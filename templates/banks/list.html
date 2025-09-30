@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}البنوك في سلطنة عمان{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="mb-4">البنوك المشاركة في سلطنة عمان</h1>
+        {% if banks and banks|length > 0 %}
+        <div class="row g-4">
+            {% for bank in banks %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    {% if bank.logo_path %}
+                    <img src="{{ url_for('static', filename=bank.logo_path) }}" class="card-img-top" alt="{{ bank.user.name }}">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ bank.user.name }}</h5>
+                        <p class="card-text text-muted">{{ bank.about or 'بنك يقدم حلول تمويل متنوعة للأفراد والشركات.' }}</p>
+                        <div class="mt-auto d-flex gap-2">
+                            <a href="{{ url_for('main.bank_detail', slug=bank.slug) }}" class="btn btn-primary">عرض التفاصيل</a>
+                            {% if bank.website %}
+                            <a href="{{ bank.website }}" target="_blank" class="btn btn-outline-secondary">الموقع الرسمي</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">لم يتم إضافة بنوك بعد.</div>
+        {% endif %}
+    </div>
+ </section>
+{% endblock %}
+

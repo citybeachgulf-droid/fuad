@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for
 import os
 from flask_login import LoginManager, current_user, login_required
-from models import db, User, ValuationRequest
+from models import db, User, ValuationRequest, BankProfile, BankOffer
 from sqlalchemy import inspect, text
 
 # Blueprints
@@ -81,5 +81,56 @@ if __name__ == '__main__':
             admin_user.set_password("123")
             db.session.add(admin_user)
             db.session.commit()
+
+        # Seed major Omani banks and sample offers
+        def seed_omani_banks():
+            banks = [
+                {"name": "Bank Muscat", "slug": "bank-muscat", "website": "https://www.bankmuscat.com/"},
+                {"name": "Bank Dhofar", "slug": "bank-dhofar", "website": "https://www.bankdhofar.com/"},
+                {"name": "Sohar International", "slug": "sohar-international", "website": "https://soharinternational.com/"},
+                {"name": "National Bank of Oman", "slug": "nbo", "website": "https://www.nbo.om/"},
+                {"name": "Oman Arab Bank", "slug": "oman-arab-bank", "website": "https://www.oman-arabbank.com/"},
+                {"name": "Ahli Bank", "slug": "ahli-bank", "website": "https://ahlibank.om/"},
+                {"name": "HSBC Oman", "slug": "hsbc-oman", "website": "https://www.hsbc.co.om/"},
+                {"name": "Bank Nizwa", "slug": "bank-nizwa", "website": "https://www.banknizwa.om/"},
+                {"name": "Alizz Islamic Bank", "slug": "alizz-islamic-bank", "website": "https://alizzib.com/"},
+            ]
+
+            if BankProfile.query.count() > 0:
+                return
+
+            for b in banks:
+                # Create user for bank
+                email = f"{b['slug']}@banks.om"
+                existing_user = User.query.filter_by(email=email).first()
+                if not existing_user:
+                    u = User(name=b["name"], email=email, role="bank")
+                    u.set_password("123")
+                    db.session.add(u)
+                    db.session.flush()
+                else:
+                    u = existing_user
+
+                profile = BankProfile(user_id=u.id, slug=b["slug"], website=b.get("website"), about=f"عروض تمويل من {b['name']}")
+                db.session.add(profile)
+                db.session.flush()
+
+                # Sample offers (illustrative only)
+                offer = BankOffer(
+                    bank_profile_id=profile.id,
+                    product_name="قرض سكني",
+                    rate_type="ثابت",
+                    interest_rate=5.75,
+                    min_amount=10000,
+                    max_amount=300000,
+                    min_tenure_months=12,
+                    max_tenure_months=300,
+                    notes="عرض توضيحي"
+                )
+                db.session.add(offer)
+
+            db.session.commit()
+
+        seed_omani_banks()
 
     app.run(host='0.0.0.0', port=5000, debug=True)
