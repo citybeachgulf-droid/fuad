@@ -1,3 +1,307 @@
+{% extends 'base.html' %}
+{% block title %}تثمين عمان - الصفحة الرئيسية{% endblock %}
+
+{% block content %}
+    <!-- Hero / CTA: قيم عقارك الآن -->
+    <section id="cta" class="py-5">
+        <div class="container">
+            <div class="row g-4 align-items-stretch">
+                <div class="col-12 col-lg-7" data-aos="fade-up">
+                    <div class="card hero-card p-4 p-lg-5 h-100">
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <h1 class="h3 mb-2">قيّم عقارك الآن</h1>
+                                <p class="mb-0 opacity-75">احصل على تقدير سريع ودقيق لعقارك في سلطنة عمان خلال دقائق.</p>
+                            </div>
+                            <span class="badge rounded-pill badge-type">سريع ودقيق</span>
+                        </div>
+                        <hr class="border-light opacity-25 my-4" />
+                        <form class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">نوع العقار</label>
+                                <div class="btn-group d-flex" role="group">
+                                    <label class="btn btn-outline-light flex-fill d-flex align-items-center gap-2" data-property-type>
+                                        <input class="visually-hidden" type="radio" name="ptype" value="residential" checked>
+                                        <span class="bi bi-house"></span>
+                                        <span>سكني</span>
+                                    </label>
+                                    <label class="btn btn-outline-light flex-fill d-flex align-items-center gap-2" data-property-type>
+                                        <input class="visually-hidden" type="radio" name="ptype" value="commercial">
+                                        <span class="bi bi-building"></span>
+                                        <span>تجاري</span>
+                                    </label>
+                                    <label class="btn btn-outline-light flex-fill d-flex align-items-center gap-2" data-property-type>
+                                        <input class="visually-hidden" type="radio" name="ptype" value="land">
+                                        <span class="bi bi-geo"></span>
+                                        <span>أرض</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">الولاية</label>
+                                <input type="text" class="form-control" placeholder="مثال: مسقط" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">المساحة (م²)</label>
+                                <input type="number" class="form-control" placeholder="مثال: 250" />
+                            </div>
+                            <div class="col-12 d-grid d-md-flex gap-2">
+                                <a href="#" class="btn btn-primary btn-lg hero-cta-btn animate__animated animate__pulse animate__infinite">ابدأ التثمين الآن</a>
+                                <small class="opacity-75 align-self-center">لا يستغرق الأمر أكثر من دقيقتين</small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-5" data-aos="fade-left">
+                    <div class="card h-100 border-0 card-hover p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="feature-icon">
+                                <span class="bi bi-speedometer2"></span>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">سرعة ودقة</h5>
+                                <p class="mb-0 text-muted small">خوارزميات تعتمد على بيانات السوق العماني الفعلية.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="feature-icon">
+                                <span class="bi bi-cpu"></span>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">ذكاء تحليلي</h5>
+                                <p class="mb-0 text-muted small">نمزجة متقدمة للمناطق، الأسعار، والعوامل المحيطة.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="feature-icon">
+                                <span class="bi bi-shield-check"></span>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">موثوقية</h5>
+                                <p class="mb-0 text-muted small">تقارير قابلة للمشاركة والتحميل.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- News and Tips -->
+    <section id="news" class="py-5">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h4 mb-0">الأخبار والنصائح العقارية</h2>
+                <a class="link-primary" href="#">عرض الكل</a>
+            </div>
+            <div class="row g-3 g-lg-4">
+                {% for i in range(1,4) %}
+                <div class="col-12 col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ i * 100 }}">
+                    <div class="card h-100 card-hover">
+                        <img src="https://images.unsplash.com/photo-1505691723518-36a5ac3b2e5b?q=80&w=1200&auto=format&fit=crop" class="card-img-top" alt="news" />
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">اتجاهات السوق: ربع سنوي {{ i }}</h5>
+                            <p class="card-text text-muted small">نظرة سريعة على حركة الأسعار في الولايات العُمانية، وما يعنيه ذلك للمستثمرين.</p>
+                            <div class="mt-auto">
+                                <a href="#" class="stretched-link">اقرأ المزيد</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Carousel / Cards -->
+    <section id="features" class="py-5 bg-white">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h4 mb-0">مميزات المنصة</h2>
+            </div>
+            <div id="featuresCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="row g-3 g-lg-4">
+                            <div class="col-12 col-md-4" data-aos="zoom-in">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-lightning-charge"></span></div>
+                                    <h5>سرعة التقييم</h5>
+                                    <p class="text-muted small">نتائج لحظية مدعومة بالبيانات.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-bullseye"></span></div>
+                                    <h5>دقة البيانات</h5>
+                                    <p class="text-muted small">مصادر موثوقة وتحليل مستمر.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-phone"></span></div>
+                                    <h5>سهولة الوصول</h5>
+                                    <p class="text-muted small">تجربة مثالية على كل الأجهزة.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="row g-3 g-lg-4">
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-shield-lock"></span></div>
+                                    <h5>حماية البيانات</h5>
+                                    <p class="text-muted small">أمان وخصوصية في كل خطوة.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-graph-up"></span></div>
+                                    <h5>تقارير قابلة للتصدير</h5>
+                                    <p class="text-muted small">PDF وملفات مشاركة فورية.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 feature-card card-hover p-3">
+                                    <div class="feature-icon mb-3"><span class="bi bi-cloud-arrow-down"></span></div>
+                                    <h5>تخزين سحابي</h5>
+                                    <p class="text-muted small">الوصول في أي وقت وأي مكان.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#featuresCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">السابق</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#featuresCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">التالي</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-12 col-lg-7" data-aos="fade-up">
+                    <h2 class="h4 mb-3">تجارب العملاء</h2>
+                    <div id="testimonialsSlider" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for i in [
+                              {"name":"سالم م.", "type":"سكني", "summary":"شقة 3 غرف، الخوير", "quote":"النتيجة وصلتني فورًا وكانت قريبة جدًا من السعر الفعلي."},
+                              {"name":"أمينة ك.", "type":"تجاري", "summary":"محل تجاري، مطرح", "quote":"تجربة سلسة وسريعة أنصح بها الجميع."},
+                              {"name":"راشد ع.", "type":"أرض", "summary":"أرض 600م²، السيب", "quote":"التقرير مفصل وسهل الفهم."}
+                            ] %}
+                            <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                                <div class="card h-100 card-hover p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:44px;height:44px;">{{ i.name[0] }}</div>
+                                            <div>
+                                                <div class="fw-semibold">{{ i.name }}</div>
+                                                <div class="text-muted small">{{ i.type }} • {{ i.summary }}</div>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-light text-dark">★★★★★</span>
+                                    </div>
+                                    <p class="testimonial-quote mb-0">“{{ i.quote }}”</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#testimonialsSlider" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">السابق</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#testimonialsSlider" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">التالي</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-5" data-aos="fade-left">
+                    <h2 class="h5 mb-3">أضف تجربتك</h2>
+                    <form id="testimonial-form" class="card p-3 p-lg-4 card-hover">
+                        <div class="mb-3">
+                            <label class="form-label">الاسم</label>
+                            <input type="text" class="form-control" placeholder="اسمك" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">نوع العقار</label>
+                            <select class="form-select">
+                                <option>سكني</option>
+                                <option>تجاري</option>
+                                <option>أرض</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">تقييم الخدمة</label>
+                            <select class="form-select">
+                                <option>★★★★★</option>
+                                <option>★★★★☆</option>
+                                <option>★★★☆☆</option>
+                                <option>★★☆☆☆</option>
+                                <option>★☆☆☆☆</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">نص التجربة</label>
+                            <textarea class="form-control" rows="3" placeholder="شاركنا رأيك" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">إرسال</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direct Contact -->
+    <section id="contact" class="py-5 bg-white">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-12 col-lg-8" data-aos="fade-up">
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <a href="#" class="btn btn-success btn-lg d-flex align-items-center gap-2">
+                            <span class="bi bi-chat-dots"></span>
+                            <span>دردشة مباشرة مع المستشار</span>
+                        </a>
+                        <a href="https://wa.me/96800000000" class="btn btn-outline-success d-flex align-items-center gap-2" target="_blank" rel="noopener">
+                            <span class="bi bi-whatsapp"></span>
+                            <span>واتساب</span>
+                        </a>
+                        <a href="tel:+96800000000" class="btn btn-outline-primary d-flex align-items-center gap-2">
+                            <span class="bi bi-telephone"></span>
+                            <span>اتصال</span>
+                        </a>
+                        <a href="mailto:info@example.com" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                            <span class="bi bi-envelope"></span>
+                            <span>بريد</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4" data-aos="fade-left">
+                    <div class="alert alert-info mb-0">
+                        فريقنا جاهز للرد خلال دقائق على استفساراتك حول التثمين.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating CTA -->
+    <div class="container contact-floating">
+        <div class="d-flex justify-content-end">
+            <a href="#cta" class="btn btn-primary shadow rounded-pill px-4 py-2">ابدأ الآن</a>
+        </div>
+    </div>
+
+{% endblock %}
+
 {% extends 'layout.html' %}
 {% block content %}
   <div class="text-center">

@@ -1,0 +1,63 @@
+/* Color palette: dark blue, gray, white */
+:root {
+  --brand-dark: #0e2a47;
+  --brand-accent: #1f6feb;
+  --gray-100: #f8f9fb;
+  --gray-200: #eef1f6;
+  --gray-600: #6b7280;
+  --success: #22c55e;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--gray-100);
+}
+
+.hero-card {
+  background: linear-gradient(135deg, var(--brand-dark), #15395f);
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+
+.hero-cta-btn {
+  background: var(--brand-accent);
+  border: none;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.hero-cta-btn:hover, .hero-cta-btn:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(31,111,235,0.35);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+}
+.card-hover { transition: transform .25s ease, box-shadow .25s ease; }
+
+.feature-icon {
+  width: 56px; height: 56px; border-radius: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--gray-200);
+  color: var(--brand-dark);
+  transition: transform .2s ease, background-color .2s ease, color .2s ease;
+}
+.feature-card:hover .feature-icon { transform: scale(1.06); background: var(--brand-accent); color: #fff; }
+
+.testimonial-quote {
+  font-style: italic; color: var(--gray-600);
+}
+
+.badge-type { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); }
+
+.contact-floating {
+  position: sticky; bottom: 24px; z-index: 1030;
+}
+
+/* Simple slide animation class (fallback if AOS disabled) */
+.slide-up { animation: slideUp .6s ease both; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: translateY(0);} }
+
