@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+{% block title %}البنوك المسجلة{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>البنوك المسجلة في المنصة</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBankModal">إضافة بنك جديد</button>
+    </div>
+
+    <!-- جدول البنوك -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>الاسم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الهاتف</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bank in banks %}
+                    <tr>
+                        <td>{{ bank.name }}</td>
+                        <td>{{ bank.email }}</td>
+                        <td>{{ bank.phone or '-' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning">تعديل</button>
+                            <button class="btn btn-sm btn-danger">حذف</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal لإضافة بنك جديد -->
+    <div class="modal fade" id="addBankModal" tabindex="-1" aria-labelledby="addBankModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('admin.add_bank') }}">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addBankModalLabel">إضافة بنك جديد</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="name" class="form-label">اسم البنك</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">الهاتف</label>
+                    <input type="text" class="form-control" id="phone" name="phone">
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">حفظ</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+</div>
+{% endblock %}
