@@ -1,3 +1,30 @@
+from flask import Flask, render_template
+
+
+def create_app() -> Flask:
+    app = Flask(__name__)
+
+    @app.route("/")
+    def home():
+        return render_template("index.html")
+
+    @app.route("/wireframe")
+    def wireframe():
+        return render_template("wireframe.html")
+
+    @app.route("/health")
+    def health():
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
 from flask import Flask, render_template, redirect, url_for
 import os
 from flask_sqlalchemy import SQLAlchemy

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="2048" viewBox="0 0 1440 2048">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0e2a47"/>
+      <stop offset="100%" stop-color="#15395f"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="#f8f9fb"/>
+  <!-- Navbar -->
+  <rect x="0" y="0" width="1440" height="64" fill="#0e2a47"/>
+  <text x="1340" y="40" font-family="sans-serif" font-weight="700" font-size="18" fill="#ffffff">تثمين عمان</text>
+
+  <!-- Hero card -->
+  <rect x="40" y="96" width="900" height="360" rx="18" fill="url(#g1)"/>
+  <text x="860" y="160" font-family="sans-serif" font-weight="700" font-size="28" fill="#ffffff" text-anchor="end">قيّم عقارك الآن</text>
+  <text x="860" y="195" font-family="sans-serif" font-size="16" fill="#e2e8f0" text-anchor="end">تقدير سريع ودقيق لعقارك في سلطنة عمان</text>
+  <rect x="760" y="220" width="160" height="36" rx="10" fill="#1f6feb"/>
+  <text x="840" y="244" font-family="sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">ابدأ التثمين الآن</text>
+
+  <!-- Side benefits card -->
+  <rect x="960" y="96" width="440" height="360" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+  <circle cx="1000" cy="160" r="28" fill="#eef1f6"/>
+  <text x="1040" y="168" font-family="sans-serif" font-weight="600" font-size="16" fill="#0f172a">سرعة ودقة</text>
+  <circle cx="1000" cy="230" r="28" fill="#eef1f6"/>
+  <text x="1040" y="238" font-family="sans-serif" font-weight="600" font-size="16" fill="#0f172a">ذكاء تحليلي</text>
+  <circle cx="1000" cy="300" r="28" fill="#eef1f6"/>
+  <text x="1040" y="308" font-family="sans-serif" font-weight="600" font-size="16" fill="#0f172a">موثوقية</text>
+
+  <!-- News cards -->
+  <text x="1360" y="500" font-family="sans-serif" font-weight="700" font-size="22" fill="#0f172a" text-anchor="end">الأخبار والنصائح</text>
+  <rect x="40" y="520" width="440" height="320" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="510" y="520" width="440" height="320" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="980" y="520" width="440" height="320" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+
+  <!-- Features carousel area -->
+  <text x="1360" y="900" font-family="sans-serif" font-weight="700" font-size="22" fill="#0f172a" text-anchor="end">مميزات المنصة</text>
+  <rect x="40" y="920" width="1360" height="280" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="80" y="960" width="380" height="200" rx="12" fill="#eef1f6"/>
+  <rect x="520" y="960" width="380" height="200" rx="12" fill="#eef1f6"/>
+  <rect x="960" y="960" width="380" height="200" rx="12" fill="#eef1f6"/>
+
+  <!-- Testimonials + form -->
+  <text x="1360" y="1300" font-family="sans-serif" font-weight="700" font-size="22" fill="#0f172a" text-anchor="end">تجارب العملاء</text>
+  <rect x="40" y="1320" width="860" height="300" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="920" y="1320" width="480" height="300" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+
+  <!-- Contact -->
+  <text x="1360" y="1680" font-family="sans-serif" font-weight="700" font-size="22" fill="#0f172a" text-anchor="end">تواصل مباشر</text>
+  <rect x="40" y="1700" width="1360" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+
+  <!-- Footer -->
+  <rect x="0" y="1960" width="1440" height="88" fill="#ffffff" stroke="#e2e8f0"/>
+</svg>
