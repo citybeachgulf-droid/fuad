@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <div class="py-4">
+    <h1 class="mb-4">شركات التثمين العقاري</h1>
+    {% if companies and companies|length > 0 %}
+      <div class="row g-3">
+        {% for company in companies %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title mb-2">{{ company.name }}</h5>
+                <p class="card-text mb-1"><strong>البريد:</strong> {{ company.email }}</p>
+                {% if company.phone %}
+                  <p class="card-text"><strong>الهاتف:</strong> {{ company.phone }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">لا توجد شركات حالياً.</div>
+    {% endif %}
+  </div>
+{% endblock %}
+
