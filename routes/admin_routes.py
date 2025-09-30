@@ -82,3 +82,27 @@ def companies():
         return "غير مصرح لك بالوصول", 403
     companies = User.query.filter_by(role='company').all()
     return render_template('companies.html', companies=companies)
+
+# --- صفحة عرض الدعوات ---
+@admin_bp.route('/invites')
+@login_required
+def invites():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+
+    invites_qs = InviteToken.query.order_by(InviteToken.created_at.desc()).all()
+
+    base_url = (f"http://{current_app.config['SERVER_NAME']}/" if current_app.config.get('SERVER_NAME') else request.host_url)
+    invites_data = []
+    for inv in invites_qs:
+        invite_url = urljoin(base_url, url_for('auth.register', token=inv.token))
+        invites_data.append({
+            'name': (inv.name or (inv.email.split('@')[0] if inv.email else '')),
+            'email': inv.email,
+            'role': inv.role,
+            'url': invite_url,
+            'used_at': inv.used_at,
+            'expires_at': inv.expires_at,
+        })
+
+    return render_template('invites.html', invites=invites_data)
