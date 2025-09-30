@@ -138,3 +138,50 @@ class InviteToken(db.Model):
         db.session.add(invite)
         db.session.commit()
         return invite
+
+
+# ================================
+# ملف تعريف البنك
+# ================================
+class BankProfile(db.Model):
+    __tablename__ = 'bank_profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    slug = db.Column(db.String(150), unique=True, nullable=False, index=True)
+    logo_path = db.Column(db.String(255), nullable=True)
+    about = db.Column(db.Text, nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+    min_tenure_months = db.Column(db.Integer, nullable=True)
+    max_tenure_months = db.Column(db.Integer, nullable=True)
+    min_amount = db.Column(db.Float, nullable=True)
+    max_amount = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = db.relationship(
+        'User',
+        backref=db.backref('bank_profile', uselist=False, cascade="all, delete")
+    )
+
+
+# ================================
+# عروض التمويل الخاصة بالبنوك
+# ================================
+class BankOffer(db.Model):
+    __tablename__ = 'bank_offers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    bank_profile_id = db.Column(db.Integer, db.ForeignKey('bank_profiles.id'), nullable=False, index=True)
+    product_name = db.Column(db.String(150), nullable=False)  # مثال: قرض سكني، قرض شخصي
+    rate_type = db.Column(db.String(50), nullable=True)  # ثابت/متغير
+    interest_rate = db.Column(db.Float, nullable=False)  # نسبة سنوية %
+    apr = db.Column(db.Float, nullable=True)
+    min_amount = db.Column(db.Float, nullable=True)
+    max_amount = db.Column(db.Float, nullable=True)
+    min_tenure_months = db.Column(db.Integer, nullable=True)
+    max_tenure_months = db.Column(db.Integer, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    bank_profile = db.relationship('BankProfile', backref=db.backref('offers', cascade='all, delete-orphan'))

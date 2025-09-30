@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort
-from models import User, CompanyProfile
+from models import User, CompanyProfile, BankProfile
 
 main = Blueprint('main', __name__)
 
@@ -20,3 +20,21 @@ def company_detail(company_id: int):
     if not company:
         return abort(404)
     return render_template('companies/detail.html', company=company)
+
+
+# -------------------------------
+# البنوك: قائمة + صفحة تفاصيل بنك
+# -------------------------------
+@main.route('/banks')
+def banks_list():
+    banks = BankProfile.query.order_by(BankProfile.id.asc()).all()
+    return render_template('banks/list.html', banks=banks)
+
+
+@main.route('/banks/<string:slug>')
+def bank_detail(slug: str):
+    bank = BankProfile.query.filter_by(slug=slug).first()
+    if not bank:
+        return abort(404)
+    # تمرير عروض البنك للواجهة لعرضها مع الحاسبة
+    return render_template('banks/detail.html', bank=bank, offers=bank.offers)

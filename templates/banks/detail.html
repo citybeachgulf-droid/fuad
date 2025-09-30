@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ bank.user.name }} - عروض التمويل وحاسبة القروض{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    {% if bank.logo_path %}
+                    <img src="{{ url_for('static', filename=bank.logo_path) }}" class="card-img-top p-3" alt="{{ bank.user.name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h1 class="h4">{{ bank.user.name }}</h1>
+                        {% if bank.website %}
+                        <p class="mb-1"><a href="{{ bank.website }}" target="_blank">الموقع الرسمي</a></p>
+                        {% endif %}
+                        {% if bank.about %}
+                        <p class="text-muted mb-0">{{ bank.about }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">عروض التمويل</h2>
+                        {% if offers and offers|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>نوع السعر</th>
+                                        <th>النسبة السنوية %</th>
+                                        <th>المدة (شهر)</th>
+                                        <th>الحدود</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for o in offers %}
+                                    <tr>
+                                        <td>{{ o.product_name }}</td>
+                                        <td>{{ o.rate_type or '-' }}</td>
+                                        <td>{{ '%.2f'|format(o.interest_rate) }}</td>
+                                        <td>
+                                            {{ o.min_tenure_months or '-' }} - {{ o.max_tenure_months or '-' }}
+                                        </td>
+                                        <td>
+                                            {{ (o.min_amount or 0)|int }} - {{ (o.max_amount or 0)|int }} ر.ع
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mb-0">لا توجد عروض متاحة حاليًا.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">حاسبة القروض</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">اختر عرضًا (اختياري)</label>
+                                <select id="offerSelect" class="form-select">
+                                    <option value="">— بدون اختيار —</option>
+                                    {% for o in offers %}
+                                    <option value="{{ o.interest_rate }}" data-min-months="{{ o.min_tenure_months or '' }}" data-max-months="{{ o.max_tenure_months or '' }}">{{ o.product_name }} — {{ '%.2f'|format(o.interest_rate) }}%</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="interestRate" class="form-label">النسبة السنوية %</label>
+                                <input id="interestRate" type="number" step="0.01" class="form-control" placeholder="مثال: 5.75">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="loanAmount" class="form-label">مبلغ القرض (ر.ع)</label>
+                                <input id="loanAmount" type="number" step="0.01" class="form-control" placeholder="مثال: 50000">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tenureMonths" class="form-label">المدة (بالأشهر)</label>
+                                <input id="tenureMonths" type="number" class="form-control" placeholder="مثال: 240">
+                                <div class="form-text" id="tenureHint"></div>
+                            </div>
+                            <div class="col-12">
+                                <button id="calcBtn" class="btn btn-primary">احسب القسط الشهري</button>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <div class="text-muted">القسط الشهري</div>
+                                    <div id="monthlyPayment" class="fs-4 fw-bold">—</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <div class="text-muted">إجمالي الفائدة</div>
+                                    <div id="totalInterest" class="fs-5 fw-bold">—</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <div class="text-muted">إجمالي التكلفة</div>
+                                    <div id="totalCost" class="fs-5 fw-bold">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2">تنبيه: النتائج تقديرية للاطلاع فقط ولا تُعد عرضًا تمويليًا.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/loan_calculator.js') }}"></script>
+{% endblock %}
+
