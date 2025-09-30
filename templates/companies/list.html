@@ -1,6 +1,11 @@
 {% extends 'layout.html' %}
 {% block content %}
+<div class="d-flex justify-content-between align-items-center">
 <h2>شركات التثمين</h2>
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCompanyModal">إضافة شركة</button>
+{% endif %}
+</div>
 <div class="row mt-3">
   {% for c in companies %}
   <div class="col-md-4 mb-3">
@@ -17,5 +22,37 @@
   </div>
   {% endfor %}
 </div>
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
+<div class="modal fade" id="addCompanyModal" tabindex="-1" aria-labelledby="addCompanyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_company') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCompanyModalLabel">إضافة شركة تثمين جديدة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="name" class="form-label">اسم الشركة</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">الهاتف</label>
+            <input type="text" class="form-control" id="phone" name="phone">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">حفظ</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
