@@ -1,7 +1,7 @@
 """Blueprint for valuation company portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from models import db, ValuationRequest, CompanyProfile, User, CompanyApprovedBank, CompanyContact
+from models import db, ValuationRequest, CompanyProfile, CompanyManualBank, CompanyContact
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -52,11 +52,9 @@ def edit_profile():
         db.session.add(profile)
         db.session.commit()
 
-    # جلب البنوك وأرقام التواصل الحالية
-    banks = User.query.filter_by(role='bank').all()
-    approved_bank_ids = [ab.bank_user_id for ab in getattr(profile, 'approved_banks', [])]
+    # جلب بيانات أرقام التواصل والبنوك اليدوية
     contacts_list = list(getattr(profile, 'contacts', []))
-    bank_limits_map = {ab.bank_user_id: ab.limit_value for ab in getattr(profile, 'approved_banks', [])}
+    manual_banks_list = list(getattr(profile, 'manual_banks', []))
 
     if request.method == 'POST':
         services = request.form.get('services') or None
@@ -67,15 +65,15 @@ def edit_profile():
         try:
             limit_value = float(limit_value_raw) if limit_value_raw else None
         except ValueError:
-            flash('الرجاء إدخال قيمة حد صحيحة', 'danger')
-            return render_template('company/profile_edit.html', profile=profile, banks=banks, approved_bank_ids=approved_bank_ids, contacts=contacts_list)
+            flash('الرجاء إدخال قيمة حد صحيحة للحد العام', 'danger')
+            return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list, manual_banks=manual_banks_list)
 
         # معالجة رفع الشعار
         file = request.files.get('logo')
         if file and file.filename:
             if not _allowed_file(file.filename):
                 flash('صيغة الشعار غير مدعومة', 'danger')
-                return render_template('company/profile_edit.html', profile=profile, banks=banks, approved_bank_ids=approved_bank_ids, contacts=contacts_list)
+                return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list, manual_banks=manual_banks_list)
             upload_folder = current_app.config.get('UPLOAD_FOLDER')
             os.makedirs(upload_folder, exist_ok=True)
             filename = f"company_{current_user.id}_{int(time.time())}_" + secure_filename(file.filename)
@@ -90,36 +88,55 @@ def edit_profile():
         profile.about = about
         profile.website = website
 
-        # تحديث البنوك المعتمدة مع حدود لكل بنك
-        selected_bank_ids = []
-        posted_bank_limits = {}
-        for bank in banks:
-            sel_key = f"bank_selected_{bank.id}"
-            limit_key = f"bank_limit_{bank.id}"
-            if request.form.get(sel_key):
-                selected_bank_ids.append(bank.id)
-                limit_raw = request.form.get(limit_key, '').strip()
-                if limit_raw:
-                    try:
-                        posted_bank_limits[bank.id] = float(limit_raw)
-                    except ValueError:
-                        flash(f'قيمة حد غير صالحة للبنك: {bank.name}', 'danger')
-                        return render_template(
-                            'company/profile_edit.html',
-                            profile=profile,
-                            banks=banks,
-                            approved_bank_ids=selected_bank_ids,
-                            contacts=contacts_list,
-                            bank_limits=posted_bank_limits
-                        )
-                else:
-                    posted_bank_limits[bank.id] = None
+        # تحديث البنوك اليدوية
+        names = request.form.getlist('bank_name')
+        emails = request.form.getlist('bank_email')
+        phones = request.form.getlist('bank_phone')
+        limits = request.form.getlist('bank_limit')
 
-        # امسح الحالي ثم أضف الجديد مع القيم
-        if hasattr(profile, 'approved_banks'):
-            profile.approved_banks.clear()
-        for bank_id in selected_bank_ids:
-            profile.approved_banks.append(CompanyApprovedBank(bank_user_id=bank_id, limit_value=posted_bank_limits.get(bank_id)))
+        posted_manual_banks = []
+        has_limit_error = False
+        for name_val, email_val, phone_val, limit_val in zip(names, emails, phones, limits):
+            name_clean = (name_val or '').strip()
+            email_clean = (email_val or '').strip() or None
+            phone_clean = (phone_val or '').strip() or None
+            limit_clean = None
+            if not name_clean and not email_clean and not phone_clean and (limit_val or '').strip() == '':
+                # صف فارغ بالكامل — تجاهله
+                continue
+            if not name_clean:
+                # يلزم الاسم لحفظ البنك
+                has_limit_error = True
+                flash('الرجاء كتابة اسم البنك لكل صف غير فارغ', 'danger')
+            limit_str = (limit_val or '').strip()
+            if limit_str:
+                try:
+                    limit_clean = float(limit_str)
+                except ValueError:
+                    has_limit_error = True
+                    flash(f'قيمة حد غير صالحة للبنك: {name_clean or "(بدون اسم)"}', 'danger')
+            posted_manual_banks.append({
+                'name': name_clean,
+                'email': email_clean,
+                'phone': phone_clean,
+                'limit_value': limit_clean if not has_limit_error else limit_str
+            })
+
+        if has_limit_error:
+            # أعد العرض مع القيم المدخلة
+            return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list, manual_banks=posted_manual_banks)
+
+        # استبدل القائمة الحالية
+        if hasattr(profile, 'manual_banks'):
+            profile.manual_banks.clear()
+        for b in posted_manual_banks:
+            if b.get('name'):
+                profile.manual_banks.append(CompanyManualBank(
+                    name=b.get('name'),
+                    email=b.get('email'),
+                    phone=b.get('phone'),
+                    limit_value=b.get('limit_value')
+                ))
 
         # تحديث أرقام التواصل
         labels = request.form.getlist('contact_label')
@@ -136,7 +153,6 @@ def edit_profile():
         return redirect(url_for('company.edit_profile'))
 
     # تمرير البيانات إلى الواجهة
-    approved_bank_ids = [ab.bank_user_id for ab in getattr(profile, 'approved_banks', [])]
     contacts_list = list(getattr(profile, 'contacts', []))
-    bank_limits_map = {ab.bank_user_id: ab.limit_value for ab in getattr(profile, 'approved_banks', [])}
-    return render_template('company/profile_edit.html', profile=profile, banks=banks, approved_bank_ids=approved_bank_ids, contacts=contacts_list, bank_limits=bank_limits_map)
+    manual_banks_list = list(getattr(profile, 'manual_banks', []))
+    return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list, manual_banks=manual_banks_list)

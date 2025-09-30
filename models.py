@@ -72,6 +72,26 @@ class CompanyApprovedBank(db.Model):
 
 
 # ================================
+# البنوك اليدوية الخاصة بكل شركة
+# ================================
+class CompanyManualBank(db.Model):
+    __tablename__ = 'company_manual_banks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), nullable=True)
+    phone = db.Column(db.String(50), nullable=True)
+    limit_value = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    company_profile = db.relationship(
+        'CompanyProfile',
+        backref=db.backref('manual_banks', cascade='all, delete-orphan')
+    )
+
+
+# ================================
 # أرقام التواصل الخاصة بالشركة
 # ================================
 class CompanyContact(db.Model):
