@@ -23,6 +23,10 @@
       <h4 class="h6">الحد المالي</h4>
       <p>{% if company.company_profile and company.company_profile.limit_value %}{{ company.company_profile.limit_value }} OMR{% else %}-{% endif %}</p>
     </div>
+
+    <div class="mt-4">
+      <a class="btn btn-warning" href="{{ url_for('client.submit_request', company_id=company.id) }}">طلب تثمين من هذه الشركة</a>
+    </div>
   </div>
 </div>
 {% endblock %}

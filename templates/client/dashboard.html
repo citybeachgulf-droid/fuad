@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>لوحة العميل</h2>
+  <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
+</div>
+
+<table class="table mt-3">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>العنوان</th>
+      <th>الشركة</th>
+      <th>الحالة</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in requests %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.company.name if r.company else '-' }}</td>
+        <td>{{ r.status }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
