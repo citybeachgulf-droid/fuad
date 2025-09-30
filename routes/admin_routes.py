@@ -29,6 +29,15 @@ def dashboard():
         requests=requests
     )
 
+# --- صفحة عرض طلبات التثمين ---
+@admin_bp.route('/requests')
+@login_required
+def requests_list():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    requests = ValuationRequest.query.order_by(ValuationRequest.id.desc()).all()
+    return render_template('requests.html', requests=requests)
+
 # --- إضافة بنك ---
 @admin_bp.route('/add_bank', methods=['POST'])
 @login_required

@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2 class="mb-3">طلب تثمين جديد</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">العنوان</label>
+    <input type="text" class="form-control" name="title" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">الوصف</label>
+    <textarea class="form-control" name="description" rows="4"></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">اختر شركة التثمين</label>
+    <select class="form-select" name="company_id">
+      <option value="">— بدون تحديد —</option>
+      {% for c in companies %}
+        <option value="{{ c.id }}" {% if preselected_company_id and preselected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-primary" type="submit">إرسال الطلب</button>
+  <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
+  
+</form>
+{% endblock %}
+

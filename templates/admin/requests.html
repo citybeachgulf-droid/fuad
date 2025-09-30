@@ -1,0 +1,35 @@
+{% extends "layout_admin.html" %}
+{% block title %}طلبات التثمين{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">طلبات التثمين</h2>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>العنوان</th>
+        <th>العميل</th>
+        <th>الشركة</th>
+        <th>البنك</th>
+        <th>الحالة</th>
+        <th>القيمة</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.title or '-' }}</td>
+          <td>{{ r.client.name if r.client else '-' }}</td>
+          <td>{{ r.company.name if r.company else '-' }}</td>
+          <td>{{ r.bank.name if r.bank else '-' }}</td>
+          <td><span class="badge bg-secondary">{{ r.status }}</span></td>
+          <td>{% if r.value %}{{ r.value }}{% else %}-{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
