@@ -49,6 +49,40 @@ class CompanyProfile(db.Model):
         backref=db.backref('company_profile', uselist=False, cascade="all, delete")
     )
 
+
+# ================================
+# البنوك المعتمدة للشركة (Many-to-Many عبر جدول وسيط)
+# ================================
+class CompanyApprovedBank(db.Model):
+    __tablename__ = 'company_approved_banks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False)
+    bank_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # علاقات اختيارية للمساعدة في الاستعلامات
+    company_profile = db.relationship('CompanyProfile', backref=db.backref('approved_banks', cascade='all, delete-orphan'))
+    bank_user = db.relationship('User')
+
+    __table_args__ = (
+        db.UniqueConstraint('company_profile_id', 'bank_user_id', name='uq_company_bank'),
+    )
+
+
+# ================================
+# أرقام التواصل الخاصة بالشركة
+# ================================
+class CompanyContact(db.Model):
+    __tablename__ = 'company_contacts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False)
+    label = db.Column(db.String(100), nullable=True)  # مثل: هاتف المكتب، واتساب، جوال
+    phone = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    company_profile = db.relationship('CompanyProfile', backref=db.backref('contacts', cascade='all, delete-orphan'))
+
 # ================================
 # نموذج طلب التثمين
 # ================================
