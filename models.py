@@ -59,6 +59,8 @@ class CompanyApprovedBank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False)
     bank_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # حد الشركة المعتمد لدى هذا البنك (اختياري لكل بنك)
+    limit_value = db.Column(db.Float, nullable=True)
 
     # علاقات اختيارية للمساعدة في الاستعلامات
     company_profile = db.relationship('CompanyProfile', backref=db.backref('approved_banks', cascade='all, delete-orphan'))

@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for
 import os
 from flask_login import LoginManager, current_user, login_required
 from models import db, User, ValuationRequest
+from sqlalchemy import inspect, text
 
 # Blueprints
 from routes.auth_routes import auth
@@ -62,6 +63,17 @@ app = create_app()
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        # Lightweight migration: ensure 'limit_value' exists on company_approved_banks
+        try:
+            inspector = inspect(db.engine)
+            cols = [c['name'] for c in inspector.get_columns('company_approved_banks')]
+            if 'limit_value' not in cols:
+                # SQLite compatible ALTER TABLE to add column
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE company_approved_banks ADD COLUMN limit_value FLOAT'))
+        except Exception:
+            # Fail silently to avoid startup crash; model will still work for new DBs
+            pass
         # إنشاء حساب المدير الافتراضي إذا لم يوجد
         if User.query.filter_by(role='admin').count() == 0:
             admin_user = User(name="مدير النظام", email="admin@platform.com", role="admin")
