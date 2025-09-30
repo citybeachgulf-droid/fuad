@@ -1,68 +1,184 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>منصة التقييم العقاري - سلطنة عمان</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-  </head>
-  <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-      <div class="container">
-        <a class="navbar-brand" href="#">منصة التقييم العقاري</a>
-<button class="btn btn-primary" onclick="window.location.href='/login'">تسجيل الدخول</button>
-      </div>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}الصفحة الرئيسية - منصة التثمين العقاري{% endblock %}</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" crossorigin="anonymous">
+
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- AOS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" />
+</head>
+<body class="bg-light text-dark">
+
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">تثمين عمان</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#hero">الرئيسية</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">المميزات</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#news">الأخبار</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#testimonials">التجارب</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">تواصل</a></li>
+                    <li class="nav-item"><a class="btn btn-warning ms-lg-2" href="{{ url_for('auth.login') }}">تسجيل الدخول</a></li>
+                </ul>
+            </div>
+        </div>
     </nav>
+</header>
 
+<main>
     <!-- Hero Section -->
-    <section class="hero text-center d-flex flex-column justify-content-center align-items-center">
-      <h1 class="display-4 animate__animated animate__fadeInDown">منصة التقييم العقاري في سلطنة عمان</h1>
-      <p class="lead animate__animated animate__fadeInUp mt-3">أحدث نسب الفائدة من البنوك العمانية</p>
-      <div class="mt-4">
-        <a href="/companies" class="btn btn-primary btn-lg animate__animated animate__fadeInUp animate__delay-1s">طلب تثمين عقاري</a>
-      </div>
+    <section id="hero" class="text-center text-white bg-primary py-5">
+        <div class="container">
+            <h1 class="display-4 fw-bold animate__animated animate__fadeInDown">قيّم عقارك الآن بسهولة</h1>
+            <p class="lead animate__animated animate__fadeInUp animate__delay-1s">استفد من خبرة المثمنين المحترفين في عمان وابدأ رحلتك بثقة</p>
+            <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
+                <button class="btn btn-light btn-lg me-3" onclick="window.location.href='/login'">تسجيل الدخول</button>
+                <a href="/companies" class="btn btn-warning btn-lg">طلب تثمين عقاري</a>
+            </div>
+        </div>
     </section>
 
-    <!-- Interest Rates Section -->
-    <section class="container my-5">
-      <h2 class="text-center mb-4">نسب الفائدة الحالية للبنوك</h2>
-      <div class="row justify-content-center gap-3">
-        <div class="col-md-3 col-sm-6">
-          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp">
-            <div class="card-body text-center">
-              <h5 class="card-title">Bank Muscat</h5>
-              <p class="card-text">5.25%</p>
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">مميزات منصة تثمين عمان</h2>
+            <div class="row g-4">
+                <div class="col-md-4 text-center" data-aos="fade-up">
+                    <i class="bi bi-house-door display-4 mb-3 text-primary"></i>
+                    <h5>تقييم دقيق</h5>
+                    <p>نظام ذكي لتقييم الممتلكات بدقة عالية ويوفر تقارير مفصلة.</p>
+                </div>
+                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
+                    <i class="bi bi-clock display-4 mb-3 text-primary"></i>
+                    <h5>توفير الوقت</h5>
+                    <p>عملية التقييم سريعة وفعالة، لتسهيل اتخاذ القرار.</p>
+                </div>
+                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
+                    <i class="bi bi-people display-4 mb-3 text-primary"></i>
+                    <h5>فريق محترف</h5>
+                    <p>خبراء ومثمنون معتمدون يقدمون أفضل الخدمات للعملاء.</p>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp animate__delay-1s">
-            <div class="card-body text-center">
-              <h5 class="card-title">National Bank of Oman</h5>
-              <p class="card-text">5.00%</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp animate__delay-2s">
-            <div class="card-body text-center">
-              <h5 class="card-title">HSBC Oman</h5>
-              <p class="card-text">4.75%</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="text-center py-4 bg-light">
-      &copy; 2025 Valuation Platform Oman. All rights reserved.
-    </footer>
+    <!-- News Section -->
+    <section id="news" class="bg-light py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">أحدث الأخبار</h2>
+            <div class="row g-4">
+                <div class="col-md-4" data-aos="fade-up">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/news1.jpg') }}" class="card-img-top" alt="خبر 1">
+                        <div class="card-body">
+                            <h5 class="card-title">عنوان الخبر الأول</h5>
+                            <p class="card-text">ملخص الخبر الأول مع بعض التفاصيل المهمة.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/news2.jpg') }}" class="card-img-top" alt="خبر 2">
+                        <div class="card-body">
+                            <h5 class="card-title">عنوان الخبر الثاني</h5>
+                            <p class="card-text">ملخص الخبر الثاني مع لمحة عن المحتوى.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/news3.jpg') }}" class="card-img-top" alt="خبر 3">
+                        <div class="card-body">
+                            <h5 class="card-title">عنوان الخبر الثالث</h5>
+                            <p class="card-text">ملخص الخبر الثالث يعطي فكرة سريعة عن الموضوع.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+    <!-- Testimonials Section -->
+    <!-- Testimonials Section + Share Your Experience -->
+<section id="testimonials" class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">تجارب العملاء</h2>
+        
+        <!-- Existing Testimonials -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4 text-center" data-aos="fade-up">
+                <blockquote class="blockquote">
+                    <p>"خدمة رائعة وسريعة جدًا، أنصح الجميع باستخدام المنصة."</p>
+                    <footer class="blockquote-footer">أحمد علي</footer>
+                </blockquote>
+            </div>
+            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
+                <blockquote class="blockquote">
+                    <p>"تجربة مميزة وفريق محترف، كل شيء كان سلسًا."</p>
+                    <footer class="blockquote-footer">سارة حسن</footer>
+                </blockquote>
+            </div>
+            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
+                <blockquote class="blockquote">
+                    <p>"الحصول على التقرير كان سريع ودقيق، أنصح بهذه الخدمة."</p>
+                    <footer class="blockquote-footer">محمد سالم</footer>
+                </blockquote>
+            </div>
+        </div>
+
+        <!-- Share Your Experience Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <h3 class="text-center mb-4">شارك تجربتك معنا</h3>
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">الاسم</label>
+                        <input type="text" class="form-control" id="name" placeholder="اسمك">
+                    </div>
+                    <div class="mb-3">
+                        <label for="experience" class="form-label">تجربتك</label>
+                        <textarea class="form-control" id="experience" rows="4" placeholder="اكتب تجربتك هنا"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">إرسال تجربتك</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container d-flex flex-column flex-lg-row align-items-center justify-content-between gap-2">
+        <span>© 2025 تثمين عمان</span>
+        <div class="d-flex gap-3">
+            <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap & AOS JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" crossorigin="anonymous"></script>
+<script>
+    AOS.init({ duration: 700, easing: 'ease-out-quart', once: true });
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
 </html>
