@@ -1,0 +1,53 @@
+{% extends "layout_admin.html" %}
+{% block title %}الدعوات{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>الدعوات</h2>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>الاسم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الدور</th>
+                        <th>رابط الدعوة</th>
+                        <th>الحالة</th>
+                        <th>ينتهي في</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invites %}
+                    <tr class="align-middle">
+                        <td>{{ inv.name or '-' }}</td>
+                        <td>{{ inv.email }}</td>
+                        <td>{{ 'شركة' if inv.role == 'company' else 'بنك' }}</td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" value="{{ inv.url }}" readonly>
+                                <a class="btn btn-outline-primary" href="{{ inv.url }}" target="_blank">فتح</a>
+                            </div>
+                        </td>
+                        <td>
+                            {% if inv.used_at %}
+                                <span class="badge bg-success">تم الاستخدام</span>
+                            {% elif inv.expires_at < now() %}
+                                <span class="badge bg-danger">منتهي</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">قيد الاستخدام</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ inv.expires_at.strftime('%Y-%m-%d %H:%M') if inv.expires_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
