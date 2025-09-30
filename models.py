@@ -160,3 +160,16 @@ class InviteToken(db.Model):
         db.session.add(invite)
         db.session.commit()
         return invite
+
+
+# ================================
+# نموذج الأخبار
+# ================================
+class News(db.Model):
+    __tablename__ = 'news'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(255), nullable=True)  # مسار الصورة داخل static
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

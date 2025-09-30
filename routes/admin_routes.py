@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User, InviteToken
+from models import db, User, InviteToken, News
 from flask_login import login_required, current_user
 from urllib.parse import urljoin
 from flask import current_app
+import os
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__, template_folder='../templates/admin', static_folder='../static')
 
@@ -21,12 +23,15 @@ def dashboard():
     clients = User.query.filter_by(role='client').all()
     requests = ValuationRequest.query.all()
 
+    latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
+
     return render_template(
         'dashboard.html',
         banks=banks,
         companies=companies,
         clients=clients,
-        requests=requests
+        requests=requests,
+        latest_news=latest_news
     )
 
 # --- صفحة عرض طلبات التثمين ---
@@ -115,3 +120,66 @@ def invites():
         })
 
     return render_template('invites.html', invites=invites_data)
+
+
+# --- إعداد رفع صور الأخبار ---
+def _ensure_news_upload_dir(app):
+    configured = app.config.get('NEWS_UPLOAD_FOLDER')
+    if configured:
+        news_upload = configured
+    else:
+        base_upload = app.config.get('UPLOAD_FOLDER', os.path.join(app.root_path, 'static', 'uploads'))
+        news_upload = os.path.join(os.path.dirname(base_upload), 'news') if base_upload.endswith('logos') else os.path.join(base_upload, 'news')
+    os.makedirs(news_upload, exist_ok=True)
+    return news_upload
+
+
+# --- قائمة الأخبار ---
+@admin_bp.route('/news')
+@login_required
+def news_list():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    items = News.query.order_by(News.created_at.desc()).all()
+    return render_template('news_list.html', news_list=items)
+
+
+# --- إنشاء خبر جديد ---
+@admin_bp.route('/news/new', methods=['GET', 'POST'])
+@login_required
+def news_new():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        body = request.form.get('body', '').strip()
+        if not title:
+            flash('الرجاء إدخال عنوان الخبر', 'danger')
+            return redirect(url_for('admin.news_new'))
+
+        image_path_rel = None
+        file = request.files.get('image')
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            upload_dir = _ensure_news_upload_dir(current_app)
+            save_path = os.path.join(upload_dir, filename)
+            # تجنب التعارض: أعد التسمية إذا كان الملف موجوداً
+            base, ext = os.path.splitext(filename)
+            counter = 1
+            while os.path.exists(save_path):
+                filename = f"{base}_{counter}{ext}"
+                save_path = os.path.join(upload_dir, filename)
+                counter += 1
+            file.save(save_path)
+            # المسار النسبي داخل static
+            # نفترض أن مجلد news داخل static/uploads/news
+            image_path_rel = f"uploads/news/{filename}"
+
+        news = News(title=title, body=body, image_path=image_path_rel)
+        db.session.add(news)
+        db.session.commit()
+        flash('تم إضافة الخبر بنجاح', 'success')
+        return redirect(url_for('admin.news_list'))
+
+    return render_template('news_form.html')

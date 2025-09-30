@@ -18,8 +18,9 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
-    # Ensure upload folder exists
+    # Ensure upload folders exist
     os.makedirs(app.config.get('UPLOAD_FOLDER', ''), exist_ok=True)
+    os.makedirs(app.config.get('NEWS_UPLOAD_FOLDER', ''), exist_ok=True)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
