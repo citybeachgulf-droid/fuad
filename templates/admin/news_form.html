@@ -1,0 +1,26 @@
+{% extends "layout_admin.html" %}
+{% block title %}إضافة خبر{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">إضافة خبر جديد</h2>
+
+<form method="post" enctype="multipart/form-data" class="card p-3">
+  <div class="mb-3">
+    <label class="form-label">عنوان الخبر</label>
+    <input type="text" name="title" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">المحتوى</label>
+    <textarea name="body" class="form-control" rows="5"></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">الصورة (اختياري)</label>
+    <input type="file" name="image" accept="image/*" class="form-control">
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-success">حفظ</button>
+    <a href="{{ url_for('admin.news_list') }}" class="btn btn-secondary">رجوع</a>
+  </div>
+</form>
+{% endblock %}
+
