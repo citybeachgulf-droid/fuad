@@ -57,9 +57,7 @@
               <thead>
                 <tr>
                   <th style="width: 30%">اسم البنك</th>
-                  <th style="width: 25%">البريد الإلكتروني</th>
-                  <th style="width: 25%">الهاتف</th>
-                  <th style="width: 20%">الحد (SAR)</th>
+                  <th style="width: 20%">الحد (OMR)</th>
                   <th style="width: 10%">إزالة</th>
                 </tr>
               </thead>
@@ -78,9 +76,7 @@
                 {% else %}
                   <tr>
                     <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
-                    <td><input type="email" class="form-control" name="bank_email" placeholder="email@example.com"></td>
-                    <td><input type="text" class="form-control" name="bank_phone" placeholder="05xxxxxxxx"></td>
-                    <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder="اختياري"></td>
+                    <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder=""></td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
                   </tr>
                 {% endif %}
@@ -113,14 +109,14 @@
                   {% for c in contacts %}
                   <tr>
                     <td><input type="text" class="form-control" name="contact_label" value="{{ c.label or '' }}" placeholder="مثال: واتساب"></td>
-                    <td><input type="text" class="form-control" name="contact_phone" value="{{ c.phone }}" placeholder="05xxxxxxxx"></td>
+                    <td><input type="text" class="form-control" name="contact_phone" value="{{ c.phone }}" placeholder=""></td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
                   </tr>
                   {% endfor %}
                 {% else %}
                   <tr>
                     <td><input type="text" class="form-control" name="contact_label" placeholder="مثال: واتساب"></td>
-                    <td><input type="text" class="form-control" name="contact_phone" placeholder="05xxxxxxxx"></td>
+                    <td><input type="text" class="form-control" name="contact_phone" placeholder=""></td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
                   </tr>
                 {% endif %}
