@@ -24,6 +24,22 @@
       <p>{% if company.company_profile and company.company_profile.limit_value %}{{ company.company_profile.limit_value }} OMR{% else %}-{% endif %}</p>
     </div>
 
+    <div class="mb-3">
+      <h4 class="h6">البنوك المعتمدة لدى الشركة</h4>
+      {% if company.company_profile and company.company_profile.approved_banks %}
+      <ul class="list-group">
+        {% for ab in company.company_profile.approved_banks %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>{{ ab.bank_user.name }}{% if ab.bank_user.phone %} — {{ ab.bank_user.phone }}{% endif %}</span>
+          <span class="badge bg-secondary">{% if ab.limit_value %}{{ ab.limit_value }} OMR{% else %}-{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>-</p>
+      {% endif %}
+    </div>
+
     <div class="mt-4">
       <a class="btn btn-warning" href="{{ url_for('client.submit_request', company_id=company.id) }}">طلب تثمين من هذه الشركة</a>
     </div>
