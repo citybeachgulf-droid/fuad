@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block title %}إنشاء حساب عبر الدعوة{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="mb-3">إنشاء حساب {{ 'لشركة' if invite.role == 'company' else 'لبنك' }}</h3>
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          <input type="hidden" name="token" value="{{ token }}" />
+          <div class="mb-3">
+            <label class="form-label">الاسم</label>
+            <input class="form-control" type="text" name="name" value="{{ invite.name or '' }}" placeholder="الاسم" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input class="form-control" type="email" name="email" value="{{ invite.email }}" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الهاتف</label>
+            <input class="form-control" type="text" name="phone" value="{{ invite.phone or '' }}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">كلمة المرور</label>
+            <input class="form-control" type="password" name="password" required minlength="6" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">تأكيد كلمة المرور</label>
+            <input class="form-control" type="password" name="confirm" required minlength="6" />
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">إنشاء الحساب</button>
+            <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
