@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<p>Manage users and valuation requests.</p>
+
+<h4>Users</h4>
+<table class="table table-sm">
+  <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+      <tr><td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Recent Requests</h4>
+<table class="table">
+  <thead><tr><th>ID</th><th>Title</th><th>Client</th><th>Status</th><th>Assign</th></tr></thead>
+  <tbody>
+    {% for r in requests %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.client.name }}</td>
+        <td>{{ r.status }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.assign_request') }}" class="d-flex gap-2">
+            <input type="hidden" name="request_id" value="{{ r.id }}">
+            <select name="company_id" class="form-select form-select-sm">
+              {% for c in users if c.role == 'company' %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-sm btn-primary">Assign</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

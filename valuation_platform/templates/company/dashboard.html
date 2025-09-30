@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Company Dashboard</h2>
+<p>Requests assigned to your company:</p>
+<table class="table">
+  <thead><tr><th>ID</th><th>Title</th><th>Client</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for r in requests %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.client.name }}</td>
+        <td>{{ r.status }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('company.submit_valuation', request_id=r.id) }}">Submit Valuation</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
