@@ -1,41 +1,148 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
+{% block title %}لوحة تحكم المدير{% endblock %}
+
 {% block content %}
-<h2>Admin Dashboard</h2>
-<p>Manage users and valuation requests.</p>
+<div class="container-fluid">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm mb-4">
+        <a class="navbar-brand" href="#">لوحة تحكم المدير</a>
+        <div class="ms-auto">
+            <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addBankModal">إضافة بنك</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompanyModal">إضافة شركة تثمين</button>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">تسجيل الخروج</a>
+        </div>
+    </nav>
 
-<h4>Users</h4>
-<table class="table table-sm">
-  <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr></thead>
-  <tbody>
-    {% for u in users %}
-      <tr><td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <!-- Cards Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي البنوك</h5>
+                    <p class="card-text">{{ banks|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي شركات التثمين</h5>
+                    <p class="card-text">{{ companies|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<h4>Recent Requests</h4>
-<table class="table">
-  <thead><tr><th>ID</th><th>Title</th><th>Client</th><th>Status</th><th>Assign</th></tr></thead>
-  <tbody>
-    {% for r in requests %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.title }}</td>
-        <td>{{ r.client.name }}</td>
-        <td>{{ r.status }}</td>
-        <td>
-          <form method="post" action="{{ url_for('admin.assign_request') }}" class="d-flex gap-2">
-            <input type="hidden" name="request_id" value="{{ r.id }}">
-            <select name="company_id" class="form-select form-select-sm">
-              {% for c in users if c.role == 'company' %}
-                <option value="{{ c.id }}">{{ c.name }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-sm btn-primary">Assign</button>
-          </form>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <!-- Tables Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <h4>قائمة البنوك</h4>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الهاتف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bank in banks %}
+                    <tr>
+                        <td>{{ bank.name }}</td>
+                        <td>{{ bank.email }}</td>
+                        <td>{{ bank.phone }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h4>قائمة شركات التثمين</h4>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الهاتف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr>
+                        <td>{{ company.name }}</td>
+                        <td>{{ company.email }}</td>
+                        <td>{{ company.phone }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Bank Modal -->
+<div class="modal fade" id="addBankModal" tabindex="-1" aria-labelledby="addBankModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_bank') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addBankModalLabel">إضافة بنك جديد</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="bankName" class="form-label">اسم البنك</label>
+            <input type="text" class="form-control" id="bankName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="bankEmail" class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="bankEmail" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="bankPhone" class="form-label">الهاتف</label>
+            <input type="text" class="form-control" id="bankPhone" name="phone">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">إضافة</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Company Modal -->
+<div class="modal fade" id="addCompanyModal" tabindex="-1" aria-labelledby="addCompanyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_company') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCompanyModalLabel">إضافة شركة تثمين جديدة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="companyName" class="form-label">اسم الشركة</label>
+            <input type="text" class="form-control" id="companyName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="companyEmail" class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="companyEmail" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="companyPhone" class="form-label">الهاتف</label>
+            <input type="text" class="form-control" id="companyPhone" name="phone">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">إضافة</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

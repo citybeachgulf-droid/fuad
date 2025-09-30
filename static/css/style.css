@@ -1,3 +1,21 @@
-/* Basic styles and placeholders */
-body { padding-bottom: 40px; }
-.table th, .table td { vertical-align: middle; }
+/* Hero section */
+.hero {
+  height: 70vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card hover animation */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}

@@ -1,0 +1,65 @@
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>منصة التقييم العقاري - سلطنة عمان</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+      <div class="container">
+        <a class="navbar-brand" href="#">منصة التقييم العقاري</a>
+<button class="btn btn-primary" onclick="window.location.href='/login'">تسجيل الدخول</button>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero text-center d-flex flex-column justify-content-center align-items-center">
+      <h1 class="display-4 animate__animated animate__fadeInDown">منصة التقييم العقاري في سلطنة عمان</h1>
+      <p class="lead animate__animated animate__fadeInUp mt-3">أحدث نسب الفائدة من البنوك العمانية</p>
+    </section>
+
+    <!-- Interest Rates Section -->
+    <section class="container my-5">
+      <h2 class="text-center mb-4">نسب الفائدة الحالية للبنوك</h2>
+      <div class="row justify-content-center gap-3">
+        <div class="col-md-3 col-sm-6">
+          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp">
+            <div class="card-body text-center">
+              <h5 class="card-title">Bank Muscat</h5>
+              <p class="card-text">5.25%</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp animate__delay-1s">
+            <div class="card-body text-center">
+              <h5 class="card-title">National Bank of Oman</h5>
+              <p class="card-text">5.00%</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="card shadow p-3 mb-3 animate__animated animate__fadeInUp animate__delay-2s">
+            <div class="card-body text-center">
+              <h5 class="card-title">HSBC Oman</h5>
+              <p class="card-text">4.75%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 bg-light">
+      &copy; 2025 Valuation Platform Oman. All rights reserved.
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
