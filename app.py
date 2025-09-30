@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for
+import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_required
 from models import db, User, ValuationRequest
@@ -9,12 +10,15 @@ from routes.admin_routes import admin_bp
 from routes.company_routes import company_bp
 from routes.bank_routes import bank_bp
 from routes.client_routes import client_bp
+from routes.main_routes import main
 from config import Config
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
+    # Ensure upload folder exists
+    os.makedirs(app.config.get('UPLOAD_FOLDER', ''), exist_ok=True)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -30,6 +34,7 @@ def create_app():
     app.register_blueprint(company_bp, url_prefix='/company')
     app.register_blueprint(bank_bp, url_prefix='/bank')
     app.register_blueprint(client_bp, url_prefix='/client')
+    app.register_blueprint(main)
 
     # الصفحة الرئيسية
     @app.route('/')
