@@ -1,7 +1,22 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, abort
+from models import User, CompanyProfile
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def landing():
     return render_template('landing.html')
+
+
+@main.route('/companies')
+def companies_list():
+    companies = User.query.filter_by(role='company').all()
+    return render_template('companies/list.html', companies=companies)
+
+
+@main.route('/companies/<int:company_id>')
+def company_detail(company_id: int):
+    company = User.query.filter_by(id=company_id, role='company').first()
+    if not company:
+        return abort(404)
+    return render_template('companies/detail.html', company=company)

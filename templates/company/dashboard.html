@@ -1,6 +1,12 @@
 {% extends 'layout.html' %}
 {% block content %}
 <h2>Company Dashboard</h2>
+<div class="mb-3">
+  <a class="btn btn-success" href="{{ url_for('company.edit_profile') }}">تعديل الملف التعريفي للشركة</a>
+  {% if profile and profile.logo_path %}
+    <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" style="height:40px;" class="ms-2">
+  {% endif %}
+</div>
 <p>Requests assigned to your company:</p>
 <table class="table">
   <thead><tr><th>ID</th><th>Title</th><th>Client</th><th>Status</th><th>Actions</th></tr></thead>
