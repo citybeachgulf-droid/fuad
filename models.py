@@ -28,12 +28,36 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
 # ================================
+# ملف تعريف شركة التثمين
+# ================================
+class CompanyProfile(db.Model):
+    __tablename__ = 'company_profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    logo_path = db.Column(db.String(255), nullable=True)
+    services = db.Column(db.Text, nullable=True)
+    limit_value = db.Column(db.Float, nullable=True)
+    about = db.Column(db.Text, nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # علاقة واحد لواحد مع المستخدم (الشركة)
+    user = db.relationship(
+        'User',
+        backref=db.backref('company_profile', uselist=False, cascade="all, delete")
+    )
+
+# ================================
 # نموذج طلب التثمين
 # ================================
 class ValuationRequest(db.Model):
     __tablename__ = 'valuation_requests'
 
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=True)
+    description = db.Column(db.Text, nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     bank_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
