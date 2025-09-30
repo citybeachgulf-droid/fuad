@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import db, User
 from flask_login import login_required, current_user
 
-admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
+admin_bp = Blueprint('admin', __name__, template_folder='../templates/admin', static_folder='../static')
 
 # Dashboard (محمي ويعرض البنوك والشركات)
 @admin_bp.route('/dashboard')
