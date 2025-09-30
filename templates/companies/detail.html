@@ -26,17 +26,31 @@
 
     <div class="mb-3">
       <h4 class="h6">البنوك المعتمدة لدى الشركة</h4>
-      {% if company.company_profile and company.company_profile.approved_banks %}
-      <ul class="list-group">
-        {% for ab in company.company_profile.approved_banks %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span>{{ ab.bank_user.name }}{% if ab.bank_user.phone %} — {{ ab.bank_user.phone }}{% endif %}</span>
-          <span class="badge bg-secondary">{% if ab.limit_value %}{{ ab.limit_value }} OMR{% else %}-{% endif %}</span>
-        </li>
-        {% endfor %}
-      </ul>
+      {% set profile = company.company_profile %}
+      {% if profile %}
+        {% if profile.approved_banks and profile.approved_banks|length > 0 %}
+          <ul class="list-group">
+            {% for ab in profile.approved_banks %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ ab.bank_user.name }}{% if ab.bank_user.phone %} — {{ ab.bank_user.phone }}{% endif %}</span>
+              <span class="badge bg-secondary">{% if ab.limit_value %}{{ ab.limit_value }} OMR{% else %}-{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        {% elif profile.manual_banks and profile.manual_banks|length > 0 %}
+          <ul class="list-group">
+            {% for mb in profile.manual_banks %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ mb.name }}{% if mb.phone %} — {{ mb.phone }}{% elif mb.email %} — {{ mb.email }}{% endif %}</span>
+              <span class="badge bg-secondary">{% if mb.limit_value %}{{ mb.limit_value }} OMR{% else %}-{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>-</p>
+        {% endif %}
       {% else %}
-      <p>-</p>
+        <p>-</p>
       {% endif %}
     </div>
 
