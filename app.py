@@ -36,6 +36,11 @@ def create_app():
     def index():
         return render_template('landing.html')
 
+    @app.route('/companies')
+    def companies_public():
+        companies = User.query.filter_by(role='company').all()
+        return render_template('companies.html', companies=companies)
+
     # إعادة توجيه حسب الدور بعد تسجيل الدخول
     @app.route('/dashboard')
     @login_required
