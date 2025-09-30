@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User
+from models import db, User, InviteToken
 from flask_login import login_required, current_user
+from urllib.parse import urljoin
+from flask import current_app
 
 admin_bp = Blueprint('admin', __name__, template_folder='../templates/admin', static_folder='../static')
 
@@ -36,10 +38,13 @@ def add_bank():
     name = request.form['name']
     email = request.form['email']
     phone = request.form.get('phone')
-    new_bank = User(name=name, email=email, phone=phone, role='bank')
-    db.session.add(new_bank)
-    db.session.commit()
-    flash('تم إضافة البنك بنجاح', 'success')
+    # إنشاء دعوة
+    invite = InviteToken.generate(email=email, role='bank', invited_by_id=current_user.id, name=name, phone=phone)
+    # إنشاء رابط التسجيل
+    base_url = (f"http://{current_app.config['SERVER_NAME']}/" if current_app.config.get('SERVER_NAME') else request.host_url)
+    invite_url = urljoin(base_url, url_for('auth.register', token=invite.token))
+
+    flash(f'تم إنشاء دعوة للبنك. رابط التسجيل: {invite_url}', 'success')
     return redirect(url_for('admin.dashboard'))
 
 # --- إضافة شركة تثمين ---
@@ -51,10 +56,13 @@ def add_company():
     name = request.form['name']
     email = request.form['email']
     phone = request.form.get('phone')
-    new_company = User(name=name, email=email, phone=phone, role='company')
-    db.session.add(new_company)
-    db.session.commit()
-    flash('تم إضافة الشركة بنجاح', 'success')
+    # إنشاء دعوة
+    invite = InviteToken.generate(email=email, role='company', invited_by_id=current_user.id, name=name, phone=phone)
+    # إنشاء رابط التسجيل
+    base_url = (f"http://{current_app.config['SERVER_NAME']}/" if current_app.config.get('SERVER_NAME') else request.host_url)
+    invite_url = urljoin(base_url, url_for('auth.register', token=invite.token))
+
+    flash(f'تم إنشاء دعوة للشركة. رابط التسجيل: {invite_url}', 'success')
     return redirect(url_for('admin.dashboard'))
 
 # --- صفحة عرض البنوك ---
