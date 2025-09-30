@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, abort
-from models import User, CompanyProfile
+from models import User, CompanyProfile, News
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def landing():
-    return render_template('landing.html')
+    latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
+    return render_template('landing.html', latest_news=latest_news)
 
 
 @main.route('/companies')
