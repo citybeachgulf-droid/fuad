@@ -80,35 +80,33 @@
     <section id="news" class="bg-light py-5">
         <div class="container">
             <h2 class="text-center mb-5">أحدث الأخبار</h2>
+            {% if latest_news and latest_news|length > 0 %}
             <div class="row g-4">
-                <div class="col-md-4" data-aos="fade-up">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/news1.jpg') }}" class="card-img-top" alt="خبر 1">
-                        <div class="card-body">
-                            <h5 class="card-title">عنوان الخبر الأول</h5>
-                            <p class="card-text">ملخص الخبر الأول مع بعض التفاصيل المهمة.</p>
+                {% for item in latest_news %}
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                    <div class="card h-100">
+                        {% if item.image_path %}
+                        <img src="{{ url_for('static', filename=item.image_path) }}" class="card-img-top" alt="خبر" />
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            {% if item.body %}
+                            <p class="card-text text-muted small text-truncate">{{ item.body }}</p>
+                            {% endif %}
+                            <div class="mt-auto">
+                                <a href="#" class="stretched-link">اقرأ المزيد</a>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted small">
+                            {{ item.created_at.strftime('%Y-%m-%d') if item.created_at else '' }}
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/news2.jpg') }}" class="card-img-top" alt="خبر 2">
-                        <div class="card-body">
-                            <h5 class="card-title">عنوان الخبر الثاني</h5>
-                            <p class="card-text">ملخص الخبر الثاني مع لمحة عن المحتوى.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/news3.jpg') }}" class="card-img-top" alt="خبر 3">
-                        <div class="card-body">
-                            <h5 class="card-title">عنوان الخبر الثالث</h5>
-                            <p class="card-text">ملخص الخبر الثالث يعطي فكرة سريعة عن الموضوع.</p>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="alert alert-info text-center">لا توجد أخبار بعد.</div>
+            {% endif %}
         </div>
     </section>
 
