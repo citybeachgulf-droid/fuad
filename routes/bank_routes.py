@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankOffer
+from models import db, User, ValuationRequest, BankProfile, BankOffer, BankLoanPolicy
+from utils import calculate_max_loan
 
 # تعريف Blueprint للبنك
 bank_bp = Blueprint('bank', __name__, template_folder='templates/bank')
@@ -29,7 +30,10 @@ def dashboard():
     # جلب عروض البنك
     offers = bank_profile.offers if bank_profile else []
 
-    return render_template('bank/dashboard.html', requests=requests, offers=offers)
+    # جلب سياسات القروض الحالية
+    policies = BankLoanPolicy.query.filter_by(bank_profile_id=bank_profile.id).all()
+
+    return render_template('bank/dashboard.html', requests=requests, offers=offers, policies=policies)
 
 # --- تحديث حالة الطلب ---
 @bank_bp.route('/update_request/<int:request_id>', methods=['POST'])
@@ -47,6 +51,88 @@ def update_request(request_id):
     db.session.commit()
     flash('تم تحديث حالة الطلب', 'success')
     return redirect(url_for('bank.dashboard'))
+
+
+# --- إدارة سياسات القروض للبنك ---
+@bank_bp.route('/policies', methods=['GET'])
+@login_required
+def list_policies():
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+    bank_profile = current_user.bank_profile
+    if not bank_profile:
+        return jsonify([])
+    items = BankLoanPolicy.query.filter_by(bank_profile_id=bank_profile.id).all()
+    return jsonify([
+        {
+            'id': p.id,
+            'loan_type': p.loan_type,
+            'max_ratio': p.max_ratio,
+            'default_annual_rate': p.default_annual_rate,
+            'default_years': p.default_years,
+        } for p in items
+    ])
+
+
+@bank_bp.route('/policies/upsert', methods=['POST'])
+@login_required
+def upsert_policy():
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+    bank_profile = current_user.bank_profile
+    if bank_profile is None:
+        bank_profile = BankProfile(
+            user_id=current_user.id,
+            slug=f"bank-{current_user.id}"
+        )
+        db.session.add(bank_profile)
+        db.session.commit()
+
+    loan_type = request.form.get('loan_type', 'housing').strip() or 'housing'
+    try:
+        max_ratio = float(request.form.get('max_ratio'))
+    except Exception:
+        max_ratio = 0.4
+    default_annual_rate = request.form.get('default_annual_rate')
+    default_years = request.form.get('default_years')
+    default_annual_rate = float(default_annual_rate) if default_annual_rate not in (None, '',) else None
+    default_years = int(default_years) if default_years not in (None, '',) else None
+
+    policy = BankLoanPolicy.query.filter_by(bank_profile_id=bank_profile.id, loan_type=loan_type).first()
+    if not policy:
+        policy = BankLoanPolicy(
+            bank_profile_id=bank_profile.id,
+            loan_type=loan_type,
+            max_ratio=max_ratio,
+            default_annual_rate=default_annual_rate,
+            default_years=default_years,
+        )
+        db.session.add(policy)
+    else:
+        policy.max_ratio = max_ratio
+        policy.default_annual_rate = default_annual_rate
+        policy.default_years = default_years
+
+    db.session.commit()
+    flash('تم حفظ سياسة القرض', 'success')
+    return redirect(url_for('bank.dashboard'))
+
+
+# --- API لحساب أقصى قرض ممكن للعرض للعميل ---
+@bank_bp.route('/compute_max_loan', methods=['POST'])
+@login_required
+def compute_max_loan_api():
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+    income = float(request.form.get('income', '0') or 0)
+    annual_rate = float(request.form.get('annual_rate', '0') or 0)
+    years = int(request.form.get('years', '0') or 0)
+    max_ratio = float(request.form.get('max_ratio', '0') or 0)
+    P, max_payment = calculate_max_loan(income, annual_rate, years, max_ratio)
+    return jsonify({
+        'max_principal': P,
+        'max_monthly_payment': max_payment
+    })
 
 
 # --- إضافة عرض تمويلي للبنك ---

@@ -2,7 +2,10 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>لوحة العميل</h2>
-  <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="#max-loan-card">حاسبة أقصى قرض ممكن</a>
+    <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
+  </div>
 </div>
 
 <table class="table mt-3">
@@ -25,5 +28,88 @@
     {% endfor %}
   </tbody>
 </table>
+
+<div id="max-loan-card" class="card mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>حاسبة أقصى قرض ممكن</strong>
+    <small class="text-muted">القيم تعتمد على سياسات البنك المختارة</small>
+  </div>
+  <div class="card-body">
+    <form class="row g-3 align-items-end" onsubmit="return false;">
+      <div class="col-12 col-md-3">
+        <label class="form-label">اختر البنك</label>
+        <select id="bankSelect" class="form-select" required>
+          <option value="">— اختر —</option>
+          {% for b in banks or [] %}
+            <option value="{{ b.slug }}">{{ b.user.name if b.user else ('Bank #' ~ b.id) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">نوع القرض</label>
+        <select id="loanType" class="form-select">
+          <option value="housing">سكني</option>
+          <option value="personal">شخصي</option>
+          <option value="auto">سيارات</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">الدخل الشهري</label>
+        <input id="income" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 800" required>
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label">المدة</label>
+        <input id="years" type="number" min="1" step="1" class="form-control" placeholder="سنوات">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label">% الفائدة السنوية</label>
+        <input id="annualRate" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 6">
+      </div>
+    </form>
+
+    <div class="row g-3 mt-2">
+      <div class="col-12 col-md-4">
+        <div class="border rounded p-3 text-center h-100">
+          <div class="text-muted">القسط الشهري المسموح</div>
+          <div id="maxMonthly" class="fs-5 fw-bold">—</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="border rounded p-3 text-center h-100">
+          <div class="text-muted">أقصى مبلغ قرض</div>
+          <div id="maxPrincipal" class="fs-5 fw-bold">—</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="border rounded p-3 text-center h-100">
+          <div class="text-muted">سياسة البنك</div>
+          <div id="policyInfo" class="small">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <details>
+        <summary>طريقة الحساب (لزيادة الشفافية)</summary>
+        <div class="mt-2 small">
+          <div>نفترض أن البنك حدد نسبة تحمل قصوى لا يمكن تعديلها من قبل العميل.</div>
+          <div>نحسب:</div>
+          <ul class="mb-1">
+            <li>r = (%الفائدة السنوية ÷ 100) ÷ 12</li>
+            <li>n = (السنوات × 12)</li>
+            <li>القسط المسموح = الدخل الشهري × نسبة التحمل</li>
+            <li>P = القسط المسموح × ((1 + r)^n − 1) ÷ (r × (1 + r)^n)</li>
+          </ul>
+          <div id="formulaUsed" class="text-muted"></div>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/client_max_loan.js') }}"></script>
+{% endblock %}
 {% endblock %}
 
