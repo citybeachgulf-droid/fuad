@@ -22,4 +22,232 @@
     {% endfor %}
   </tbody>
 </table>
+
+<hr>
+
+<div class="row g-4">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header">
+        <strong>العروض التمويلية الحالية</strong>
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>المنتج</th>
+              <th>نوع السعر</th>
+              <th>% الفائدة السنوية</th>
+              <th>APR</th>
+              <th>الحد الأدنى/الأعلى</th>
+              <th>المدة (أشهر)</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if offers and offers|length > 0 %}
+              {% for o in offers %}
+              <tr>
+                <td>{{ o.product_name }}</td>
+                <td>{{ o.rate_type or '-' }}</td>
+                <td>{{ '%.2f' % o.interest_rate }}</td>
+                <td>{{ (('%.2f' % o.apr) if o.apr is not none else '-') }}</td>
+                <td>
+                  {{ (('%.0f' % o.min_amount) if o.min_amount is not none else '-') }} /
+                  {{ (('%.0f' % o.max_amount) if o.max_amount is not none else '-') }}
+                </td>
+                <td>
+                  {{ (o.min_tenure_months or '-') }} /
+                  {{ (o.max_tenure_months or '-') }}
+                </td>
+                <td>{{ o.notes or '-' }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center py-3">لا توجد عروض بعد</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><strong>إضافة عرض تمويلي</strong></div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('bank.add_offer') }}">
+          <div class="mb-3">
+            <label class="form-label">اسم المنتج</label>
+            <input type="text" name="product_name" class="form-control" placeholder="مثال: قرض سكني" required>
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">نوع السعر</label>
+              <select class="form-select" name="rate_type">
+                <option value="">—</option>
+                <option value="ثابت">ثابت</option>
+                <option value="متغير">متغير</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">% الفائدة السنوية</label>
+              <input type="number" step="0.01" min="0" name="interest_rate" class="form-control" placeholder="مثال: 6" required>
+            </div>
+          </div>
+          <div class="row g-3 mt-0">
+            <div class="col-6">
+              <label class="form-label">APR</label>
+              <input type="number" step="0.01" min="0" name="apr" class="form-control" placeholder="اختياري">
+            </div>
+            <div class="col-6">
+              <label class="form-label">الحد الأدنى للمبلغ</label>
+              <input type="number" step="0.01" min="0" name="min_amount" class="form-control" placeholder="اختياري">
+            </div>
+          </div>
+          <div class="row g-3 mt-0">
+            <div class="col-6">
+              <label class="form-label">الحد الأقصى للمبلغ</label>
+              <input type="number" step="0.01" min="0" name="max_amount" class="form-control" placeholder="اختياري">
+            </div>
+            <div class="col-6">
+              <label class="form-label">المدة الدنيا (أشهر)</label>
+              <input type="number" min="0" name="min_tenure_months" class="form-control" placeholder="اختياري">
+            </div>
+          </div>
+          <div class="row g-3 mt-0">
+            <div class="col-6">
+              <label class="form-label">المدة القصوى (أشهر)</label>
+              <input type="number" min="0" name="max_tenure_months" class="form-control" placeholder="اختياري">
+            </div>
+            <div class="col-6">
+              <label class="form-label">ملاحظات</label>
+              <input type="text" name="notes" class="form-control" placeholder="اختياري">
+            </div>
+          </div>
+          <div class="mt-3 d-flex justify-content-end">
+            <button class="btn btn-primary" type="submit">حفظ العرض</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="card mt-3">
+  <div class="card-header"><strong>حاسبة القروض</strong></div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">اختر عرضًا (اختياري)</label>
+        <select id="calc_offer" class="form-select">
+          <option value="">—</option>
+          {% for o in offers or [] %}
+            <option value="{{ o.id }}" data-rate="{{ o.interest_rate }}" data-minm="{{ o.min_tenure_months or '' }}" data-maxm="{{ o.max_tenure_months or '' }}">{{ o.product_name }} — {{ '%.2f' % o.interest_rate }}%</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">المبلغ (Principal)</label>
+        <input id="calc_amount" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 100000">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">المدة (شهر)</label>
+        <input id="calc_months" type="number" min="1" step="1" class="form-control" placeholder="مثال: 60">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">% الفائدة السنوية</label>
+        <input id="calc_rate" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 6">
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-3">
+        <div class="border rounded p-3 text-center">
+          <div class="text-muted">القسط الشهري</div>
+          <div id="calc_monthly" class="fs-5 fw-bold">—</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="border rounded p-3 text-center">
+          <div class="text-muted">إجمالي المدفوعات</div>
+          <div id="calc_total" class="fs-5 fw-bold">—</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="border rounded p-3 text-center">
+          <div class="text-muted">إجمالي الفائدة</div>
+          <div id="calc_interest" class="fs-5 fw-bold">—</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        const offerSelect = document.getElementById('calc_offer');
+        const amountInput = document.getElementById('calc_amount');
+        const monthsInput = document.getElementById('calc_months');
+        const rateInput = document.getElementById('calc_rate');
+        const monthlyEl = document.getElementById('calc_monthly');
+        const totalEl = document.getElementById('calc_total');
+        const interestEl = document.getElementById('calc_interest');
+
+        function formatCurrency(value) {
+          if (!isFinite(value)) return '—';
+          try {
+            return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(value);
+          } catch (e) {
+            return value.toFixed(2);
+          }
+        }
+
+        function compute() {
+          const P = parseFloat(amountInput.value);
+          const n = parseInt(monthsInput.value, 10);
+          const annual = parseFloat(rateInput.value);
+          if (!(P > 0) || !(n > 0) || !(annual >= 0)) {
+            monthlyEl.textContent = '—';
+            totalEl.textContent = '—';
+            interestEl.textContent = '—';
+            return;
+          }
+          const r = (annual / 100) / 12; // معدل شهري
+          let M;
+          if (r === 0) {
+            M = P / n;
+          } else {
+            M = P * r / (1 - Math.pow(1 + r, -n));
+          }
+          const total = M * n;
+          const interest = total - P;
+          monthlyEl.textContent = formatCurrency(M);
+          totalEl.textContent = formatCurrency(total);
+          interestEl.textContent = formatCurrency(interest);
+        }
+
+        offerSelect && offerSelect.addEventListener('change', function() {
+          const opt = offerSelect.selectedOptions[0];
+          if (!opt) return;
+          const rate = opt.getAttribute('data-rate');
+          const minm = opt.getAttribute('data-minm');
+          const maxm = opt.getAttribute('data-maxm');
+          if (rate) rateInput.value = rate;
+          if (minm && !monthsInput.value) monthsInput.value = minm;
+          if (maxm && monthsInput.value && parseInt(monthsInput.value, 10) > parseInt(maxm, 10)) {
+            monthsInput.value = maxm;
+          }
+          compute();
+        });
+
+        [amountInput, monthsInput, rateInput].forEach(function(el) {
+          el && el.addEventListener('input', compute);
+          el && el.addEventListener('change', compute);
+        });
+      })();
+    </script>
+  </div>
+</div>
 {% endblock %}
