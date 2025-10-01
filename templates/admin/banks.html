@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout_admin.html" %}
 {% block title %}البنوك المسجلة{% endblock %}
 
 {% block content %}
@@ -28,7 +28,7 @@
                         <td>{{ bank.email }}</td>
                         <td>{{ bank.phone or '-' }}</td>
                         <td>
-                            <button class="btn btn-sm btn-warning">تعديل</button>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editBankModal" data-bank-id="{{ bank.id }}" data-bank-name="{{ bank.name }}" data-bank-email="{{ bank.email }}" data-bank-phone="{{ bank.phone or '' }}">تعديل</button>
                             <button class="btn btn-sm btn-danger">حذف</button>
                         </td>
                     </tr>
@@ -69,6 +69,61 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal لتعديل بيانات بنك -->
+    <div class="modal fade" id="editBankModal" tabindex="-1" aria-labelledby="editBankModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="editBankForm" method="POST">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editBankModalLabel">تعديل بيانات البنك</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="edit_name" class="form-label">اسم البنك</label>
+                    <input type="text" class="form-control" id="edit_name" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit_email" class="form-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-control" id="edit_email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit_phone" class="form-label">الهاتف</label>
+                    <input type="text" class="form-control" id="edit_phone" name="phone">
+                </div>
+                <div class="mb-3">
+                    <label for="edit_password" class="form-label">كلمة المرور الجديدة (اختياري)</label>
+                    <input type="password" class="form-control" id="edit_password" name="password" placeholder="اتركها فارغة لعدم التغيير">
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const editBankModal = document.getElementById('editBankModal');
+      editBankModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const bankId = button.getAttribute('data-bank-id');
+        const name = button.getAttribute('data-bank-name');
+        const email = button.getAttribute('data-bank-email');
+        const phone = button.getAttribute('data-bank-phone') || '';
+
+        document.getElementById('edit_name').value = name || '';
+        document.getElementById('edit_email').value = email || '';
+        document.getElementById('edit_phone').value = phone || '';
+        document.getElementById('edit_password').value = '';
+
+        const form = document.getElementById('editBankForm');
+        form.action = `${"{{ url_for('admin.update_bank', bank_id=0) }}".replace('/0/', '/' + bankId + '/')}`;
+      });
+    </script>
 
 </div>
 {% endblock %}
