@@ -219,3 +219,20 @@ class News(db.Model):
     body = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String(255), nullable=True)  # مسار الصورة داخل static
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ================================
+# سياسات القروض للبنك
+# ================================
+class BankLoanPolicy(db.Model):
+    __tablename__ = 'bank_loan_policies'
+
+    id = db.Column(db.Integer, primary_key=True)
+    bank_profile_id = db.Column(db.Integer, db.ForeignKey('bank_profiles.id'), nullable=False, index=True)
+    loan_type = db.Column(db.String(100), nullable=False)  # مثال: housing, personal, auto
+    max_ratio = db.Column(db.Float, nullable=False)  # مثل 0.3 أو 0.4
+    default_annual_rate = db.Column(db.Float, nullable=True)  # % سنوي
+    default_years = db.Column(db.Integer, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    bank_profile = db.relationship('BankProfile', backref=db.backref('loan_policies', cascade='all, delete-orphan'))
