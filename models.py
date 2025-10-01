@@ -236,3 +236,17 @@ class BankLoanPolicy(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     bank_profile = db.relationship('BankProfile', backref=db.backref('loan_policies', cascade='all, delete-orphan'))
+
+
+# ================================
+# تجارب العملاء (Testimonials)
+# ================================
+class Testimonial(db.Model):
+    __tablename__ = 'testimonials'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    property_type = db.Column(db.String(50), nullable=True)  # سكني/تجاري/أرض
+    rating = db.Column(db.Integer, nullable=True)  # 1..5
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
