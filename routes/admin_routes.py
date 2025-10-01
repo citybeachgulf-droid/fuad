@@ -183,3 +183,41 @@ def news_new():
         return redirect(url_for('admin.news_list'))
 
     return render_template('news_form.html')
+
+
+# --- تحديث بيانات بنك (المدير فقط) ---
+@admin_bp.route('/banks/<int:bank_id>/update', methods=['POST'])
+@login_required
+def update_bank(bank_id: int):
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+
+    bank_user = User.query.filter_by(id=bank_id, role='bank').first_or_404()
+
+    name = (request.form.get('name') or '').strip()
+    email = (request.form.get('email') or '').strip()
+    phone = (request.form.get('phone') or '').strip()
+    password = request.form.get('password') or ''
+
+    # التحقق من البريد الإلكتروني الفريد إذا تم تغييره
+    if email and email != bank_user.email:
+        if User.query.filter_by(email=email).first():
+            flash('البريد الإلكتروني مستخدم من قبل.', 'danger')
+            return redirect(url_for('admin.banks'))
+
+    if name:
+        bank_user.name = name
+    if email:
+        bank_user.email = email
+    if phone:
+        bank_user.phone = phone
+    else:
+        # السماح بتفريغ الهاتف
+        bank_user.phone = None
+
+    if password:
+        bank_user.set_password(password)
+
+    db.session.commit()
+    flash('تم تحديث بيانات البنك بنجاح', 'success')
+    return redirect(url_for('admin.banks'))
