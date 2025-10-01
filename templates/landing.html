@@ -34,7 +34,6 @@
                     <li class="nav-item"><a class="nav-link" href="#contact">تواصل</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.banks_list') }}">البنوك</a></li>
                     <li class="nav-item"><a class="btn btn-warning ms-lg-2" href="{{ url_for('main.companies_list') }}">طلب تثمين عقاري</a></li>
-                    <li class="nav-item"><a class="btn btn-success ms-lg-2" href="{{ url_for('main.calculator') }}">احسب قرضك</a></li>
                     <li class="nav-item"><a class="btn btn-primary ms-lg-2" href="{{ url_for('auth.login') }}">تسجيل الدخول</a></li>
                 </ul>
             </div>
@@ -50,7 +49,8 @@
             <p class="lead animate__animated animate__fadeInUp animate__delay-1s">استفد من خبرة المثمنين المحترفين في عمان وابدأ رحلتك بثقة</p>
             <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
                 <button class="btn btn-light btn-lg me-3" onclick="window.location.href='/login'">تسجيل الدخول</button>
-                <a href="/companies" class="btn btn-warning btn-lg">طلب تثمين عقاري</a>
+                <a href="/companies" class="btn btn-warning btn-lg me-3">طلب تثمين عقاري</a>
+                <a href="{{ url_for('main.calculator') }}" class="btn btn-success btn-lg">احسب قرضك</a>
             </div>
         </div>
     </section>
