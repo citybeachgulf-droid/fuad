@@ -6,15 +6,17 @@
 <section class="py-5">
     <div class="container">
         <div class="row g-4">
+
+            <!-- بطاقة البنك -->
             <div class="col-lg-4">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm border-0 animate__animated animate__fadeInLeft">
                     {% if bank.logo_path %}
                     <img src="{{ url_for('static', filename=bank.logo_path) }}" class="card-img-top p-3" alt="{{ bank.user.name }}">
                     {% endif %}
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h1 class="h4">{{ bank.user.name }}</h1>
                         {% if bank.website %}
-                        <p class="mb-1"><a href="{{ bank.website }}" target="_blank">الموقع الرسمي</a></p>
+                        <p class="mb-1"><a href="{{ bank.website }}" target="_blank" class="text-decoration-none"><i class="bi bi-globe"></i> الموقع الرسمي</a></p>
                         {% endif %}
                         {% if bank.about %}
                         <p class="text-muted mb-0">{{ bank.about }}</p>
@@ -23,14 +25,17 @@
                 </div>
             </div>
 
+            <!-- البطاقة الرئيسية: العروض وحاسبة القروض -->
             <div class="col-lg-8">
-                <div class="card shadow-sm mb-4">
+
+                <!-- عروض التمويل -->
+                <div class="card shadow-sm mb-4 animate__animated animate__fadeInUp">
                     <div class="card-body">
-                        <h2 class="h5 mb-3">عروض التمويل</h2>
+                        <h2 class="h5 mb-3"><i class="bi bi-cash-stack"></i> عروض التمويل</h2>
                         {% if offers and offers|length > 0 %}
                         <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
+                            <table class="table align-middle table-hover">
+                                <thead class="table-light">
                                     <tr>
                                         <th>المنتج</th>
                                         <th>نوع السعر</th>
@@ -41,91 +46,118 @@
                                 </thead>
                                 <tbody>
                                     {% for o in offers %}
-                                    <tr>
+                                    <tr class="align-middle">
                                         <td>{{ o.product_name }}</td>
                                         <td>{{ o.rate_type or '-' }}</td>
                                         <td>{{ '%.2f'|format(o.interest_rate) }}</td>
-                                        <td>
-                                            {{ o.min_tenure_months or '-' }} - {{ o.max_tenure_months or '-' }}
-                                        </td>
-                                        <td>
-                                            {{ (o.min_amount or 0)|int }} - {{ (o.max_amount or 0)|int }} ر.ع
-                                        </td>
+                                        <td>{{ o.min_tenure_months or '-' }} - {{ o.max_tenure_months or '-' }}</td>
+                                        <td>{{ (o.min_amount or 0)|int }} - {{ (o.max_amount or 0)|int }} ر.ع</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                         {% else %}
-                        <div class="alert alert-info mb-0">لا توجد عروض متاحة حاليًا.</div>
+                        <div class="alert alert-info mb-0"><i class="bi bi-info-circle"></i> لا توجد عروض متاحة حاليًا.</div>
                         {% endif %}
                     </div>
                 </div>
 
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="h5 mb-3">حاسبة القروض</h2>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">اختر عرضًا (اختياري)</label>
-                                <select id="offerSelect" class="form-select">
-                                    <option value="">— بدون اختيار —</option>
-                                    {% for o in offers %}
-                                    <option value="{{ o.interest_rate }}" data-min-months="{{ o.min_tenure_months or '' }}" data-max-months="{{ o.max_tenure_months or '' }}" data-min-amount="{{ o.min_amount or '' }}" data-max-amount="{{ o.max_amount or '' }}">{{ o.product_name }} — {{ '%.2f'|format(o.interest_rate) }}%</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="interestRate" class="form-label">النسبة السنوية %</label>
-                                <input id="interestRate" type="number" step="0.01" class="form-control" placeholder="مثال: 5.75">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="loanAmount" class="form-label">مبلغ القرض (ر.ع)</label>
-                                <input id="loanAmount" type="number" step="0.01" class="form-control" placeholder="مثال: 50000">
-                                <div class="form-text" id="amountHint"></div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="tenureMonths" class="form-label">المدة (بالأشهر)</label>
-                                <input id="tenureMonths" type="number" class="form-control" placeholder="مثال: 240">
-                                <div class="form-text" id="tenureHint"></div>
-                            </div>
-                            <div class="col-12">
-                                <button id="calcBtn" class="btn btn-primary">احسب القسط الشهري</button>
-                            </div>
-                        </div>
+                <!-- حاسبة القروض -->
+               <!-- حاسبة القروض المعدلة -->
+<div class="card shadow-sm animate__animated animate__fadeInUp animate__delay-1s">
+    <div class="card-body">
+        <h2 class="h5 mb-4 text-primary"><i class="bi bi-calculator"></i> حاسبة القروض</h2>
+        <div class="row g-3">
 
-                        <hr class="my-4">
+            <!-- اختيار العرض -->
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">اختر عرضًا (اختياري)</label>
+                <select id="offerSelect" class="form-select border-primary">
+                    <option value="">— بدون اختيار —</option>
+                    {% for o in offers %}
+                    <option value="{{ o.interest_rate }}" data-min-months="{{ o.min_tenure_months or '' }}" data-max-months="{{ o.max_tenure_months or '' }}" data-min-amount="{{ o.min_amount or '' }}" data-max-amount="{{ o.max_amount or '' }}">{{ o.product_name }} — {{ '%.2f'|format(o.interest_rate) }}%</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <div class="border rounded p-3">
-                                    <div class="text-muted">القسط الشهري</div>
-                                    <div id="monthlyPayment" class="fs-4 fw-bold">—</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="border rounded p-3">
-                                    <div class="text-muted">إجمالي الفائدة</div>
-                                    <div id="totalInterest" class="fs-5 fw-bold">—</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="border rounded p-3">
-                                    <div class="text-muted">إجمالي التكلفة</div>
-                                    <div id="totalCost" class="fs-5 fw-bold">—</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="small text-muted mt-2">تنبيه: النتائج تقديرية للاطلاع فقط ولا تُعد عرضًا تمويليًا.</div>
-                    </div>
+            <!-- النسبة السنوية -->
+            <div class="col-md-6">
+                <label for="interestRate" class="form-label fw-semibold">النسبة السنوية %</label>
+                <input id="interestRate" type="number" step="0.01" class="form-control border-primary" placeholder="مثال: 5.75">
+            </div>
+
+            <!-- مبلغ القرض -->
+            <div class="col-md-6">
+                <label for="loanAmount" class="form-label fw-semibold">مبلغ القرض (ر.ع)</label>
+                <input id="loanAmount" type="number" step="0.01" class="form-control border-primary" placeholder="مثال: 50000">
+                <div class="form-text text-muted" id="amountHint">الحدود: سيتم التحديث عند اختيار عرض التمويل.</div>
+            </div>
+
+            <!-- المدة -->
+            <div class="col-md-6">
+                <label for="tenureMonths" class="form-label fw-semibold">المدة (بالأشهر)</label>
+                <input id="tenureMonths" type="number" class="form-control border-primary" placeholder="مثال: 240">
+                <div class="form-text text-muted" id="tenureHint">الحدود: سيتم التحديث عند اختيار عرض التمويل.</div>
+            </div>
+
+            <!-- زر الحساب -->
+            <div class="col-12 text-center mt-3">
+                <button id="calcBtn" class="btn btn-gradient btn-lg shadow-sm px-5 text-white" 
+                        style="background: linear-gradient(90deg, #4e73df, #1cc88a); transition: transform 0.2s;">
+                    احسب القسط الشهري
+                </button>
+            </div>
+
+        </div>
+
+        <hr class="my-4">
+
+        <!-- نتائج الحاسبة -->
+        <div class="row text-center g-3">
+            <div class="col-md-4">
+                <div class="p-4 rounded shadow-sm bg-gradient-light animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="text-muted mb-1">القسط الشهري</div>
+                    <div id="monthlyPayment" class="fs-4 fw-bold text-primary">—</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded shadow-sm bg-gradient-light animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="text-muted mb-1">إجمالي الفائدة</div>
+                    <div id="totalInterest" class="fs-5 fw-bold text-success">—</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded shadow-sm bg-gradient-light animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="text-muted mb-1">إجمالي التكلفة</div>
+                    <div id="totalCost" class="fs-5 fw-bold text-danger">—</div>
                 </div>
             </div>
         </div>
+
+        <div class="small text-muted mt-3">تنبيه: النتائج تقديرية للاطلاع فقط ولا تُعد عرضًا تمويليًا.</div>
     </div>
- </section>
+</div>
+
+<!-- CSS إضافي داخل الصفحة -->
+<style>
+    .bg-gradient-light {
+        background: linear-gradient(135deg, #f8f9fc, #e9ecef);
+    }
+    #calcBtn:hover {
+        transform: scale(1.05);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+</style>
+
+</section>
 {% endblock %}
 
 {% block scripts %}
+<!-- Animate.css CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <script src="{{ url_for('static', filename='js/loan_calculator.js') }}"></script>
 {% endblock %}
-
