@@ -71,7 +71,7 @@
                                 <select id="offerSelect" class="form-select">
                                     <option value="">— بدون اختيار —</option>
                                     {% for o in offers %}
-                                    <option value="{{ o.interest_rate }}" data-min-months="{{ o.min_tenure_months or '' }}" data-max-months="{{ o.max_tenure_months or '' }}">{{ o.product_name }} — {{ '%.2f'|format(o.interest_rate) }}%</option>
+                                    <option value="{{ o.interest_rate }}" data-min-months="{{ o.min_tenure_months or '' }}" data-max-months="{{ o.max_tenure_months or '' }}" data-min-amount="{{ o.min_amount or '' }}" data-max-amount="{{ o.max_amount or '' }}">{{ o.product_name }} — {{ '%.2f'|format(o.interest_rate) }}%</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -82,6 +82,7 @@
                             <div class="col-md-6">
                                 <label for="loanAmount" class="form-label">مبلغ القرض (ر.ع)</label>
                                 <input id="loanAmount" type="number" step="0.01" class="form-control" placeholder="مثال: 50000">
+                                <div class="form-text" id="amountHint"></div>
                             </div>
                             <div class="col-md-6">
                                 <label for="tenureMonths" class="form-label">المدة (بالأشهر)</label>
