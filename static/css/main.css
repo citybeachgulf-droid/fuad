@@ -61,3 +61,25 @@ body {
 .slide-up { animation: slideUp .6s ease both; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: translateY(0);} }
 
+/* Responsive: mobile-first tweaks */
+@media (max-width: 576px) {
+  /* Hero heading and lead */
+  #hero h1 { font-size: 2rem; line-height: 1.2; }
+  #hero p.lead { font-size: 1rem; }
+
+  /* Stack hero buttons */
+  #hero .mt-4 { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+  #hero .btn-lg { width: 100%; }
+
+  /* Reduce vertical spacing in sections */
+  section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+  /* Larger tap targets in collapsed navbar */
+  .navbar .nav-link, .navbar .btn { padding: .75rem 1rem; }
+}
+
+@media (max-width: 768px) {
+  /* Clamp news text lines for better readability */
+  #news .card .card-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+}
+
