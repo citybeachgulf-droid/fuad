@@ -32,6 +32,26 @@
     }
   }
 
+  function updateAmountHint(min, max) {
+    var hint = byId('amountHint');
+    if (!hint) return;
+    if (min || max) {
+      var parts = [];
+      if (min) parts.push('الأدنى: ' + Number(min).toLocaleString('ar-EG') + ' ر.ع');
+      if (max) parts.push('الأقصى: ' + Number(max).toLocaleString('ar-EG') + ' ر.ع');
+      hint.textContent = parts.join(' — ');
+    } else {
+      hint.textContent = '';
+    }
+  }
+
+  function clip(value, min, max) {
+    var v = Number(value);
+    if (min && v < Number(min)) v = Number(min);
+    if (max && v > Number(max)) v = Number(max);
+    return v;
+  }
+
   function recalc() {
     var amount = byId('loanAmount')?.value;
     var months = byId('tenureMonths')?.value;
@@ -52,10 +72,17 @@
     var rate = selected && selected.value ? Number(selected.value) : null;
     var min = selected && selected.dataset.minMonths ? Number(selected.dataset.minMonths) : null;
     var max = selected && selected.dataset.maxMonths ? Number(selected.dataset.maxMonths) : null;
+    var minAmount = selected && selected.dataset.minAmount ? Number(selected.dataset.minAmount) : null;
+    var maxAmount = selected && selected.dataset.maxAmount ? Number(selected.dataset.maxAmount) : null;
     if (rate) {
       byId('interestRate').value = rate;
     }
     updateTenureHint(min, max);
+    updateAmountHint(minAmount, maxAmount);
+    var amountEl = byId('loanAmount');
+    var monthsEl = byId('tenureMonths');
+    if (amountEl) amountEl.value = clip(amountEl.value, minAmount, maxAmount);
+    if (monthsEl) monthsEl.value = clip(monthsEl.value, min, max);
     recalc();
   }
 

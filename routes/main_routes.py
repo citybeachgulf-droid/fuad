@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort
-from models import User, CompanyProfile, News, BankProfile
+from models import User, CompanyProfile, News, BankProfile, BankOffer
 
 main = Blueprint('main', __name__)
 
@@ -39,3 +39,19 @@ def bank_detail(slug: str):
         return abort(404)
     # تمرير عروض البنك للواجهة لعرضها مع الحاسبة
     return render_template('banks/detail.html', bank=bank, offers=bank.offers)
+
+
+# -------------------------------
+# صفحة حاسبة القروض العامة
+# تعتمد على سياسات وعروض البنوك
+# -------------------------------
+@main.route('/calculator')
+def calculator():
+    # نجلب جميع العروض مع معلومات البنك لعرضها في القائمة المنسدلة
+    offers = (
+        BankOffer.query
+        .join(BankProfile, BankOffer.bank_profile_id == BankProfile.id)
+        .order_by(BankProfile.id.asc(), BankOffer.product_name.asc())
+        .all()
+    )
+    return render_template('calculator.html', offers=offers)
