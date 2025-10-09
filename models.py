@@ -250,3 +250,32 @@ class Testimonial(db.Model):
     rating = db.Column(db.Integer, nullable=True)  # 1..5
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ================================
+# الإعلانات (Advertisements)
+# ================================
+class Advertisement(db.Model):
+    __tablename__ = 'advertisements'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=True)
+    image_path = db.Column(db.String(255), nullable=False)  # مسار الصورة داخل static
+    target_url = db.Column(db.String(500), nullable=True)
+    placement = db.Column(db.String(50), nullable=False, default='homepage_top')  # موقع الظهور
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    start_at = db.Column(db.DateTime, nullable=True)
+    end_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def is_currently_visible(self) -> bool:
+        """تحقق من صلاحية العرض حسب تاريخي البداية والنهاية وحالة التفعيل."""
+        now = datetime.utcnow()
+        if not self.is_active:
+            return False
+        if self.start_at and now < self.start_at:
+            return False
+        if self.end_at and now > self.end_at:
+            return False
+        return True

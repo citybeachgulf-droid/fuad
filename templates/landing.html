@@ -2,6 +2,28 @@
 {% block title %}الصفحة الرئيسية - منصة التثمين العقاري{% endblock %}
 {% block head %}{% endblock %}
 {% block content %}
+    {# Top Advertisement Banner(s) #}
+    {% if ads_top and ads_top|length > 0 %}
+    <section id="ads-top" class="py-3">
+        <div class="container">
+            <div class="row g-3">
+                {% for ad in ads_top %}
+                <div class="col-12" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                    <div class="card border-0 shadow-sm overflow-hidden">
+                        {% if ad.target_url %}
+                        <a href="{{ ad.target_url }}" target="_blank" rel="noopener" class="d-block">
+                            <img src="{{ url_for('static', filename=ad.image_path) }}" class="w-100" alt="{{ ad.title or 'إعلان' }}">
+                        </a>
+                        {% else %}
+                        <img src="{{ url_for('static', filename=ad.image_path) }}" class="w-100" alt="{{ ad.title or 'إعلان' }}">
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
     {% from 'partials/cards.html' import cards_grid %}
     <!-- CTA as cards -->
     <section id="cta" class="py-5">

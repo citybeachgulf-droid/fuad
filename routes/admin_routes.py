@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User, InviteToken, News
+from models import db, User, InviteToken, News, Advertisement
 from flask_login import login_required, current_user
 from urllib.parse import urljoin
 from flask import current_app
@@ -183,6 +183,114 @@ def news_new():
         return redirect(url_for('admin.news_list'))
 
     return render_template('news_form.html')
+
+
+# --- إدارة الإعلانات ---
+@admin_bp.route('/ads')
+@login_required
+def ads_list():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    items = Advertisement.query.order_by(Advertisement.placement.asc(), Advertisement.sort_order.asc(), Advertisement.created_at.desc()).all()
+    return render_template('ads_list.html', ads=items)
+
+
+@admin_bp.route('/ads/new', methods=['GET', 'POST'])
+@login_required
+def ads_new():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        target_url = (request.form.get('target_url') or '').strip()
+        placement = (request.form.get('placement') or 'homepage_top').strip()
+        sort_order_raw = (request.form.get('sort_order') or '0').strip()
+        is_active = (request.form.get('is_active') == 'on')
+        start_at = request.form.get('start_at') or None
+        end_at = request.form.get('end_at') or None
+
+        # Parse datetimes if provided
+        from datetime import datetime
+        fmt = '%Y-%m-%dT%H:%M'
+        start_dt = datetime.strptime(start_at, fmt) if start_at else None
+        end_dt = datetime.strptime(end_at, fmt) if end_at else None
+
+        image_path_rel = None
+        file = request.files.get('image')
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            upload_dir = _ensure_ads_upload_dir(current_app)
+            save_path = os.path.join(upload_dir, filename)
+            base, ext = os.path.splitext(filename)
+            counter = 1
+            while os.path.exists(save_path):
+                filename = f"{base}_{counter}{ext}"
+                save_path = os.path.join(upload_dir, filename)
+                counter += 1
+            file.save(save_path)
+            image_path_rel = f"uploads/ads/{filename}"
+
+        try:
+            sort_order = int(sort_order_raw)
+        except Exception:
+            sort_order = 0
+
+        if not image_path_rel:
+            flash('الرجاء رفع صورة للإعلان', 'danger')
+            return redirect(url_for('admin.ads_new'))
+
+        ad = Advertisement(
+            title=title or None,
+            image_path=image_path_rel,
+            target_url=target_url or None,
+            placement=placement or 'homepage_top',
+            sort_order=sort_order,
+            is_active=is_active,
+            start_at=start_dt,
+            end_at=end_dt,
+        )
+        db.session.add(ad)
+        db.session.commit()
+        flash('تم إنشاء الإعلان بنجاح', 'success')
+        return redirect(url_for('admin.ads_list'))
+
+    return render_template('ads_form.html')
+
+
+@admin_bp.route('/ads/<int:ad_id>/toggle', methods=['POST'])
+@login_required
+def ads_toggle(ad_id: int):
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    ad = Advertisement.query.get_or_404(ad_id)
+    ad.is_active = not ad.is_active
+    db.session.commit()
+    flash('تم تحديث حالة الإعلان', 'success')
+    return redirect(url_for('admin.ads_list'))
+
+
+@admin_bp.route('/ads/<int:ad_id>/delete', methods=['POST'])
+@login_required
+def ads_delete(ad_id: int):
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    ad = Advertisement.query.get_or_404(ad_id)
+    db.session.delete(ad)
+    db.session.commit()
+    flash('تم حذف الإعلان', 'success')
+    return redirect(url_for('admin.ads_list'))
+
+
+def _ensure_ads_upload_dir(app):
+    configured = app.config.get('ADS_UPLOAD_FOLDER')
+    if configured:
+        ads_upload = configured
+    else:
+        base_upload = app.config.get('UPLOAD_FOLDER', os.path.join(app.root_path, 'static', 'uploads'))
+        ads_upload = os.path.join(os.path.dirname(base_upload), 'ads') if base_upload.endswith('logos') else os.path.join(base_upload, 'ads')
+    os.makedirs(ads_upload, exist_ok=True)
+    return ads_upload
 
 
 # --- تحديث بيانات بنك (المدير فقط) ---

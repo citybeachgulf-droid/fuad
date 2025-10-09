@@ -1,0 +1,49 @@
+{% extends 'admin/layout_admin.html' %}
+{% block title %}إعلان جديد{% endblock %}
+{% block content %}
+<h2 class="h4 mb-3">إنشاء إعلان جديد</h2>
+<form action="{{ url_for('admin.ads_new') }}" method="post" enctype="multipart/form-data" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">العنوان (اختياري)</label>
+    <input type="text" name="title" class="form-control" />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">رابط الهدف (URL) اختياري</label>
+    <input type="url" name="target_url" class="form-control" placeholder="https://example.com" />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">الموقع</label>
+    <select name="placement" class="form-select">
+      <option value="homepage_top">أعلى الصفحة الرئيسية</option>
+      <option value="homepage_middle">منتصف الصفحة الرئيسية</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">الترتيب</label>
+    <input type="number" name="sort_order" class="form-control" value="0" />
+  </div>
+  <div class="col-md-3 d-flex align-items-end">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked />
+      <label class="form-check-label" for="is_active">نشط</label>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">تاريخ البداية</label>
+    <input type="datetime-local" name="start_at" class="form-control" />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">تاريخ النهاية</label>
+    <input type="datetime-local" name="end_at" class="form-control" />
+  </div>
+  <div class="col-12">
+    <label class="form-label">صورة الإعلان (PNG/JPG)</label>
+    <input type="file" name="image" class="form-control" accept="image/*" required />
+    <div class="form-text">يفضل أبعاد بانر عريض 1200×300</div>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">حفظ</button>
+    <a class="btn btn-secondary" href="{{ url_for('admin.ads_list') }}">إلغاء</a>
+  </div>
+</form>
+{% endblock %}

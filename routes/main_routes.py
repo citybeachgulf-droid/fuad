@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, abort, request, jsonify, url_for, redirect
-from models import db, User, CompanyProfile, News, BankProfile, BankOffer, CompanyApprovedBank
+from models import db, User, CompanyProfile, News, BankProfile, BankOffer, CompanyApprovedBank, Advertisement
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def landing():
     latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
-    return render_template('landing.html', latest_news=latest_news)
+    # Fetch active ads for homepage top
+    ads_qs = Advertisement.query.filter_by(placement='homepage_top').order_by(Advertisement.sort_order.asc(), Advertisement.created_at.desc()).all()
+    active_ads = [ad for ad in ads_qs if ad.is_currently_visible()]
+    return render_template('landing.html', latest_news=latest_news, ads_top=active_ads)
 
 
 # -------------------------------

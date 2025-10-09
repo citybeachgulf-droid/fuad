@@ -9,6 +9,7 @@ class Config:
     # Uploads
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(basedir, 'static', 'uploads', 'logos'))
     NEWS_UPLOAD_FOLDER = os.environ.get('NEWS_UPLOAD_FOLDER', os.path.join(basedir, 'static', 'uploads', 'news'))
+    ADS_UPLOAD_FOLDER = os.environ.get('ADS_UPLOAD_FOLDER', os.path.join(basedir, 'static', 'uploads', 'ads'))
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024))
     # Mail settings (SMTP)
     MAIL_SERVER = os.environ.get('MAIL_SERVER')
