@@ -9,6 +9,21 @@ def landing():
     return render_template('landing.html', latest_news=latest_news)
 
 
+# -------------------------------
+# صفحات منفصلة للتقييم الفوري والمعتمد
+# -------------------------------
+@main.route('/quick')
+def quick_page():
+    """صفحة التقييم الفوري كوحدة مستقلة."""
+    return render_template('quick.html')
+
+
+@main.route('/certified')
+def certified_page():
+    """صفحة التقييم المعتمد كوحدة مستقلة."""
+    return render_template('certified.html')
+
+
 @main.route('/companies')
 def companies_list():
     companies = User.query.filter_by(role='company').all()
