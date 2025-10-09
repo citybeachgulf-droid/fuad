@@ -64,14 +64,24 @@ app = create_app()
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Lightweight migration: ensure 'limit_value' exists on company_approved_banks
+        # Lightweight migration: ensure new columns and fields exist
         try:
             inspector = inspect(db.engine)
+            # company_approved_banks.limit_value
             cols = [c['name'] for c in inspector.get_columns('company_approved_banks')]
             if 'limit_value' not in cols:
-                # SQLite compatible ALTER TABLE to add column
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE company_approved_banks ADD COLUMN limit_value FLOAT'))
+
+            # users.oauth_provider, users.oauth_subject, users.email_verified
+            user_cols = [c['name'] for c in inspector.get_columns('users')]
+            with db.engine.connect() as conn:
+                if 'oauth_provider' not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN oauth_provider VARCHAR(50)"))
+                if 'oauth_subject' not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN oauth_subject VARCHAR(255)"))
+                if 'email_verified' not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0 NOT NULL"))
         except Exception:
             # Fail silently to avoid startup crash; model will still work for new DBs
             pass

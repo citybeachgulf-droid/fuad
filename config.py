@@ -19,3 +19,11 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'no-reply@localhost')
     # Optional: used for external URL generation; set to your domain (e.g., example.com)
     SERVER_NAME = os.environ.get('SERVER_NAME')
+
+    # OAuth configuration
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+    # Apple Sign In (set APPLE_CLIENT_SECRET to a pre-generated JWT)
+    APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
+    APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET')
