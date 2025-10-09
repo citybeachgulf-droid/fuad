@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% from 'partials/cards.html' import cards_grid %}
+{% block title %}تقييم معتمد - اختيار البنك{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 m-0">اختر البنك</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    </div>
+    {{ cards_grid(options) }}
+  </div>
+</section>
+{% endblock %}

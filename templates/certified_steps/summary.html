@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}تقييم معتمد - الملخص{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-3">ملخص الطلب</h5>
+        <ul class="list-unstyled mb-3">
+          <li><strong>الجهة:</strong> {{ 'فرد' if entity == 'person' else 'شركة' }}</li>
+          <li><strong>الغرض:</strong> {{ purpose }}</li>
+          <li><strong>البنك:</strong> {{ bank.user.name if bank and bank.user else (bank.slug if bank else '—') }}</li>
+        </ul>
+        <div class="alert alert-info">هذه مجرد شاشة ملخص. يمكن ربطها بنموذج إنشاء طلب لاحقًا.</div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">تسجيل الدخول لإتمام الطلب</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_entity') }}">إعادة الاختيار</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
