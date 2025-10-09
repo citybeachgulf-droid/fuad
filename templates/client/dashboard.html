@@ -1,10 +1,124 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>لوحة العميل</h2>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-primary" href="#max-loan-card">حاسبة أقصى قرض ممكن</a>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
+  <h2 class="mb-0">لوحة العميل</h2>
+  <div class="d-flex flex-wrap gap-2">
+    <button id="btnInstant" class="btn btn-primary">تقييم فوري</button>
+    <button id="btnCertified" class="btn btn-outline-primary">تقييم معتمد</button>
     <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
+    <a class="btn btn-outline-secondary" href="#max-loan-card">حاسبة أقصى قرض ممكن</a>
+  </div>
+  
+</div>
+
+<!-- Instant Valuation Section -->
+<div id="instantValuationSection" class="card shadow-sm mb-4" style="display:none;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>تقييم فوري</strong>
+    <small class="text-muted">أدخل بيانات العقار وسيظهر التثمين تلقائيًا</small>
+  </div>
+  <div class="card-body">
+    <form class="row g-3 align-items-end" onsubmit="return false;">
+      <div class="col-12 col-md-3">
+        <label class="form-label">مساحة الأرض (م²)</label>
+        <input id="landArea" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 600">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">الموقع</label>
+        <select id="locationSelect" class="form-select">
+          <option value="">— اختر —</option>
+          <option value="muscat">مسقط</option>
+          <option value="bawshar">بوشر</option>
+          <option value="seeb">السيب</option>
+          <option value="mabella">المعبيلة</option>
+          <option value="sohar">صحار</option>
+          <option value="salalah">صلالة</option>
+          <option value="nizwa">نزوى</option>
+          <option value="other">أخرى</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">عمر البناء (سنة)</label>
+        <input id="buildingAge" type="number" min="0" step="1" class="form-control" placeholder="مثال: 5">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">مساحة البناء (م²)</label>
+        <input id="builtArea" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 350">
+      </div>
+    </form>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12 col-lg-4">
+        <div class="border rounded p-3 text-center h-100">
+          <div class="text-muted">قيمة التثمين التقديرية</div>
+          <div id="instantValuationValue" class="fs-4 fw-bold">—</div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-8">
+        <div class="border rounded p-3 h-100 small text-muted">
+          يتم تقدير القيمة اعتمادًا على متوسط سعر المتر للأرض حسب الموقع، وسعر المتر للبناء مع معامل إهلاك للعمر. النتائج تقديرية وليست تقريرًا معتمدًا.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Certified Valuation Section -->
+<div id="certifiedValuationSection" class="card shadow-sm mb-4" style="display:none;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>تقييم معتمد</strong>
+    <small class="text-muted">اختر نوع المتقدم ثم الغرض لإظهار الشركات المعتمدة</small>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <div class="d-flex gap-3 flex-wrap">
+        <button type="button" class="choice-tile" data-applicant="individual">
+          <span class="title">فرد</span>
+        </button>
+        <button type="button" class="choice-tile" data-applicant="company">
+          <span class="title">شركة</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="purposeContainer" class="mb-3" style="display:none;">
+      <div class="d-flex gap-3 flex-wrap" id="individualPurposes" style="display:none;">
+        <button type="button" class="choice-tile" data-purpose="new_purchase"><span class="title">شراء جديد</span></button>
+        <button type="button" class="choice-tile" data-purpose="mortgage_release"><span class="title">فك رهن</span></button>
+        <button type="button" class="choice-tile" data-purpose="debt_transfer"><span class="title">نقل مديونية</span></button>
+      </div>
+      <div class="d-flex gap-3 flex-wrap" id="companyPurposes" style="display:none;">
+        <button type="button" class="choice-tile" data-purpose="sell"><span class="title">بيع</span></button>
+        <button type="button" class="choice-tile" data-purpose="buy"><span class="title">شراء</span></button>
+        <button type="button" class="choice-tile" data-purpose="financial_reports"><span class="title">تقارير مالية</span></button>
+        <button type="button" class="choice-tile" data-purpose="refinance"><span class="title">إعادة تمويل</span></button>
+      </div>
+    </div>
+
+    <form class="row g-3 align-items-end" onsubmit="return false;">
+      <div class="col-12 col-md-4">
+        <label class="form-label">مبلغ التمويل المطلوب (ر.ع)</label>
+        <input id="certAmount" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 50000">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">اختر البنك</label>
+        <select id="certBankSelect" class="form-select">
+          <option value="">— اختر —</option>
+          {% for b in banks or [] %}
+            <option value="{{ b.slug }}">{{ b.user.name if b.user else ('Bank #' ~ b.id) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <button id="btnFindCompanies" class="btn btn-primary w-100">ابحث عن شركات معتمدة</button>
+      </div>
+    </form>
+
+    <div id="resultsArea" class="mt-3">
+      <div id="companiesLoading" class="text-center text-muted" style="display:none;">جاري التحميل...</div>
+      <div id="companiesEmpty" class="alert alert-warning" style="display:none;">لا توجد شركات مطابقة للمعايير.</div>
+      <div id="companiesGrid" class="row g-3"></div>
+    </div>
   </div>
 </div>
 
@@ -109,6 +223,7 @@
 
 {% block scripts %}
   {{ super() }}
+  <script src="{{ url_for('static', filename='js/client_dashboard.js') }}"></script>
   <script src="{{ url_for('static', filename='js/client_max_loan.js') }}"></script>
 {% endblock %}
 {% endblock %}
