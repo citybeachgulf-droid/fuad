@@ -1,80 +1,138 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}الصفحة الرئيسية - منصة التثمين العقاري{% endblock %}</title>
-
-    <!-- Bootstrap 5 RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" crossorigin="anonymous">
-
-    <!-- Animate.css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <!-- AOS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" />
-</head>
-<body class="bg-light text-dark">
-
-<header>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+{% extends 'base.html' %}
+{% block title %}الصفحة الرئيسية - منصة التثمين العقاري{% endblock %}
+{% block head %}{% endblock %}
+{% block content %}
+    <!-- CTA Section with two primary buttons -->
+    <section id="cta" class="py-5">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">تثمين عمان</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#hero">الرئيسية</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#features">المميزات</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#news">الأخبار</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#testimonials">التجارب</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#contact">تواصل</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.banks_list') }}">البنوك</a></li>
-                    <li class="nav-item"><a class="nav-link ms-lg-2" href="{{ url_for('main.companies_list') }}">طلب تثمين عقاري</a></li>
-                    <li class="nav-item"><a class="nav-link ms-lg-2" href="{{ url_for('auth.login') }}">تسجيل الدخول</a></li>
-                </ul>
+            <div class="text-center mb-4">
+                <h1 class="fw-bold mb-3">ابدأ التقييم</h1>
+                <p class="text-muted">اختر نوع الخدمة المناسبة لك</p>
             </div>
-        </div>
-    </nav>
-</header>
-
-<main>
-    <!-- Hero Section -->
-    <section id="hero" class="text-center text-white bg-primary py-5">
-        <div class="container">
-            <h1 class="display-4 fw-bold animate__animated animate__fadeInDown">قيّم عقارك الآن بسهولة</h1>
-            <p class="lead animate__animated animate__fadeInUp animate__delay-1s">استفد من خبرة المثمنين المحترفين في عمان وابدأ رحلتك بثقة</p>
-            <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
-                <button class="btn btn-light btn-lg me-3" onclick="window.location.href='/login'">تسجيل الدخول</button>
-                <a href="/companies" class="btn btn-warning btn-lg me-3">طلب تثمين عقاري</a>
-                <a href="{{ url_for('main.calculator') }}" class="btn btn-success btn-lg">احسب قرضك</a>
+            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+                <a href="#quick" class="btn btn-success btn-lg px-4 py-3"><i class="bi bi-lightning-charge me-2"></i>تقييم فوري</a>
+                <a href="#certified" class="btn btn-primary btn-lg px-4 py-3"><i class="bi bi-patch-check me-2"></i>تقييم معتمد</a>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-5">
+    <!-- Quick Valuation Section -->
+    <section id="quick" class="py-4">
         <div class="container">
-            <h2 class="text-center mb-5">مميزات منصة تثمين عمان</h2>
-            <div class="row g-4">
-                <div class="col-md-4 text-center" data-aos="fade-up">
-                    <i class="bi bi-house-door display-4 mb-3 text-primary"></i>
-                    <h5>تقييم دقيق</h5>
-                    <p>نظام ذكي لتقييم الممتلكات بدقة عالية ويوفر تقارير مفصلة.</p>
+            <div class="card shadow-sm hero-card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">تقييم فوري</h3>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">مساحة الأرض (م²)</label>
+                            <input type="number" class="form-control" id="landArea" placeholder="مثال: 600">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">الموقع</label>
+                            <select class="form-select" id="location">
+                                <option value="" selected disabled>اختر الموقع</option>
+                                <option value="A">منطقة أ</option>
+                                <option value="B">منطقة ب</option>
+                                <option value="C">منطقة ج</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">عمر البناء (سنة)</label>
+                            <input type="number" class="form-control" id="buildingAge" placeholder="مثال: 5">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">مساحة البناء (م²)</label>
+                            <input type="number" class="form-control" id="builtArea" placeholder="مثال: 350">
+                        </div>
+                    </div>
+                    <div class="mt-3 quick-result" id="quickResult" hidden>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <div class="muted small">قيمة التثمين التقديرية</div>
+                                <div class="value" id="quickValue">—</div>
+                            </div>
+                            <div class="text-muted small">يتم التحديث تلقائيًا مع تغيير المدخلات</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
-                    <i class="bi bi-clock display-4 mb-3 text-primary"></i>
-                    <h5>توفير الوقت</h5>
-                    <p>عملية التقييم سريعة وفعالة، لتسهيل اتخاذ القرار.</p>
-                </div>
-                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
-                    <i class="bi bi-people display-4 mb-3 text-primary"></i>
-                    <h5>فريق محترف</h5>
-                    <p>خبراء ومثمنون معتمدون يقدمون أفضل الخدمات للعملاء.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Certified Valuation Section -->
+    <section id="certified" class="py-4">
+        <div class="container">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">تقييم معتمد</h3>
+
+                    <!-- Person vs Company tiles -->
+                    <div class="tile-grid mb-3">
+                        <label class="tile-select tile-primary" id="optPerson">
+                            <input type="radio" name="entityType" value="person">
+                            <span class="tile-icon bg-white text-primary"><i class="bi bi-person-fill"></i></span>
+                            <div>
+                                <p class="tile-label">فرد</p>
+                                <p class="tile-desc">خيارات التمويل للأفراد</p>
+                            </div>
+                        </label>
+                        <label class="tile-select tile-success" id="optCompany">
+                            <input type="radio" name="entityType" value="company">
+                            <span class="tile-icon bg-white text-success"><i class="bi bi-buildings"></i></span>
+                            <div>
+                                <p class="tile-label">شركة</p>
+                                <p class="tile-desc">خدمات التمويل للشركات</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Person choices -->
+                    <div id="personChoices" class="mb-3" hidden>
+                        <div class="tile-grid">
+                            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="buy"><span class="tile-icon bg-white text-warning"><i class="bi bi-bag-plus"></i></span><div><p class="tile-label">شراء جديد</p><p class="tile-desc">تمويل شراء عقار</p></div></label>
+                            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="release"><span class="tile-icon bg-white text-warning"><i class="bi bi-unlock"></i></span><div><p class="tile-label">فك رهن</p><p class="tile-desc">سداد ورفع الرهن</p></div></label>
+                            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="transfer"><span class="tile-icon bg-white text-warning"><i class="bi bi-arrow-left-right"></i></span><div><p class="tile-label">نقل مديونية</p><p class="tile-desc">تحويل التمويل لبنك آخر</p></div></label>
+                        </div>
+                    </div>
+
+                    <!-- Company choices -->
+                    <div id="companyChoices" class="mb-3" hidden>
+                        <div class="tile-grid">
+                            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="sell"><span class="tile-icon bg-white text-warning"><i class="bi bi-cash-coin"></i></span><div><p class="tile-label">بيع</p><p class="tile-desc">تقييم لغرض البيع</p></div></label>
+                            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="buy"><span class="tile-icon bg-white text-warning"><i class="bi bi-bag"></i></span><div><p class="tile-label">شراء</p><p class="tile-desc">تمويل شراء أصول</p></div></label>
+                            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="reports"><span class="tile-icon bg-white text-warning"><i class="bi bi-clipboard-data"></i></span><div><p class="tile-label">تقارير مالية</p><p class="tile-desc">تقارير محاسبية معتمدة</p></div></label>
+                            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="refinance"><span class="tile-icon bg-white text-warning"><i class="bi bi-arrow-repeat"></i></span><div><p class="tile-label">إعادة تمويل</p><p class="tile-desc">تحسين شروط التمويل</p></div></label>
+                        </div>
+                    </div>
+
+                    <!-- Common: amount + bank -->
+                    <div id="certifiedInputs" class="row g-3 align-items-end" hidden>
+                        <div class="col-md-4">
+                            <label class="form-label">مبلغ التمويل (ريال)</label>
+                            <input type="number" class="form-control" id="financeAmount" placeholder="مثال: 50000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">البنك</label>
+                            <select class="form-select" id="bankSelect">
+                                <option value="" selected disabled>اختر البنك</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" id="filterBtn"><i class="bi bi-funnel me-1"></i>فلترة الشركات المعتمدة</button>
+                        </div>
+                    </div>
+
+                    <div id="results" class="mt-3" hidden>
+                        <div class="results-card p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="m-0">النتائج</h6>
+                                <span class="badge text-bg-secondary" id="resultsCount">0</span>
+                            </div>
+                            <div id="resultsList" class="vstack gap-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-muted small mt-2">قد يلزم تسجيل الدخول لإتمام الطلب.</div>
                 </div>
             </div>
         </div>
@@ -114,7 +172,6 @@
         </div>
     </section>
 
-    <!-- Testimonials Section -->
     <!-- Testimonials Section + Share Your Experience -->
 <section id="testimonials" class="py-5 bg-light">
     <div class="container">
@@ -146,7 +203,7 @@
         <div class="row justify-content-center">
             <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
                 <h3 class="text-center mb-4">شارك تجربتك معنا</h3>
-                <form>
+                <form id="testimonial-form">
                     <div class="mb-3">
                         <label for="name" class="form-label">الاسم</label>
                         <input type="text" class="form-control" id="name" placeholder="اسمك">
@@ -162,25 +219,130 @@
     </div>
 </section>
 
-</main>
+{% endblock %}
 
-<footer class="bg-dark text-white py-4 mt-5">
-    <div class="container d-flex flex-column flex-lg-row align-items-center justify-content-between gap-2">
-        <span>© 2025 تثمين عمان</span>
-        <div class="d-flex gap-3">
-            <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-            <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
-        </div>
-    </div>
-</footer>
-
-<!-- Bootstrap & AOS JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" crossorigin="anonymous"></script>
+{% block scripts %}
 <script>
-    AOS.init({ duration: 700, easing: 'ease-out-quart', once: true });
+  // --- Quick valuation logic (client-side heuristic) ---
+  (function(){
+    const landArea = document.getElementById('landArea');
+    const locationSel = document.getElementById('location');
+    const buildingAge = document.getElementById('buildingAge');
+    const builtArea = document.getElementById('builtArea');
+    const quickResult = document.getElementById('quickResult');
+    const quickValue = document.getElementById('quickValue');
+
+    if (!landArea || !locationSel || !buildingAge || !builtArea) return;
+
+    function computeQuick() {
+      const areaLand = parseFloat(landArea.value || '0');
+      const areaBuilt = parseFloat(builtArea.value || '0');
+      const age = parseFloat(buildingAge.value || '0');
+      const loc = locationSel.value;
+
+      if (!loc || (!areaLand && !areaBuilt)) {
+        quickResult.hidden = true; return;
+      }
+
+      // Simple heuristic: base price per sqm per location
+      const landPrice = loc === 'A' ? 80 : (loc === 'B' ? 55 : 35); // OMR/m²
+      const buildPriceNew = loc === 'A' ? 220 : (loc === 'B' ? 180 : 140); // OMR/m²
+      const depreciation = Math.min(0.6, Math.max(0, age * 0.02));
+      const buildPriceAdj = buildPriceNew * (1 - depreciation);
+
+      const landValue = areaLand * landPrice;
+      const buildValue = areaBuilt * buildPriceAdj;
+      const total = Math.max(0, landValue + buildValue);
+
+      quickValue.textContent = new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'OMR' }).format(total);
+      quickResult.hidden = false;
+    }
+
+    [landArea, locationSel, buildingAge, builtArea].forEach(el => el.addEventListener('input', computeQuick));
+  })();
+
+  // --- Certified flow UI interactions + fetching banks and filtering ---
+  (function(){
+    const optPerson = document.getElementById('optPerson');
+    const optCompany = document.getElementById('optCompany');
+    const personChoices = document.getElementById('personChoices');
+    const companyChoices = document.getElementById('companyChoices');
+    const inputsRow = document.getElementById('certifiedInputs');
+    const bankSelect = document.getElementById('bankSelect');
+    const amount = document.getElementById('financeAmount');
+    const filterBtn = document.getElementById('filterBtn');
+    const results = document.getElementById('results');
+    const resultsList = document.getElementById('resultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    if (!optPerson || !optCompany) return;
+
+    function toggleActive(labelEl) {
+      [optPerson, optCompany].forEach(el => el.classList.remove('active'));
+      labelEl.classList.add('active');
+    }
+
+    optPerson.addEventListener('click', () => {
+      toggleActive(optPerson);
+      personChoices.hidden = false;
+      companyChoices.hidden = true;
+      inputsRow.hidden = false;
+    });
+    optCompany.addEventListener('click', () => {
+      toggleActive(optCompany);
+      personChoices.hidden = true;
+      companyChoices.hidden = false;
+      inputsRow.hidden = false;
+    });
+
+    // Load banks into select from API
+    async function ensureBanksLoaded() {
+      if (bankSelect.options.length > 1) return;
+      try {
+        const res = await fetch('/api/banks');
+        const banks = await res.json();
+        banks.forEach((b) => {
+          const opt = document.createElement('option');
+          opt.value = b.slug;
+          opt.textContent = b.name;
+          bankSelect.appendChild(opt);
+        });
+      } catch (e) { /* ignore */ }
+    }
+    ensureBanksLoaded();
+
+    function renderResults(items) {
+      resultsList.innerHTML = '';
+      resultsCount.textContent = items.length;
+      if (!items.length) {
+        resultsList.innerHTML = '<div class="text-muted">لا توجد شركات مطابقة للمعايير.</div>';
+      } else {
+        items.forEach((it) => {
+          const row = document.createElement('div');
+          row.className = 'd-flex align-items-center justify-content-between p-2 border rounded';
+          row.innerHTML = `<div class="d-flex align-items-center gap-2"><img src="${it.logo_path || ''}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px"> <strong>${it.name}</strong></div><span class="badge text-bg-success">حد: ${it.limit_value ?? '—'}</span>`;
+          resultsList.appendChild(row);
+        });
+      }
+      results.hidden = false;
+    }
+
+    // Use API to filter approved companies by bank and amount
+    async function filterCompanies() {
+      const bankSlug = bankSelect.value;
+      const amt = parseFloat(amount.value || '0');
+      if (!bankSlug || !amt) { results.hidden = true; return; }
+      try {
+        const url = new URL(window.location.origin + '/api/certified_companies');
+        url.searchParams.set('bank_slug', bankSlug);
+        url.searchParams.set('amount', String(amt));
+        const res = await fetch(url.toString());
+        const items = await res.json();
+        renderResults(Array.isArray(items) ? items : []);
+      } catch (e) { renderResults([]); }
+    }
+
+    filterBtn.addEventListener('click', (e) => { e.preventDefault(); filterCompanies(); });
+  })();
 </script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+{% endblock %}
