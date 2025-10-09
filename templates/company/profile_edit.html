@@ -1,196 +1,218 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>تعديل ملف الشركة</h2>
-  <a href="{{ url_for('company.dashboard') }}" class="btn btn-outline-secondary">رجوع</a>
+
+<div class="container mt-4">
+
+  <!-- عنوان الصفحة -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">تعديل ملف الشركة</h2>
+    <a href="{{ url_for('company.dashboard') }}" class="btn btn-outline-secondary">رجوع</a>
   </div>
 
-<form method="POST" enctype="multipart/form-data" class="mt-3">
-  <div class="row g-3">
-    <div class="col-12 col-lg-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title mb-3">الشعار</h5>
-          {% if profile and profile.logo_path %}
-            <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" style="height:96px;" class="d-block mb-2 rounded border p-1 bg-white">
-          {% endif %}
-          <input type="file" class="form-control" name="logo" accept="image/*">
+  <form method="POST" enctype="multipart/form-data">
+
+    <div class="row g-4">
+
+      <!-- قسم الشعار -->
+      <div class="col-12 col-lg-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title mb-3">الشعار</h5>
+            {% if profile and profile.logo_path %}
+              <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white" style="max-height:120px;">
+            {% endif %}
+            <input type="file" class="form-control" name="logo" accept="image/*">
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-12 col-lg-8">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title mb-3">معلومات أساسية</h5>
-          <div class="mb-3">
-            <label class="form-label">الخدمات</label>
-            <textarea class="form-control" name="services" rows="3">{{ profile.services or '' }}</textarea>
-          </div>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">الحد المالي</label>
-              <input type="number" step="0.01" class="form-control" name="limit_value" value="{{ profile.limit_value or '' }}">
+      <!-- قسم المعلومات الأساسية -->
+      <div class="col-12 col-lg-8">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-3">معلومات أساسية</h5>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">الخدمات</label>
+              <textarea class="form-control" name="services" rows="3" placeholder="أدخل الخدمات المقدمة">{{ profile.services or '' }}</textarea>
             </div>
-            <div class="col-md-6">
-              <label class="form-label">الموقع الإلكتروني</label>
-              <input type="url" class="form-control" name="website" value="{{ profile.website or '' }}" placeholder="https://example.com">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">الحد المالي (OMR)</label>
+                <input type="number" step="0.01" class="form-control" name="limit_value" value="{{ profile.limit_value or '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">الموقع الإلكتروني</label>
+                <input type="url" class="form-control" name="website" value="{{ profile.website or '' }}" placeholder="https://example.com">
+              </div>
             </div>
-          </div>
-          <div class="mt-3">
-            <label class="form-label">نبذة عن الشركة</label>
-            <textarea class="form-control" name="about" rows="4">{{ profile.about or '' }}</textarea>
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">نبذة عن الشركة</label>
+              <textarea class="form-control" name="about" rows="4" placeholder="أدخل نبذة عن الشركة">{{ profile.about or '' }}</textarea>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0">البنوك (إدخال يدوي)</h5>
-            <button type="button" id="addBankRow" class="btn btn-sm btn-outline-primary">إضافة بنك</button>
-          </div>
-          <div class="table-responsive">
-            <table class="table align-middle" id="banksTable">
-              <thead>
-                <tr>
-                  <th style="width: 30%">اسم البنك</th>
-                  <th style="width: 20%">الحد (OMR)</th>
-                  <th style="width: 10%">إزالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% set manual_list = manual_banks or [] %}
-                {% if manual_list %}
-                  {% for b in manual_list %}
+      <!-- قسم البنوك -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0 fw-bold">البنوك</h5>
+              <button type="button" id="addBankRow" class="btn btn-sm btn-outline-primary">إضافة بنك</button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle" id="banksTable">
+                <thead class="table-light">
                   <tr>
-                    <td><input type="text" class="form-control" name="bank_name" value="{{ b.name if b.name is defined else b.name }}" placeholder="اسم البنك" required></td>
-                    <td><input type="email" class="form-control" name="bank_email" value="{{ b.email if b.email is defined else b.email }}" placeholder="email@example.com"></td>
-                    <td><input type="text" class="form-control" name="bank_phone" value="{{ b.phone if b.phone is defined else b.phone }}" placeholder="05xxxxxxxx"></td>
-                    <td><input type="number" step="0.01" class="form-control" name="bank_limit" value="{{ b.limit_value if b.limit_value is defined else b.limit_value }}" placeholder="اختياري"></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
+                    <th>اسم البنك</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>رقم الهاتف</th>
+                    <th>الحد المالي (اختياري)</th>
+                    <th>إزالة</th>
                   </tr>
-                  {% endfor %}
-                {% else %}
-                  <tr>
-                    <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
-                    <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder=""></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% set manual_list = manual_banks or [] %}
+                  {% if manual_list %}
+                    {% for b in manual_list %}
+                    <tr>
+                      <td><input type="text" class="form-control" name="bank_name" value="{{ b.name or '' }}" placeholder="اسم البنك" required></td>
+                      <td><input type="email" class="form-control" name="bank_email" value="{{ b.email or '' }}" placeholder="email@example.com"></td>
+                      <td><input type="text" class="form-control" name="bank_phone" value="{{ b.phone or '' }}" placeholder="05xxxxxxxx"></td>
+                      <td><input type="number" step="0.01" class="form-control" name="bank_limit" value="{{ b.limit_value or '' }}"></td>
+                      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
+                      <td><input type="email" class="form-control" name="bank_email" placeholder="email@example.com"></td>
+                      <td><input type="text" class="form-control" name="bank_phone" placeholder="05xxxxxxxx"></td>
+                      <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder=""></td>
+                      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="form-text">أضف صفًا لكل بنك ترغب بإظهاره في ملفك.</div>
           </div>
-          <div class="form-text">أضف صفًا لكل بنك ترغب بإظهاره في ملفك.</div>
         </div>
       </div>
-    </div>
 
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0">أرقام التواصل</h5>
-            <button type="button" id="addContactRow" class="btn btn-sm btn-outline-primary">إضافة رقم</button>
-          </div>
-          <div class="table-responsive">
-            <table class="table align-middle" id="contactsTable">
-              <thead>
-                <tr>
-                  <th style="width: 30%">الوصف</th>
-                  <th style="width: 55%">الرقم</th>
-                  <th style="width: 15%">إزالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% if contacts %}
-                  {% for c in contacts %}
+      <!-- قسم أرقام التواصل -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0 fw-bold">أرقام التواصل</h5>
+              <button type="button" id="addContactRow" class="btn btn-sm btn-outline-primary">إضافة رقم</button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle" id="contactsTable">
+                <thead class="table-light">
                   <tr>
-                    <td><input type="text" class="form-control" name="contact_label" value="{{ c.label or '' }}" placeholder="مثال: واتساب"></td>
-                    <td><input type="text" class="form-control" name="contact_phone" value="{{ c.phone }}" placeholder=""></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
+                    <th>الوصف</th>
+                    <th>الرقم</th>
+                    <th>إزالة</th>
                   </tr>
-                  {% endfor %}
-                {% else %}
-                  <tr>
-                    <td><input type="text" class="form-control" name="contact_label" placeholder="مثال: واتساب"></td>
-                    <td><input type="text" class="form-control" name="contact_phone" placeholder=""></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% if contacts %}
+                    {% for c in contacts %}
+                    <tr>
+                      <td><input type="text" class="form-control" name="contact_label" value="{{ c.label or '' }}" placeholder="مثال: واتساب"></td>
+                      <td><input type="text" class="form-control" name="contact_phone" value="{{ c.phone or '' }}" placeholder=""></td>
+                      <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td><input type="text" class="form-control" name="contact_label" placeholder="مثال: واتساب"></td>
+                      <td><input type="text" class="form-control" name="contact_phone" placeholder="05xxxxxxxx"></td>
+                      <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="form-text">اترك الحقل فارغًا إذا لا تريد حفظه.</div>
           </div>
-          <div class="form-text">اترك الحقل فارغًا إذا لا تريد حفظه.</div>
         </div>
       </div>
-    </div>
 
-    <div class="col-12">
-      <div class="d-flex gap-2 justify-content-end">
-        <button type="submit" class="btn btn-primary px-4">حفظ</button>
-        <a href="{{ url_for('company.dashboard') }}" class="btn btn-secondary">إلغاء</a>
+      <!-- أزرار الحفظ والإلغاء -->
+      <div class="col-12">
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <button type="submit" class="btn btn-primary px-4">حفظ</button>
+          <a href="{{ url_for('company.dashboard') }}" class="btn btn-secondary">إلغاء</a>
+        </div>
       </div>
-    </div>
-  </div>
-</form>
 
+    </div>
+  </form>
+</div>
+
+<!-- سكريبت لإضافة وحذف الصفوف -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const tableBody = document.querySelector('#contactsTable tbody');
-  const addBtn = document.getElementById('addContactRow');
-  const banksTbody = document.querySelector('#banksTable tbody');
-  const addBankBtn = document.getElementById('addBankRow');
 
-  function bindRemoveButtons() {
-    tableBody.querySelectorAll('.removeContact').forEach(btn => {
-      btn.onclick = function () {
-        const tr = this.closest('tr');
-        if (tr) tr.remove();
-      };
+  // Contacts table
+  const contactsTableBody = document.querySelector('#contactsTable tbody');
+  const addContactBtn = document.getElementById('addContactRow');
+
+  function bindRemoveContacts() {
+    contactsTableBody.querySelectorAll('.removeContact').forEach(btn => {
+      btn.onclick = () => btn.closest('tr').remove();
     });
   }
 
-  addBtn?.addEventListener('click', function () {
+  addContactBtn.addEventListener('click', () => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><input type="text" class="form-control" name="contact_label" placeholder="مثال: واتساب"></td>
       <td><input type="text" class="form-control" name="contact_phone" placeholder="05xxxxxxxx"></td>
       <td><button type="button" class="btn btn-sm btn-outline-danger removeContact">حذف</button></td>
     `;
-    tableBody.appendChild(row);
-    bindRemoveButtons();
+    contactsTableBody.appendChild(row);
+    bindRemoveContacts();
   });
 
-  bindRemoveButtons();
+  bindRemoveContacts();
 
-  // Banks dynamic rows
-  function bindBankRemoveButtons() {
-    banksTbody?.querySelectorAll('.removeBank').forEach(btn => {
-      btn.onclick = function () {
-        const tr = this.closest('tr');
-        if (tr) tr.remove();
-      };
+  // Banks table
+  const banksTableBody = document.querySelector('#banksTable tbody');
+  const addBankBtn = document.getElementById('addBankRow');
+
+  function bindRemoveBanks() {
+    banksTableBody.querySelectorAll('.removeBank').forEach(btn => {
+      btn.onclick = () => btn.closest('tr').remove();
     });
   }
 
-  addBankBtn?.addEventListener('click', function () {
+  addBankBtn.addEventListener('click', () => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td><input type=\"text\" class=\"form-control\" name=\"bank_name\" placeholder=\"اسم البنك\" required></td>
-      <td><input type=\"email\" class=\"form-control\" name=\"bank_email\" placeholder=\"email@example.com\"></td>
-      <td><input type=\"text\" class=\"form-control\" name=\"bank_phone\" placeholder=\"05xxxxxxxx\"></td>
-      <td><input type=\"number\" step=\"0.01\" class=\"form-control\" name=\"bank_limit\" placeholder=\"اختياري\"></td>
-      <td><button type=\"button\" class=\"btn btn-sm btn-outline-danger removeBank\">حذف</button></td>
+      <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
+      <td><input type="email" class="form-control" name="bank_email" placeholder="email@example.com"></td>
+      <td><input type="text" class="form-control" name="bank_phone" placeholder="05xxxxxxxx"></td>
+      <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder="اختياري"></td>
+      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
     `;
-    banksTbody.appendChild(row);
-    bindBankRemoveButtons();
+    banksTableBody.appendChild(row);
+    bindRemoveBanks();
   });
 
-  bindBankRemoveButtons();
+  bindRemoveBanks();
+
 });
 </script>
-{% endblock %}
 
+{% endblock %}
