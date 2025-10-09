@@ -1,7 +1,16 @@
 """Blueprint for client portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy
+from sqlalchemy import or_, and_
+from models import (
+    db,
+    User,
+    ValuationRequest,
+    BankProfile,
+    BankLoanPolicy,
+    CompanyProfile,
+    CompanyApprovedBank,
+)
 from utils import calculate_max_loan
 
 client_bp = Blueprint('client', __name__, template_folder='../templates/client', static_folder='../static')
@@ -135,3 +144,61 @@ def compute_max_loan():
             'max_ratio': float(policy.max_ratio)
         }
     })
+
+
+# ----------------------------------------
+# API: Filter approved companies by bank and amount
+# ----------------------------------------
+@client_bp.route('/filter_companies', methods=['GET'])
+@login_required
+def filter_companies():
+    bank_slug = request.args.get('bank_slug', type=str)
+    amount = request.args.get('amount', type=float)
+    applicant_type = request.args.get('applicant_type', type=str)  # 'individual' | 'company' (optional, reserved)
+    purpose = request.args.get('purpose', type=str)  # optional, reserved for future logic
+
+    if not bank_slug:
+        return jsonify({'error': 'bank_slug is required'}), 400
+    try:
+        amount_val = float(amount or 0)
+    except Exception:
+        return jsonify({'error': 'invalid amount'}), 400
+
+    bank = BankProfile.query.filter_by(slug=bank_slug).first()
+    if not bank:
+        return jsonify({'error': 'bank not found'}), 404
+
+    # Join companies that have explicit approval with this bank
+    q = (
+        db.session.query(CompanyProfile, User, CompanyApprovedBank)
+        .join(CompanyApprovedBank, and_(
+            CompanyApprovedBank.company_profile_id == CompanyProfile.id,
+            CompanyApprovedBank.bank_user_id == bank.user_id,
+        ))
+        .join(User, User.id == CompanyProfile.user_id)
+    )
+
+    companies = []
+    for profile, user, approval in q.all():
+        # Determine the effective limit for this bank/company pair
+        approved_limit = approval.limit_value
+        profile_limit = profile.limit_value
+
+        # Eligibility: prefer approval.limit_value when present, otherwise fall back to profile.limit_value
+        effective_limit = approved_limit if approved_limit is not None else profile_limit
+        if effective_limit is None:
+            # If no limits are set at all, consider not eligible to avoid overpromising
+            continue
+        if amount_val <= float(effective_limit):
+            companies.append({
+                'company_id': user.id,
+                'company_name': user.name,
+                'approved_limit': float(approved_limit) if approved_limit is not None else None,
+                'profile_limit': float(profile_limit) if profile_limit is not None else None,
+                'logo_url': (url_for('static', filename=profile.logo_path) if profile.logo_path else None),
+                'apply_url': url_for('client.submit_request') + f"?company_id={user.id}",
+            })
+
+    # Sort results by effective limit descending
+    companies.sort(key=lambda c: (c['approved_limit'] or c['profile_limit'] or 0), reverse=True)
+    return jsonify({'items': companies, 'count': len(companies)})
