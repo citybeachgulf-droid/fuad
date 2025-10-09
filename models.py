@@ -250,3 +250,22 @@ class Testimonial(db.Model):
     rating = db.Column(db.Integer, nullable=True)  # 1..5
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ================================
+# القائمة السوداء (Blacklist)
+# ================================
+class BlacklistEntry(db.Model):
+    __tablename__ = 'blacklist_entries'
+
+    id = db.Column(db.Integer, primary_key=True)
+    id_number = db.Column(db.String(50), nullable=True, index=True)  # رقم البطاقة/الهوية
+    phone = db.Column(db.String(20), nullable=True, index=True)  # رقم الجوال
+    reason = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('id_number', name='uq_blacklist_id_number'),
+        db.UniqueConstraint('phone', name='uq_blacklist_phone'),
+    )

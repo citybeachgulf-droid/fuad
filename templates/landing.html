@@ -59,6 +59,43 @@
         </div>
     </section>
 
+    <!-- Blacklist Search Section -->
+    <section id="blacklist" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">التحقق من القائمة السوداء</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <form id="blacklist-form" class="row g-2 align-items-center">
+                        <div class="col-sm-9">
+                            <label for="blacklistQuery" class="form-label">أدخل رقم البطاقة أو رقم الجوال</label>
+                            <input type="text" class="form-control" id="blacklistQuery" placeholder="مثال: 1234567890 أو 05xxxxxxxx">
+                        </div>
+                        <div class="col-sm-3 d-grid">
+                            <label class="form-label invisible">&nbsp;</label>
+                            <button type="submit" class="btn btn-danger">بحث</button>
+                        </div>
+                    </form>
+                    <div id="blacklist-results" class="mt-4" hidden>
+                        <div class="alert alert-info" id="blacklist-empty" hidden>لا توجد نتائج مطابقة.</div>
+                        <div class="table-responsive" id="blacklist-table-wrap" hidden>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>رقم البطاقة</th>
+                                        <th>رقم الجوال</th>
+                                        <th>السبب</th>
+                                        <th>تاريخ الإضافة</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="blacklist-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Testimonials Section + Share Your Experience -->
 <section id="testimonials" class="py-5 bg-light">
     <div class="container">
@@ -108,4 +145,65 @@
 
 {% endblock %}
 
-{% block scripts %}{% endblock %}
+{% block scripts %}
+<script>
+  (function() {
+    const form = document.getElementById('blacklist-form');
+    if (!form) return;
+    const input = document.getElementById('blacklistQuery');
+    const resultsWrap = document.getElementById('blacklist-results');
+    const emptyAlert = document.getElementById('blacklist-empty');
+    const tableWrap = document.getElementById('blacklist-table-wrap');
+    const tbody = document.getElementById('blacklist-tbody');
+
+    async function search(q) {
+      const url = new URL('/api/blacklist_search', window.location.origin);
+      url.searchParams.set('q', q);
+      const res = await fetch(url.toString());
+      if (!res.ok) {
+        return [];
+      }
+      return await res.json();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = (input.value || '').trim();
+      if (!q) return;
+      resultsWrap.hidden = false;
+      emptyAlert.hidden = true;
+      tableWrap.hidden = true;
+      tbody.innerHTML = '';
+
+      try {
+        const data = await search(q);
+        if (!data || data.length === 0) {
+          emptyAlert.hidden = false;
+          tableWrap.hidden = true;
+          return;
+        }
+        data.forEach((row) => {
+          const tr = document.createElement('tr');
+          const idTd = document.createElement('td');
+          idTd.textContent = row.id_number || '—';
+          const phoneTd = document.createElement('td');
+          phoneTd.textContent = row.phone || '—';
+          const reasonTd = document.createElement('td');
+          reasonTd.textContent = row.reason || '—';
+          const dateTd = document.createElement('td');
+          dateTd.textContent = (row.created_at || '').split('T')[0] || '—';
+          tr.appendChild(idTd);
+          tr.appendChild(phoneTd);
+          tr.appendChild(reasonTd);
+          tr.appendChild(dateTd);
+          tbody.appendChild(tr);
+        });
+        tableWrap.hidden = false;
+      } catch (err) {
+        emptyAlert.hidden = false;
+        tableWrap.hidden = true;
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, jsonify, url_for, redirect
-from models import db, User, CompanyProfile, News, BankProfile, BankOffer, CompanyApprovedBank
+from models import db, User, CompanyProfile, News, BankProfile, BankOffer, CompanyApprovedBank, BlacklistEntry
 
 main = Blueprint('main', __name__)
 
@@ -220,3 +220,39 @@ def api_certified_companies():
             })
 
     return jsonify(results)
+
+
+@main.route('/api/blacklist_search', methods=['GET'])
+def api_blacklist_search():
+    """Search blacklist entries by id_number or phone.
+
+    Query params:
+      - q: string (required) — رقم البطاقة أو رقم الجوال
+    """
+    query = (request.args.get('q') or '').strip()
+    if not query:
+        return jsonify({'error': 'q is required'}), 400
+
+    # Normalize input: strip spaces and common separators
+    normalized = ''.join(ch for ch in query if ch.isalnum())
+
+    # Simple matching: exact match on id_number or phone
+    results = (
+        db.session.query(BlacklistEntry)
+        .filter(
+            (BlacklistEntry.id_number == normalized) |
+            (BlacklistEntry.phone == normalized)
+        )
+        .order_by(BlacklistEntry.created_at.desc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            'id': r.id,
+            'id_number': r.id_number,
+            'phone': r.phone,
+            'reason': r.reason,
+            'created_at': r.created_at.isoformat() if r.created_at else None,
+        } for r in results
+    ])
