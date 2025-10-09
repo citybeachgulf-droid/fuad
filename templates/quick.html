@@ -1,89 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}تقييم فوري - منصة التثمين العقاري{% endblock %}
+{% block title %}تقييم فوري - اختيار عبر البطاقات{% endblock %}
 {% block head %}{% endblock %}
 {% block content %}
-<section class="py-4">
-  <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h3 m-0">تقييم فوري</h1>
-      <a href="{{ url_for('main.landing') }}" class="btn btn-link">عودة للصفحة الرئيسية</a>
-    </div>
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label">مساحة الأرض (م²)</label>
-            <input type="number" class="form-control" id="landArea" placeholder="مثال: 600">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">الموقع</label>
-            <select class="form-select" id="location">
-              <option value="" selected disabled>اختر الموقع</option>
-              <option value="A">منطقة أ</option>
-              <option value="B">منطقة ب</option>
-              <option value="C">منطقة ج</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">عمر البناء (سنة)</label>
-            <input type="number" class="form-control" id="buildingAge" placeholder="مثال: 5">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">مساحة البناء (م²)</label>
-            <input type="number" class="form-control" id="builtArea" placeholder="مثال: 350">
-          </div>
-        </div>
-        <div class="mt-3 quick-result" id="quickResult" hidden>
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div>
-              <div class="muted small">قيمة التثمين التقديرية</div>
-              <div class="value" id="quickValue">—</div>
-            </div>
-            <div class="text-muted small">يتم التحديث تلقائيًا مع تغيير المدخلات</div>
-          </div>
-        </div>
-      </div>
+<section class="py-5">
+  <div class="container text-center">
+    <h1 class="fw-bold mb-3">تقييم فوري</h1>
+    <p class="text-muted mb-4">اختر للبدء</p>
+    <div class="d-flex justify-content-center">
+      <a href="{{ url_for('main.quick_step_property') }}" class="btn btn-primary btn-lg"><i class="bi bi-play-circle me-2"></i>ابدأ</a>
     </div>
   </div>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  (function(){
-    const landArea = document.getElementById('landArea');
-    const locationSel = document.getElementById('location');
-    const buildingAge = document.getElementById('buildingAge');
-    const builtArea = document.getElementById('builtArea');
-    const quickResult = document.getElementById('quickResult');
-    const quickValue = document.getElementById('quickValue');
-
-    if (!landArea || !locationSel || !buildingAge || !builtArea) return;
-
-    function computeQuick() {
-      const areaLand = parseFloat(landArea.value || '0');
-      const areaBuilt = parseFloat(builtArea.value || '0');
-      const age = parseFloat(buildingAge.value || '0');
-      const loc = locationSel.value;
-
-      if (!loc || (!areaLand && !areaBuilt)) {
-        quickResult.hidden = true; return;
-      }
-
-      const landPrice = loc === 'A' ? 80 : (loc === 'B' ? 55 : 35);
-      const buildPriceNew = loc === 'A' ? 220 : (loc === 'B' ? 180 : 140);
-      const depreciation = Math.min(0.6, Math.max(0, age * 0.02));
-      const buildPriceAdj = buildPriceNew * (1 - depreciation);
-
-      const landValue = areaLand * landPrice;
-      const buildValue = areaBuilt * buildPriceAdj;
-      const total = Math.max(0, landValue + buildValue);
-
-      quickValue.textContent = new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'OMR' }).format(total);
-      quickResult.hidden = false;
-    }
-
-    [landArea, locationSel, buildingAge, builtArea].forEach(el => el.addEventListener('input', computeQuick));
-  })();
-</script>
 {% endblock %}

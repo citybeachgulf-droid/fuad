@@ -2,17 +2,20 @@
 {% block title %}الصفحة الرئيسية - منصة التثمين العقاري{% endblock %}
 {% block head %}{% endblock %}
 {% block content %}
-    <!-- CTA Section with two primary buttons -->
+    {% from 'partials/cards.html' import cards_grid %}
+    <!-- CTA as cards -->
     <section id="cta" class="py-5">
         <div class="container">
             <div class="text-center mb-4">
                 <h1 class="fw-bold mb-3">ابدأ التقييم</h1>
                 <p class="text-muted">اختر نوع الخدمة المناسبة لك</p>
             </div>
-            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
-                <a href="{{ url_for('main.quick_page') }}" class="btn btn-success btn-lg px-4 py-3"><i class="bi bi-lightning-charge me-2"></i>تقييم فوري</a>
-                <a href="{{ url_for('main.certified_page') }}" class="btn btn-primary btn-lg px-4 py-3"><i class="bi bi-patch-check me-2"></i>تقييم معتمد</a>
-            </div>
+            {{ cards_grid([
+              { 'title': 'تقييم فوري', 'href': url_for('main.quick_page'), 'icon_class': 'bi bi-lightning-charge', 'color_class': 'tile-success', 'subtitle': 'نتيجة تقديرية سريعة' },
+              { 'title': 'تقييم معتمد', 'href': url_for('main.certified_page'), 'icon_class': 'bi bi-patch-check', 'color_class': 'tile-primary', 'subtitle': 'طلب تقرير معتمد' },
+              { 'title': 'البنوك المشاركة', 'href': url_for('main.banks_list'), 'icon_class': 'bi bi-bank', 'color_class': 'tile-warning', 'subtitle': 'تعرف على البنوك' },
+              { 'title': 'شركات التثمين', 'href': url_for('main.companies_list'), 'icon_class': 'bi bi-buildings', 'color_class': 'tile-danger', 'subtitle': 'شاهد الشركات' },
+            ]) }}
         </div>
     </section>
 
