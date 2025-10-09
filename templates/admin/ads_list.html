@@ -1,0 +1,60 @@
+{% extends 'admin/layout_admin.html' %}
+{% block title %}إدارة الإعلانات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 mb-0">الإعلانات</h2>
+  <a href="{{ url_for('admin.ads_new') }}" class="btn btn-primary">إعلان جديد</a>
+</div>
+<table class="table table-striped table-hover align-middle">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>العنوان</th>
+      <th>الموقع</th>
+      <th>الترتيب</th>
+      <th>نشط؟</th>
+      <th>الفترة</th>
+      <th>معاينة</th>
+      <th>روابط</th>
+      <th>إجراءات</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ad in ads %}
+    <tr>
+      <td>{{ ad.id }}</td>
+      <td>{{ ad.title or '-' }}</td>
+      <td><span class="badge bg-secondary">{{ ad.placement }}</span></td>
+      <td>{{ ad.sort_order }}</td>
+      <td>
+        {% if ad.is_active %}
+        <span class="badge bg-success">نشط</span>
+        {% else %}
+        <span class="badge bg-secondary">متوقف</span>
+        {% endif %}
+      </td>
+      <td class="small text-muted">
+        {{ ad.start_at.strftime('%Y-%m-%d %H:%M') if ad.start_at else '-' }} → {{ ad.end_at.strftime('%Y-%m-%d %H:%M') if ad.end_at else '-' }}
+      </td>
+      <td>
+        <img src="{{ url_for('static', filename=ad.image_path) }}" alt="ad" style="height:48px" class="rounded border" />
+      </td>
+      <td class="small">
+        {% if ad.target_url %}<a href="{{ ad.target_url }}" target="_blank" rel="noopener">فتح</a>{% else %}-{% endif %}
+      </td>
+      <td>
+        <form action="{{ url_for('admin.ads_toggle', ad_id=ad.id) }}" method="post" class="d-inline">
+          <button class="btn btn-sm btn-outline-secondary">تبديل</button>
+        </form>
+        <form action="{{ url_for('admin.ads_delete', ad_id=ad.id) }}" method="post" class="d-inline" onsubmit="return confirm('حذف الإعلان؟');">
+          <button class="btn btn-sm btn-outline-danger">حذف</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not ads or ads|length == 0 %}
+<div class="alert alert-info">لا توجد إعلانات بعد.</div>
+{% endif %}
+{% endblock %}
