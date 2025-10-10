@@ -15,7 +15,7 @@ def login():
         user = User.query.filter_by(email=email, password=password, role='client').first()
         if user:
             login_user(user)
-            return redirect(url_for('client.dashboard'))
+            return redirect(url_for('main.landing'))
         else:
             flash('Invalid credentials', 'danger')
     return render_template('client/login.html')

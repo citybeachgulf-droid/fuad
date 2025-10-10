@@ -61,7 +61,7 @@ def login():
             elif user.role == 'bank':
                 return redirect(url_for('bank.dashboard'))
             else:
-                return redirect(url_for('client.dashboard'))
+                return redirect(url_for('main.landing'))
         else:
             flash('البريد الإلكتروني أو كلمة المرور خاطئة', 'danger')
 
@@ -77,6 +77,12 @@ def phone_entry():
         if not phone:
             flash('يرجى إدخال رقم هاتف صالح', 'danger')
             return render_template('phone.html')
+
+        # لا ترسل رمز تحقق للحسابات الجديدة برقم هاتف جديد
+        existing_user = User.query.filter_by(phone=phone).first()
+        if not existing_user:
+            flash('إنشاء حساب جديد برقم الهاتف غير متاح حاليًا. الرجاء التسجيل بالبريد الإلكتروني.', 'warning')
+            return redirect(url_for('auth.signup'))
 
         purpose = (request.form.get('purpose') or 'login').strip()
         # توليد رمز OTP وتخزينه
@@ -227,7 +233,7 @@ def google_callback():
 
     login_user(user)
     flash('تم تسجيل الدخول عبر Google', 'success')
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('main.landing'))
 
 
 # --- Apple OAuth ---
@@ -274,7 +280,7 @@ def apple_callback():
 
     login_user(user)
     flash('تم تسجيل الدخول عبر Apple', 'success')
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('main.landing'))
 
 
 # --- تسجيل الخروج ---
