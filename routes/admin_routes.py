@@ -98,6 +98,15 @@ def companies():
     companies = User.query.filter_by(role='company').all()
     return render_template('companies.html', companies=companies)
 
+# --- صفحة عرض العملاء ---
+@admin_bp.route('/clients')
+@login_required
+def clients():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    clients = User.query.filter_by(role='client').all()
+    return render_template('clients.html', clients=clients)
+
 # --- صفحة عرض الدعوات ---
 @admin_bp.route('/invites')
 @login_required
