@@ -100,6 +100,64 @@ def dashboard():
     banks = BankProfile.query.order_by(BankProfile.id.asc()).all()
     return render_template('client/dashboard.html', requests=reqs, banks=banks)
 
+
+# -------------------------------
+# Client request details + transfer
+# -------------------------------
+@client_bp.route('/requests/<int:request_id>')
+@login_required
+def request_detail(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    companies = User.query.filter_by(role='company').all()
+    return render_template('client/request_detail.html', request_obj=vr, companies=companies)
+
+
+@client_bp.route('/requests/<int:request_id>/transfer', methods=['POST'])
+@login_required
+def transfer_request(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Disallow transferring a completed valuation
+    if (vr.status or '').lower() == 'completed':
+        flash('لا يمكن تحويل معاملة مكتملة', 'warning')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    company_id_raw = request.form.get('company_id')
+    try:
+        new_company_id = int(company_id_raw) if company_id_raw else None
+    except Exception:
+        new_company_id = None
+
+    new_company = User.query.filter_by(id=new_company_id, role='company').first() if new_company_id else None
+    if not new_company:
+        flash('يرجى اختيار شركة صحيحة', 'danger')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    if vr.company_id == new_company.id:
+        flash('المعاملة مخصّصة لهذه الشركة بالفعل', 'info')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    # Apply transfer
+    vr.company_id = new_company.id
+    vr.status = 'pending'
+    # Remove any scheduled/proposed appointments tied to the old company context
+    VisitAppointment.query.filter_by(valuation_request_id=vr.id).delete()
+
+    db.session.commit()
+    flash('تم تحويل المعاملة إلى الشركة الجديدة', 'success')
+    return redirect(url_for('client.request_detail', request_id=vr.id))
+
 @client_bp.route('/submit', methods=['GET', 'POST'])
 @login_required
 def submit_request():

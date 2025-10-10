@@ -1,0 +1,54 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>تفاصيل المعاملة #{{ request_obj.id }}</h2>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <p><strong>العنوان:</strong> {{ request_obj.title or '-' }}</p>
+    <p><strong>الوصف:</strong> {{ request_obj.description or '-' }}</p>
+    <p><strong>النوع:</strong>
+      {% if request_obj.valuation_type == 'land' %}أرض{% elif request_obj.valuation_type == 'property' %}عقار{% elif request_obj.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
+    </p>
+    <p><strong>الشركة الحالية:</strong> {{ request_obj.company.name if request_obj.company else '-' }}</p>
+    <p><strong>الحالة:</strong> {{ request_obj.status }}</p>
+    <p><strong>القيمة المقدّرة:</strong> {{ request_obj.value if request_obj.value is not none else '-' }}</p>
+  </div>
+</div>
+
+{% if request_obj.documents %}
+<h4>المستندات</h4>
+<ul>
+  {% for d in request_obj.documents %}
+  <li>
+    <strong>{{ d.doc_type }}</strong> -
+    <a href="{{ url_for('static', filename=d.file_path) }}" target="_blank">عرض</a>
+    {% if d.original_filename %}<small class="text-muted">({{ d.original_filename }})</small>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<div class="mt-4">
+  <a class="btn btn-secondary" href="{{ url_for('client.dashboard') }}">عودة إلى لوحة العميل</a>
+</div>
+
+<hr/>
+<div class="mt-3">
+  <h4 class="h6">تحويل المعاملة إلى شركة أخرى</h4>
+  <form method="POST" action="{{ url_for('client.transfer_request', request_id=request_obj.id) }}" class="row g-2">
+    <div class="col-md-6">
+      <select class="form-select" name="company_id" required>
+        <option value="">— اختر الشركة —</option>
+        {% for c in companies %}
+          <option value="{{ c.id }}" {% if request_obj.company and c.id == request_obj.company.id %}disabled{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <button type="submit" class="btn btn-warning">تحويل المعاملة</button>
+    </div>
+  </form>
+  <p class="text-muted small mt-2">سيتم إعادة حالة المعاملة إلى "قيد المراجعة" وإلغاء المواعيد السابقة.</p>
+</div>
+
+{% endblock %}
