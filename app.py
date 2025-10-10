@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 from flask_login import LoginManager, current_user, login_required
 from models import db, User, ValuationRequest, BankProfile, BankOffer
@@ -18,6 +19,9 @@ from routes.main_routes import main
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
+    # Respect proxy headers (X-Forwarded-Proto/Host) to generate correct external URLs
+    # Trust a single proxy by default; adjust if your deployment has more hops.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
     db.init_app(app)
 
     # إعداد OAuth
