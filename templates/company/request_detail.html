@@ -12,6 +12,7 @@
     <p><strong>العميل:</strong> {{ request_obj.client.name if request_obj.client else '-' }}</p>
     <p><strong>الحالة:</strong> {{ request_obj.status }}</p>
     <p><strong>القيمة المقدّرة:</strong> {{ request_obj.value if request_obj.value is not none else '-' }}</p>
+    <p><strong>قيمة التثمين المطلوبة (من البنك):</strong> {{ request_obj.requested_amount if request_obj.requested_amount is not none else '-' }}</p>
   </div>
 </div>
 
