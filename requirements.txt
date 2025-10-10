@@ -6,3 +6,4 @@ WTForms>=3.0
 email-validator
 python-dotenv
 Authlib>=1.2
+twilio>=9.0
