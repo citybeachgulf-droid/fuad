@@ -30,3 +30,9 @@ class Config:
     # Apple Sign In (set APPLE_CLIENT_SECRET to a pre-generated JWT)
     APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
     APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET')
+
+    # SMS provider (Twilio) for OTP
+    TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+    TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+    TWILIO_FROM_NUMBER = os.environ.get('TWILIO_FROM_NUMBER')
+    OTP_TTL_SECONDS = int(os.environ.get('OTP_TTL_SECONDS', '300'))

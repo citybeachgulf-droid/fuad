@@ -167,6 +167,27 @@ class InviteToken(db.Model):
 
 
 # ================================
+# رموز التحقق عبر الهاتف (OTP)
+# ================================
+class OTPCode(db.Model):
+    __tablename__ = 'otp_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    phone = db.Column(db.String(32), index=True, nullable=False)
+    code = db.Column(db.String(10), nullable=False)
+    purpose = db.Column(db.String(20), nullable=False, default='login')  # login/signup
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    consumed_at = db.Column(db.DateTime, nullable=True)
+
+    def is_expired(self) -> bool:
+        return datetime.utcnow() > self.expires_at
+
+    def is_consumed(self) -> bool:
+        return self.consumed_at is not None
+
+# ================================
 # ملف تعريف البنك
 # ================================
 class BankProfile(db.Model):
