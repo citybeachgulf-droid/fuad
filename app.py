@@ -30,10 +30,7 @@ def create_app() -> Flask:
         name='google',
         client_id='35722269243-fdj189u3r1n05rnsmp6q2vjcdhs4vcui.apps.googleusercontent.com',
         client_secret='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',
-        access_token_url='https://accounts.google.com/o/oauth2/token',
-        authorize_url='https://accounts.google.com/o/oauth2/auth',
-        api_base_url='https://www.googleapis.com/oauth2/v1/',
-        userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
         client_kwargs={'scope': 'openid email profile'}
     )
 
