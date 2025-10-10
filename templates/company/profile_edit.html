@@ -57,52 +57,10 @@
         </div>
       </div>
 
-      <!-- قسم البنوك -->
+      <!-- قسم البنوك أزيل: الآن البنوك هي التي تعتمد شركات التثمين -->
       <div class="col-12">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="card-title mb-0 fw-bold">البنوك</h5>
-              <button type="button" id="addBankRow" class="btn btn-sm btn-outline-primary">إضافة بنك</button>
-            </div>
-
-            <div class="table-responsive">
-              <table class="table align-middle" id="banksTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>اسم البنك</th>
-                    <th>البريد الإلكتروني</th>
-                    <th>رقم الهاتف</th>
-                    <th>الحد المالي (اختياري)</th>
-                    <th>إزالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% set manual_list = manual_banks or [] %}
-                  {% if manual_list %}
-                    {% for b in manual_list %}
-                    <tr>
-                      <td><input type="text" class="form-control" name="bank_name" value="{{ b.name or '' }}" placeholder="اسم البنك" required></td>
-                      <td><input type="email" class="form-control" name="bank_email" value="{{ b.email or '' }}" placeholder="email@example.com"></td>
-                      <td><input type="text" class="form-control" name="bank_phone" value="{{ b.phone or '' }}" placeholder="05xxxxxxxx"></td>
-                      <td><input type="number" step="0.01" class="form-control" name="bank_limit" value="{{ b.limit_value or '' }}"></td>
-                      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
-                    </tr>
-                    {% endfor %}
-                  {% else %}
-                    <tr>
-                      <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
-                      <td><input type="email" class="form-control" name="bank_email" placeholder="email@example.com"></td>
-                      <td><input type="text" class="form-control" name="bank_phone" placeholder="05xxxxxxxx"></td>
-                      <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder=""></td>
-                      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
-                    </tr>
-                  {% endif %}
-                </tbody>
-              </table>
-            </div>
-            <div class="form-text">أضف صفًا لكل بنك ترغب بإظهاره في ملفك.</div>
-          </div>
+        <div class="alert alert-info shadow-sm">
+          يمكن للبنوك اعتماد شركتكم من طرفهم. لن تحتاجوا لإضافة بنوك هنا.
         </div>
       </div>
 
@@ -187,30 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   bindRemoveContacts();
 
-  // Banks table
-  const banksTableBody = document.querySelector('#banksTable tbody');
-  const addBankBtn = document.getElementById('addBankRow');
-
-  function bindRemoveBanks() {
-    banksTableBody.querySelectorAll('.removeBank').forEach(btn => {
-      btn.onclick = () => btn.closest('tr').remove();
-    });
-  }
-
-  addBankBtn.addEventListener('click', () => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><input type="text" class="form-control" name="bank_name" placeholder="اسم البنك" required></td>
-      <td><input type="email" class="form-control" name="bank_email" placeholder="email@example.com"></td>
-      <td><input type="text" class="form-control" name="bank_phone" placeholder="05xxxxxxxx"></td>
-      <td><input type="number" step="0.01" class="form-control" name="bank_limit" placeholder="اختياري"></td>
-      <td><button type="button" class="btn btn-sm btn-outline-danger removeBank">حذف</button></td>
-    `;
-    banksTableBody.appendChild(row);
-    bindRemoveBanks();
-  });
-
-  bindRemoveBanks();
+  // تم إزالة إدارة البنوك من صفحة الشركة
 
 });
 </script>

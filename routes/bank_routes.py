@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankOffer, BankLoanPolicy
+from models import db, User, ValuationRequest, BankProfile, BankOffer, BankLoanPolicy, CompanyApprovedBank, CompanyProfile
 from utils import calculate_max_loan
 
 # تعريف Blueprint للبنك
@@ -33,7 +33,125 @@ def dashboard():
     # جلب سياسات القروض الحالية
     policies = BankLoanPolicy.query.filter_by(bank_profile_id=bank_profile.id).all()
 
-    return render_template('bank/dashboard.html', requests=requests, offers=offers, policies=policies)
+    # جلب الشركات المعتمدة لدى هذا البنك
+    approved_rows = (
+        db.session.query(CompanyApprovedBank, CompanyProfile, User)
+        .join(CompanyProfile, CompanyApprovedBank.company_profile_id == CompanyProfile.id)
+        .join(User, CompanyProfile.user_id == User.id)
+        .filter(CompanyApprovedBank.bank_user_id == current_user.id)
+        .all()
+    )
+    approved_companies = [
+        {
+            'cab_id': cab.id,
+            'company_user_id': user.id,
+            'name': user.name,
+            'limit_value': (cab.limit_value if cab.limit_value is not None else profile.limit_value),
+            'logo_path': profile.logo_path,
+        }
+        for cab, profile, user in approved_rows
+    ]
+
+    # جميع شركات التثمين غير المعتمدة بعد من هذا البنك
+    approved_user_ids = {item['company_user_id'] for item in approved_companies}
+    companies_all = (
+        db.session.query(User, CompanyProfile)
+        .join(CompanyProfile, CompanyProfile.user_id == User.id)
+        .filter(User.role == 'company')
+        .all()
+    )
+    companies_to_add = [
+        {
+            'user_id': user.id,
+            'name': user.name,
+            'limit_value': profile.limit_value,
+        }
+        for user, profile in companies_all
+        if user.id not in approved_user_ids
+    ]
+
+    return render_template(
+        'bank/dashboard.html',
+        requests=requests,
+        offers=offers,
+        policies=policies,
+        approved_companies=approved_companies,
+        companies_to_add=companies_to_add,
+    )
+
+
+# --- إدارة الشركات المعتمدة للبنك ---
+@bank_bp.route('/approved_companies/add', methods=['POST'])
+@login_required
+def add_approved_company():
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+
+    try:
+        company_user_id = int(request.form.get('company_user_id'))
+    except Exception:
+        flash('شركة غير صالحة', 'danger')
+        return redirect(url_for('bank.dashboard'))
+
+    limit_raw = request.form.get('limit_value')
+    limit_value = None
+    if limit_raw not in (None, ''):
+        try:
+            limit_value = float(limit_raw)
+        except Exception:
+            flash('قيمة حد غير صالحة', 'danger')
+            return redirect(url_for('bank.dashboard'))
+
+    profile = CompanyProfile.query.filter_by(user_id=company_user_id).first()
+    if not profile:
+        flash('ملف الشركة غير موجود', 'danger')
+        return redirect(url_for('bank.dashboard'))
+
+    cab = CompanyApprovedBank.query.filter_by(company_profile_id=profile.id, bank_user_id=current_user.id).first()
+    if not cab:
+        cab = CompanyApprovedBank(company_profile_id=profile.id, bank_user_id=current_user.id, limit_value=limit_value)
+        db.session.add(cab)
+    else:
+        cab.limit_value = limit_value
+    db.session.commit()
+    flash('تم اعتماد الشركة بنجاح', 'success')
+    return redirect(url_for('bank.dashboard'))
+
+
+@bank_bp.route('/approved_companies/<int:cab_id>/delete', methods=['POST'])
+@login_required
+def delete_approved_company(cab_id: int):
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+    cab = CompanyApprovedBank.query.get_or_404(cab_id)
+    if cab.bank_user_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+    db.session.delete(cab)
+    db.session.commit()
+    flash('تم إزالة اعتماد الشركة', 'success')
+    return redirect(url_for('bank.dashboard'))
+
+
+@bank_bp.route('/approved_companies/<int:cab_id>/update', methods=['POST'])
+@login_required
+def update_approved_company(cab_id: int):
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+    cab = CompanyApprovedBank.query.get_or_404(cab_id)
+    if cab.bank_user_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+    limit_raw = request.form.get('limit_value')
+    limit_value = None
+    if limit_raw not in (None, ''):
+        try:
+            limit_value = float(limit_raw)
+        except Exception:
+            flash('قيمة حد غير صالحة', 'danger')
+            return redirect(url_for('bank.dashboard'))
+    cab.limit_value = limit_value
+    db.session.commit()
+    flash('تم تحديث حد الشركة', 'success')
+    return redirect(url_for('bank.dashboard'))
 
 # --- تحديث حالة الطلب ---
 @bank_bp.route('/update_request/<int:request_id>', methods=['POST'])
