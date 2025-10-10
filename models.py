@@ -16,8 +16,8 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    # OAuth support fields (for Google / Apple sign-in)
-    oauth_provider = db.Column(db.String(50), nullable=True)  # e.g., 'google', 'apple'
+    # OAuth support fields (e.g., Google sign-in)
+    oauth_provider = db.Column(db.String(50), nullable=True)  # e.g., 'google'
     oauth_subject = db.Column(db.String(255), nullable=True)  # provider user id (sub)
     email_verified = db.Column(db.Boolean, nullable=False, default=False)
     role = db.Column(db.String(50), nullable=False)  # admin, client, company, bank

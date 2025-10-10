@@ -27,16 +27,7 @@ def get_oauth():
             server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
             client_kwargs={'scope': 'openid email profile'},
         )
-        # Apple (OpenID Connect - discovery is static; use custom endpoints)
-        oauth.register(
-            name='apple',
-            client_id=app.config.get('APPLE_CLIENT_ID'),
-            client_secret=app.config.get('APPLE_CLIENT_SECRET'),
-            api_base_url='https://appleid.apple.com',
-            authorize_url='https://appleid.apple.com/auth/authorize',
-            access_token_url='https://appleid.apple.com/auth/token',
-            client_kwargs={'scope': 'name email', 'response_mode': 'form_post', 'response_type': 'code'},
-        )
+        # Third-party sign-in provider removed
         _oauth = oauth
     return _oauth
 
@@ -236,51 +227,7 @@ def google_callback():
     return redirect(url_for('main.landing'))
 
 
-# --- Apple OAuth ---
-@auth.route('/login/apple')
-def login_apple():
-    oauth = get_oauth()
-    redirect_uri = url_for('auth.apple_callback', _external=True)
-    return oauth.apple.authorize_redirect(redirect_uri)
-
-
-@auth.route('/auth/apple/callback', methods=['GET', 'POST'])
-def apple_callback():
-    oauth = get_oauth()
-    token = oauth.apple.authorize_access_token()
-    id_token = token.get('id_token')
-    claims = oauth.apple.parse_id_token(token) if id_token else None
-    if not claims:
-        flash('تعذر الحصول على بيانات Apple', 'danger')
-        return redirect(url_for('auth.login'))
-
-    email = (claims.get('email') or '').lower()
-    sub = claims.get('sub')
-    name = (claims.get('name') or '') or (email.split('@')[0] if email else 'Apple User')
-    email_verified = str(claims.get('email_verified')).lower() == 'true'
-
-    if not email:
-        flash('حساب Apple لم يرجع بريد إلكتروني. الرجاء ربط البريد لاحقًا', 'warning')
-        # Fallback: construct pseudo email to allow account creation
-        email = f"apple-{sub}@private.appleid"
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(name=name, email=email, role='client', oauth_provider='apple', oauth_subject=sub, email_verified=email_verified)
-        user.set_password(secrets.token_urlsafe(16))
-        db.session.add(user)
-        db.session.commit()
-    else:
-        if not user.oauth_provider:
-            user.oauth_provider = 'apple'
-            user.oauth_subject = sub
-            if email_verified:
-                user.email_verified = True
-            db.session.commit()
-
-    login_user(user)
-    flash('تم تسجيل الدخول عبر Apple', 'success')
-    return redirect(url_for('main.landing'))
+## Third-party OAuth route removed
 
 
 # --- تسجيل الخروج ---
