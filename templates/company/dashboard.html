@@ -13,12 +13,13 @@
   <tbody>
     {% for r in requests %}
       <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.title }}</td>
+        <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
+        <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
         <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
         <td>{{ r.client.name }}</td>
         <td>{{ r.status }}</td>
         <td>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company.request_detail', request_id=r.id) }}">تفاصيل</a>
           <a class="btn btn-sm btn-primary" href="{{ url_for('company.submit_valuation', request_id=r.id) }}">Submit Valuation</a>
         </td>
       </tr>

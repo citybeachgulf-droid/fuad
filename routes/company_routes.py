@@ -31,6 +31,18 @@ def submit_valuation(request_id):
     return render_template('company/submit.html', request_obj=vr)
 
 
+@company_bp.route('/requests/<int:request_id>')
+@login_required
+def request_detail(request_id: int):
+    """عرض تفاصيل معاملة التثمين للشركة الحالية."""
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    req = ValuationRequest.query.get_or_404(request_id)
+    if req.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+    return render_template('company/request_detail.html', request_obj=req)
+
+
 # ================================
 # إدارة ملف تعريف الشركة
 # ================================
