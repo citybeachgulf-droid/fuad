@@ -61,6 +61,10 @@ body {
 .slide-up { animation: slideUp .6s ease both; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: translateY(0);} }
 
+/* Ads carousel tweaks */
+#ads-top .carousel-item img { object-fit: cover; max-height: 300px; }
+#ads-top .card { border-radius: 14px; }
+
 /* Responsive: mobile-first tweaks */
 @media (max-width: 576px) {
   /* Hero heading and lead */
