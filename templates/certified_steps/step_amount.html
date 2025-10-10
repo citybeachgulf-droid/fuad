@@ -15,7 +15,81 @@
       {% endif %}
     </div>
 
-    {{ cards_grid(options) }}
+    <div id="amountCardsContainer">
+      {{ cards_grid(options) }}
+    </div>
+
+    <div id="results" class="mt-3" hidden>
+      <div class="results-card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="m-0">الشركات المعتمدة المطابقة</h6>
+          <span class="badge text-bg-secondary" id="resultsCount">0</span>
+        </div>
+        <div id="resultsList" class="vstack gap-2"></div>
+      </div>
+    </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const container = document.getElementById('amountCardsContainer');
+  const bankSlug = {{ '"' + bank.slug + '"' if bank else '""' }};
+  const results = document.getElementById('results');
+  const resultsList = document.getElementById('resultsList');
+  const resultsCount = document.getElementById('resultsCount');
+
+  if (!container) return;
+
+  function renderResults(items) {
+    resultsList.innerHTML = '';
+    resultsCount.textContent = items.length;
+    if (!items.length) {
+      resultsList.innerHTML = '<div class="text-muted">لا توجد شركات مطابقة للمعايير.</div>';
+    } else {
+      items.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-center justify-content-between p-2 border rounded';
+        row.innerHTML = `
+          <div class="d-flex align-items-center gap-2">
+            <img src="${it.logo_path || ''}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">
+            <strong>${it.name}</strong>
+          </div>
+          <span class="badge text-bg-success">حد: ${it.limit_value ?? '—'}</span>
+        `;
+        resultsList.appendChild(row);
+      });
+    }
+    results.hidden = false;
+  }
+
+  async function handleClick(e) {
+    const href = e.currentTarget.getAttribute('href');
+    const url = new URL(href, window.location.origin);
+    const amt = url.searchParams.get('amount');
+    if (!bankSlug || !amt) {
+      // لا نعطل التنقل إذا لم تتوفر البيانات
+      return;
+    }
+    e.preventDefault();
+    try {
+      const apiUrl = new URL('/api/certified_companies', window.location.origin);
+      apiUrl.searchParams.set('bank_slug', bankSlug);
+      apiUrl.searchParams.set('amount', String(amt));
+      const res = await fetch(apiUrl.toString());
+      const items = await res.json();
+      renderResults(Array.isArray(items) ? items : []);
+    } catch (err) {
+      renderResults([]);
+    }
+  }
+
+  // اربط على روابط بطاقات المبالغ (المتجهة إلى صفحة الملخص)
+  container.querySelectorAll('.tile-grid a[href*="certified/summary"]').forEach((a) => {
+    a.addEventListener('click', handleClick);
+  });
+})();
+</script>
 {% endblock %}
