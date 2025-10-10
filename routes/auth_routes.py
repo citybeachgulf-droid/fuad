@@ -100,7 +100,9 @@ def signup():
 def login_google():
     oauth = get_oauth()
     redirect_uri = url_for('auth.google_callback', _external=True)
+    print("Redirect URI:", redirect_uri)  # ✅ أضف هذا السطر لمراجعة الرابط الحقيقي
     return oauth.google.authorize_redirect(redirect_uri)
+
 
 
 @auth.route('/auth/google/callback')

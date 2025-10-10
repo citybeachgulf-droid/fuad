@@ -3,6 +3,8 @@ import os
 from flask_login import LoginManager, current_user, login_required
 from models import db, User, ValuationRequest, BankProfile, BankOffer
 from sqlalchemy import inspect, text
+from authlib.integrations.flask_client import OAuth  # ✅ ضروري
+from config import Config
 
 # Blueprints
 from routes.auth_routes import auth
@@ -11,18 +13,32 @@ from routes.company_routes import company_bp
 from routes.bank_routes import bank_bp
 from routes.client_routes import client_bp
 from routes.main_routes import main
-from config import Config
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
+
+    # إعداد OAuth
+    oauth = OAuth(app)
+    google = oauth.register(
+        name='google',
+        client_id='35722269243-fdj189u3r1n05rnsmp6q2vjcdhs4vcui.apps.googleusercontent.com',
+        client_secret='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',
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        api_base_url='https://www.googleapis.com/oauth2/v1/',
+        userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+        client_kwargs={'scope': 'openid email profile'}
+    )
+
     # Ensure upload folders exist
     os.makedirs(app.config.get('UPLOAD_FOLDER', ''), exist_ok=True)
     os.makedirs(app.config.get('NEWS_UPLOAD_FOLDER', ''), exist_ok=True)
     os.makedirs(app.config.get('ADS_UPLOAD_FOLDER', ''), exist_ok=True)
 
+    # إعداد LoginManager
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -43,7 +59,6 @@ def create_app() -> Flask:
     def health():
         return {"status": "ok"}
 
-    # Redirect to role dashboards after login
     @app.route('/dashboard')
     @login_required
     def dashboard():
@@ -56,25 +71,27 @@ def create_app() -> Flask:
         else:
             return redirect(url_for('client.dashboard'))
 
+    # ✅ نرجع الكائنات المهمة لاستخدامها في باقي الملفات
+    app.oauth = oauth
+    app.google = google
+
     return app
 
 
 app = create_app()
 
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Lightweight migration: ensure new columns and fields exist
+
+        # تحديث الجداول تلقائياً إذا لزم
         try:
             inspector = inspect(db.engine)
-            # company_approved_banks.limit_value
             cols = [c['name'] for c in inspector.get_columns('company_approved_banks')]
             if 'limit_value' not in cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE company_approved_banks ADD COLUMN limit_value FLOAT'))
 
-            # users.oauth_provider, users.oauth_subject, users.email_verified
             user_cols = [c['name'] for c in inspector.get_columns('users')]
             with db.engine.connect() as conn:
                 if 'oauth_provider' not in user_cols:
@@ -84,16 +101,16 @@ if __name__ == '__main__':
                 if 'email_verified' not in user_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0 NOT NULL"))
         except Exception:
-            # Fail silently to avoid startup crash; model will still work for new DBs
             pass
-        # إنشاء حساب المدير الافتراضي إذا لم يوجد
+
+        # إنشاء مدير النظام إذا لم يوجد
         if User.query.filter_by(role='admin').count() == 0:
             admin_user = User(name="مدير النظام", email="admin@platform.com", role="admin")
             admin_user.set_password("123")
             db.session.add(admin_user)
             db.session.commit()
 
-        # Seed major Omani banks and sample offers
+        # بيانات البنوك العمانية
         def seed_omani_banks():
             banks = [
                 {"name": "Bank Muscat", "slug": "bank-muscat", "website": "https://www.bankmuscat.com/"},
@@ -111,7 +128,6 @@ if __name__ == '__main__':
                 return
 
             for b in banks:
-                # Create user for bank
                 email = f"{b['slug']}@banks.om"
                 existing_user = User.query.filter_by(email=email).first()
                 if not existing_user:
@@ -122,11 +138,15 @@ if __name__ == '__main__':
                 else:
                     u = existing_user
 
-                profile = BankProfile(user_id=u.id, slug=b["slug"], website=b.get("website"), about=f"عروض تمويل من {b['name']}")
+                profile = BankProfile(
+                    user_id=u.id,
+                    slug=b["slug"],
+                    website=b.get("website"),
+                    about=f"عروض تمويل من {b['name']}"
+                )
                 db.session.add(profile)
                 db.session.flush()
 
-                # Sample offers (illustrative only)
                 offer = BankOffer(
                     bank_profile_id=profile.id,
                     product_name="قرض سكني",
@@ -144,4 +164,5 @@ if __name__ == '__main__':
 
         seed_omani_banks()
 
+    # ✅ تشغيل التطبيق
     app.run(host='0.0.0.0', port=5000, debug=True)
