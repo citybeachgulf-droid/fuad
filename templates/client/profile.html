@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">الملف الشخصي للعميل</h5>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.dashboard') }}">لوحة العميل</a>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label text-muted">الاسم</label>
+        <div class="form-control bg-light">{{ (user.name or '-') if user else '-' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-muted">البريد الإلكتروني</label>
+        <div class="form-control bg-light">{{ (user.email or '-') if user else '-' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-muted">رقم الهاتف</label>
+        <div class="form-control bg-light">{{ (user.phone or '-') if user else '-' }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-muted">حالة التحقق من البريد</label>
+        <div class="form-control bg-light">
+          {% if user and user.email_verified %}
+            <span class="text-success">مؤكّد</span>
+          {% else %}
+            <span class="text-warning">غير مؤكد</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-muted">تسجيل عبر</label>
+        <div class="form-control bg-light">{{ user.oauth_provider or 'البريد/الهاتف' }}</div>
+      </div>
+      <div class="col-12 mt-3">
+        <a href="{{ url_for('client.submit_request') }}" class="btn btn-primary">طلب تثمين جديد</a>
+        <a href="{{ url_for('client.dashboard') }}" class="btn btn-outline-primary ms-2">مشاهدة طلباتي</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

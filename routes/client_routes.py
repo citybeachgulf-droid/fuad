@@ -15,10 +15,16 @@ def login():
         user = User.query.filter_by(email=email, password=password, role='client').first()
         if user:
             login_user(user)
-            return redirect(url_for('main.landing'))
+            return redirect(url_for('client.profile'))
         else:
             flash('Invalid credentials', 'danger')
     return render_template('client/login.html')
+
+@client_bp.route('/profile')
+@login_required
+def profile():
+    """عرض ملف العميل الشخصي بعد تسجيل الدخول."""
+    return render_template('client/profile.html', user=current_user)
 
 @client_bp.route('/dashboard')
 @login_required

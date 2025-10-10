@@ -52,7 +52,8 @@ def login():
             elif user.role == 'bank':
                 return redirect(url_for('bank.dashboard'))
             else:
-                return redirect(url_for('main.landing'))
+                # عميل: عرض صفحة البروفايل بعد الدخول
+                return redirect(url_for('client.profile'))
         else:
             flash('البريد الإلكتروني أو كلمة المرور خاطئة', 'danger')
 
@@ -150,7 +151,7 @@ def verify_otp():
 
         login_user(user)
         flash('تم تسجيل الدخول برقم الهاتف', 'success')
-        return redirect(url_for('client.dashboard'))
+        return redirect(url_for('client.profile'))
 
     # GET
     return render_template('verify_otp.html', phone=phone, purpose=purpose)
@@ -224,7 +225,7 @@ def google_callback():
 
     login_user(user)
     flash('تم تسجيل الدخول عبر Google', 'success')
-    return redirect(url_for('main.landing'))
+    return redirect(url_for('client.profile'))
 
 
 ## Third-party OAuth route removed
