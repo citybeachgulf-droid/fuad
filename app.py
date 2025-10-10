@@ -109,6 +109,12 @@ if __name__ == '__main__':
             if 'stored_in_utc' not in ads_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE advertisements ADD COLUMN stored_in_utc BOOLEAN DEFAULT 0 NOT NULL'))
+
+            # Ensure valuation_requests.valuation_type exists
+            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
+            if 'valuation_type' not in vr_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN valuation_type VARCHAR(50)'))
         except Exception:
             pass
 

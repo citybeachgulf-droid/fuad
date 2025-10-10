@@ -11,6 +11,15 @@
     <textarea class="form-control" name="description" rows="4"></textarea>
   </div>
   <div class="mb-3">
+    <label class="form-label">نوع التثمين</label>
+    <select class="form-select" name="valuation_type" required>
+      <option value="">— اختر —</option>
+      <option value="land">أرض</option>
+      <option value="property">عقار</option>
+      <option value="house">بناء منزل</option>
+    </select>
+  </div>
+  <div class="mb-3">
     <label class="form-label">اختر شركة التثمين</label>
     <select class="form-select" name="company_id">
       <option value="">— بدون تحديد —</option>

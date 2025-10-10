@@ -123,6 +123,8 @@ class ValuationRequest(db.Model):
     bank_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     value = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), default='pending')  # pending/approved/completed/revision_requested
+    # نوع التثمين: أرض/عقار/بناء منزل
+    valuation_type = db.Column(db.String(50), nullable=True)  # values: land, property, house
 
     # علاقات ORM (اختياري لكن مفيد)
     client = db.relationship('User', foreign_keys=[client_id], backref='client_requests')
