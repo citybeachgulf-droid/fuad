@@ -99,13 +99,37 @@ def signup():
 @auth.route('/login/google')
 def login_google():
     oauth = get_oauth()
-    redirect_uri = url_for('auth.google_callback', _external=True)
+    app = current_app
+    external_base = app.config.get('EXTERNAL_BASE_URL')
+    # Build redirect URI robustly in proxied setups
+    if external_base:
+        # Ensure no trailing slash and construct full callback URL
+        base = external_base.rstrip('/')
+        redirect_uri = f"{base}{url_for('auth.google_callback')}"
+    else:
+        redirect_uri = url_for('auth.google_callback', _external=True)
+
+    # Validate env configuration to avoid 400 from Google due to misconfig
+    client_id = app.config.get('GOOGLE_CLIENT_ID')
+    client_secret = app.config.get('GOOGLE_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        flash('إعدادات Google غير مكتملة. يرجى ضبط مفاتيح Google.', 'danger')
+        return redirect(url_for('auth.login'))
+
     return oauth.google.authorize_redirect(redirect_uri)
 
 
 @auth.route('/auth/google/callback')
 def google_callback():
     oauth = get_oauth()
+    # Defensive: prevent confusing 400s if env misconfigured
+    app = current_app
+    client_id = app.config.get('GOOGLE_CLIENT_ID')
+    client_secret = app.config.get('GOOGLE_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        flash('إعدادات Google غير مكتملة. يرجى ضبط مفاتيح Google.', 'danger')
+        return redirect(url_for('auth.login'))
+
     token = oauth.google.authorize_access_token()
     userinfo = token.get('userinfo') or oauth.google.parse_id_token(token)
     if not userinfo:

@@ -20,6 +20,8 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'no-reply@localhost')
     # Optional: used for external URL generation; set to your domain (e.g., example.com)
     SERVER_NAME = os.environ.get('SERVER_NAME')
+    # Optional: explicitly set the public base URL used to build callbacks, e.g. "https://app.example.com"
+    EXTERNAL_BASE_URL = os.environ.get('EXTERNAL_BASE_URL')
 
     # OAuth configuration
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
