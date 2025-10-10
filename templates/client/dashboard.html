@@ -16,6 +16,7 @@
       <th>نوع التثمين</th>
       <th>الشركة</th>
       <th>الحالة</th>
+      <th>إجراء</th>
     </tr>
   </thead>
   <tbody>
@@ -28,6 +29,12 @@
         </td>
         <td>{{ r.company.name if r.company else '-' }}</td>
         <td>{{ r.status }}</td>
+        <td>
+          {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}
+          {% if (r.status or '').lower() == 'completed' and not has_final %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('client.propose_appointment', request_id=r.id) }}">تحديد موعد زيارة</a>
+          {% else %}-{% endif %}
+        </td>
       </tr>
     {% endfor %}
   </tbody>

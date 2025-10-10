@@ -131,6 +131,12 @@ class ValuationRequest(db.Model):
     company = db.relationship('User', foreign_keys=[company_id], backref='company_requests')
     bank = db.relationship('User', foreign_keys=[bank_id], backref='bank_requests')
     documents = db.relationship('RequestDocument', backref='valuation_request', cascade='all, delete-orphan')
+    # مواعيد الزيارة المرتبطة بالطلب
+    appointments = db.relationship(
+        'VisitAppointment',
+        backref='valuation_request',
+        cascade='all, delete-orphan'
+    )
 
 # ================================
 # نموذج دعوة التسجيل
@@ -248,6 +254,30 @@ class RequestDocument(db.Model):
     file_path = db.Column(db.String(255), nullable=False)  # مسار داخل static/uploads
     original_filename = db.Column(db.String(255), nullable=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ================================
+# مواعيد الزيارة
+# ================================
+class VisitAppointment(db.Model):
+    __tablename__ = 'visit_appointments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    valuation_request_id = db.Column(
+        db.Integer,
+        db.ForeignKey('valuation_requests.id'),
+        nullable=False,
+        index=True,
+    )
+    # وقت الموعد المقترح/النهائي
+    proposed_time = db.Column(db.DateTime, nullable=False)
+    # من قام باقتراحه: client أو company
+    proposed_by = db.Column(db.String(20), nullable=False)
+    # حالة الموعد: pending/accepted/rejected/final
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 # ================================
 # نموذج الأخبار

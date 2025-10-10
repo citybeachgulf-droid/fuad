@@ -1,11 +1,12 @@
 """Blueprint for client portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument
+from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment
 from werkzeug.utils import secure_filename
 import os
 import time
 from utils import calculate_max_loan, format_phone_e164
+from datetime import datetime
 
 client_bp = Blueprint('client', __name__, template_folder='../templates/client', static_folder='../static')
 
@@ -218,6 +219,52 @@ def upload_docs(request_id: int):
         return redirect(url_for('client.dashboard'))
 
     return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
+
+
+# -------------------------------
+# Client proposes visit appointment after valuation completed
+# -------------------------------
+@client_bp.route('/appointments/propose/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+def propose_appointment(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Allow proposing only if company has submitted valuation (completed)
+    if (vr.status or '').lower() != 'completed':
+        flash('يمكن تحديد موعد الزيارة بعد اكتمال التثمين من الشركة', 'warning')
+        return redirect(url_for('client.dashboard'))
+
+    if request.method == 'POST':
+        proposed_raw = (request.form.get('proposed_time') or '').strip()
+        notes = (request.form.get('notes') or '').strip() or None
+        if not proposed_raw:
+            flash('يرجى تحديد وقت الموعد', 'danger')
+            return render_template('client/appointment_propose.html', request_obj=vr)
+        try:
+            # Expecting input type datetime-local => YYYY-MM-DDTHH:MM
+            proposed_dt = datetime.fromisoformat(proposed_raw)
+        except Exception:
+            flash('تنسيق وقت غير صالح', 'danger')
+            return render_template('client/appointment_propose.html', request_obj=vr)
+
+        appt = VisitAppointment(
+            valuation_request_id=vr.id,
+            proposed_time=proposed_dt,
+            proposed_by='client',
+            status='pending',
+            notes=notes,
+        )
+        db.session.add(appt)
+        db.session.commit()
+        flash('تم إرسال اقتراح موعد الزيارة إلى الشركة', 'success')
+        return redirect(url_for('client.dashboard'))
+
+    return render_template('client/appointment_propose.html', request_obj=vr)
 
 
 # -------------------------------

@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>تحديد موعد زيارة للمعاملة #{{ request_obj.id }}</h2>
+<p class="text-muted">بعد إرسال الموعد، ستقوم الشركة بمراجعة الموعد والموافقة أو اقتراح موعد بديل.</p>
+<form method="post" class="card p-3">
+  <div class="mb-3">
+    <label class="form-label">موعد الزيارة المقترح</label>
+    <input type="datetime-local" name="proposed_time" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">ملاحظات (اختياري)</label>
+    <textarea name="notes" class="form-control" rows="3" placeholder="أي تفاصيل تود مشاركتها"></textarea>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
+    <button type="submit" class="btn btn-primary">إرسال الموعد</button>
+  </div>
+</form>
+{% endblock %}
