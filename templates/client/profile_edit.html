@@ -1,0 +1,54 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">تعديل الملف الشخصي</h5>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.profile') }}">رجوع</a>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الاسم</label>
+              <input type="text" class="form-control" name="name" value="{{ user.name or '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">البريد الإلكتروني</label>
+              <input type="email" class="form-control" name="email" value="{{ user.email or '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رقم الهاتف</label>
+              <input type="text" class="form-control" name="phone" value="{{ user.phone or '' }}" placeholder="مثال: +9689xxxxxxx">
+            </div>
+
+            <div class="col-12 mt-3">
+              <h6 class="text-muted">تغيير كلمة المرور (اختياري)</h6>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">كلمة المرور الحالية</label>
+                  <input type="password" class="form-control" name="current_password" autocomplete="current-password">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">كلمة المرور الجديدة</label>
+                  <input type="password" class="form-control" name="new_password" autocomplete="new-password">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">تأكيد كلمة المرور</label>
+                  <input type="password" class="form-control" name="confirm_password" autocomplete="new-password">
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 mt-3">
+              <button type="submit" class="btn btn-primary">حفظ</button>
+              <a href="{{ url_for('client.profile') }}" class="btn btn-outline-secondary ms-2">إلغاء</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

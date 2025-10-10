@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy
-from utils import calculate_max_loan
+from utils import calculate_max_loan, format_phone_e164
 
 client_bp = Blueprint('client', __name__, template_folder='../templates/client', static_folder='../static')
 
@@ -25,6 +25,68 @@ def login():
 def profile():
     """عرض ملف العميل الشخصي بعد تسجيل الدخول."""
     return render_template('client/profile.html', user=current_user)
+
+
+@client_bp.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """تعديل بيانات ملف العميل الشخصي."""
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    user = current_user
+
+    if request.method == 'POST':
+        name = (request.form.get('name') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        phone_raw = (request.form.get('phone') or '').strip()
+
+        current_password = request.form.get('current_password') or ''
+        new_password = request.form.get('new_password') or ''
+        confirm_password = request.form.get('confirm_password') or ''
+
+        if not name:
+            flash('يرجى إدخال الاسم', 'danger')
+            return render_template('client/profile_edit.html', user=user)
+
+        if not email:
+            flash('يرجى إدخال البريد الإلكتروني', 'danger')
+            return render_template('client/profile_edit.html', user=user)
+
+        # التحقق من فريدة البريد الإلكتروني عند تغييره
+        if email != (user.email or '').lower():
+            exists = User.query.filter(User.email == email, User.id != user.id).first()
+            if exists:
+                flash('البريد الإلكتروني مستخدم بالفعل', 'danger')
+                return render_template('client/profile_edit.html', user=user)
+
+        # توحيد تنسيق الهاتف
+        phone = format_phone_e164(phone_raw) if phone_raw else None
+
+        # تغيير كلمة المرور (اختياري)
+        if new_password or confirm_password:
+            if new_password != confirm_password:
+                flash('كلمتا المرور غير متطابقتين', 'danger')
+                return render_template('client/profile_edit.html', user=user)
+            # طلب كلمة المرور الحالية للتحقق، مع استثناء حسابات OAuth التي لا تملك كلمة معروفة
+            if not (user.oauth_provider and not current_password):
+                if not user.check_password(current_password):
+                    flash('كلمة المرور الحالية غير صحيحة', 'danger')
+                    return render_template('client/profile_edit.html', user=user)
+            user.set_password(new_password)
+
+        email_changed = email != (user.email or '').lower()
+        user.name = name
+        user.email = email
+        user.phone = phone
+        if email_changed:
+            user.email_verified = False
+
+        db.session.commit()
+        flash('تم تحديث الملف الشخصي', 'success')
+        return redirect(url_for('client.profile'))
+
+    return render_template('client/profile_edit.html', user=user)
 
 @client_bp.route('/dashboard')
 @login_required
