@@ -54,8 +54,11 @@
       {% endif %}
     </div>
 
-    <div class="mt-4">
+    <div class="mt-4 d-flex gap-2">
       <a class="btn btn-warning" href="{{ url_for('client.submit_request', company_id=company.id) }}">طلب تثمين من هذه الشركة</a>
+      {% if current_user.is_authenticated and current_user.role == 'client' %}
+      <a class="btn btn-primary" href="{{ url_for('conversations.start_conversation', company_id=company.id) }}">بدء محادثة داخلية</a>
+      {% endif %}
     </div>
   </div>
 </div>

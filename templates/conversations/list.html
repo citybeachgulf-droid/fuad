@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}محادثاتي{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0">المحادثات</h1>
+  </div>
+
+  {% if conversations|length == 0 %}
+    <div class="alert alert-info">لا توجد محادثات بعد.</div>
+  {% else %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>الطرف الآخر</th>
+          <th>الحالة</th>
+          <th>تاريخ الإنشاء</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in conversations %}
+          {% set other_id = c.company_id if current_user.role == 'client' else c.client_id %}
+          {% set other = other_parties.get(other_id) %}
+          <tr>
+            <td>{{ other.name if other else '—' }}</td>
+            <td>
+              {% if c.status == 'open' %}
+                <span class="badge bg-success">مفتوحة</span>
+              {% elif c.status == 'pending' %}
+                <span class="badge bg-warning text-dark">قيد المراجعة</span>
+              {% else %}
+                <span class="badge bg-secondary">مغلقة</span>
+              {% endif %}
+            </td>
+            <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-primary" href="{{ url_for('conversations.conversation_detail', conversation_id=c.id) }}">فتح</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

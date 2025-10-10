@@ -14,6 +14,7 @@ from routes.company_routes import company_bp
 from routes.bank_routes import bank_bp
 from routes.client_routes import client_bp
 from routes.main_routes import main
+from routes.conversation_routes import conversations_bp
 
 
 def create_app() -> Flask:
@@ -55,6 +56,7 @@ def create_app() -> Flask:
     app.register_blueprint(bank_bp, url_prefix='/bank')
     app.register_blueprint(client_bp, url_prefix='/client')
     app.register_blueprint(main)
+    app.register_blueprint(conversations_bp)
 
     @app.route('/health')
     def health():
