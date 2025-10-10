@@ -27,7 +27,7 @@
         </div>
         <div id="resultsList" class="vstack gap-2"></div>
         <div class="d-flex justify-content-end mt-2">
-          <a id="continueLink" href="#" class="btn btn-primary" hidden>متابعة إلى الملخص</a>
+          <a id="continueLink" href="#" class="btn btn-primary" hidden>متابعة إلى الشركات</a>
         </div>
       </div>
     </div>
@@ -94,8 +94,8 @@
     }
   }
 
-  // اربط على روابط بطاقات المبالغ (المتجهة إلى صفحة الملخص)
-  container.querySelectorAll('.tile-grid a[href*="certified/summary"]').forEach((a) => {
+  // اربط على روابط بطاقات المبالغ (المتجهة إلى صفحة الشركات)
+  container.querySelectorAll('.tile-grid a[href*="certified/companies"]').forEach((a) => {
     a.addEventListener('click', handleClick);
   });
 })();
