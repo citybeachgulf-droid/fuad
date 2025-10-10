@@ -132,7 +132,7 @@ def certified_step_amount():
     for amt in amounts:
         options.append({
             "title": f"{amt:,}",
-            "href": url_for('main.certified_summary', entity=entity, purpose=purpose, bank=bank_slug, amount=amt),
+            "href": url_for('main.certified_companies', entity=entity, purpose=purpose, bank=bank_slug, amount=amt),
             "icon_class": "bi bi-cash-stack",
             "color_class": "tile-success",
             "subtitle": "ريال"
@@ -153,6 +153,56 @@ def certified_summary():
     except Exception:
         amount = None
     return render_template('certified_steps/summary.html', entity=entity, purpose=purpose, bank=bank, amount=amount)
+
+
+@main.route('/certified/companies')
+def certified_companies():
+    entity = request.args.get('entity', 'person')
+    purpose = request.args.get('purpose', 'buy')
+    bank_slug = request.args.get('bank')
+    bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
+
+    amount_raw = request.args.get('amount')
+    try:
+        amount = float(amount_raw) if amount_raw not in (None, '') else None
+    except Exception:
+        amount = None
+
+    companies = []
+    if bank and amount is not None:
+        q = (
+            db.session.query(CompanyApprovedBank, CompanyProfile, User)
+            .join(CompanyProfile, CompanyApprovedBank.company_profile_id == CompanyProfile.id)
+            .join(User, CompanyProfile.user_id == User.id)
+            .filter(CompanyApprovedBank.bank_user_id == bank.user_id)
+        )
+
+        for cab, profile, user in q.all():
+            limit_value = cab.limit_value if cab.limit_value is not None else profile.limit_value
+            if limit_value is None:
+                continue
+            try:
+                limit_val = float(limit_value)
+            except Exception:
+                continue
+            if limit_val >= float(amount):
+                companies.append({
+                    'id': user.id,
+                    'name': user.name,
+                    'logo_path': f"/static/{profile.logo_path}" if profile.logo_path else None,
+                    'limit_value': limit_val,
+                })
+
+    companies.sort(key=lambda x: x.get('limit_value') or 0, reverse=True)
+
+    return render_template(
+        'certified_steps/companies.html',
+        entity=entity,
+        purpose=purpose,
+        bank=bank,
+        amount=amount,
+        companies=companies,
+    )
 
 
 @main.route('/companies')

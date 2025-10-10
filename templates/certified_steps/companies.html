@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}تقييم معتمد - الشركات المعتمدة{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 m-0">الشركات المعتمدة</h1>
+      <a href="{{ url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=bank.slug if bank else None) }}" class="btn btn-link">رجوع</a>
+    </div>
+
+    <div class="mb-3 text-muted">
+      <div class="d-flex flex-wrap gap-3">
+        <div><strong>الجهة:</strong> {{ 'فرد' if entity == 'person' else 'شركة' }}</div>
+        <div><strong>الغرض:</strong> {{ purpose }}</div>
+        <div><strong>البنك:</strong> {{ bank.user.name if bank and bank.user else (bank.slug if bank else '—') }}</div>
+        <div><strong>المبلغ:</strong> {% if amount is not none %}{{ '{:,}'.format(amount|int if amount is number else amount) }} ريال{% else %}—{% endif %}</div>
+      </div>
+    </div>
+
+    {% if not companies or companies|length == 0 %}
+      <div class="alert alert-warning">لا توجد شركات مطابقة للمعايير المحددة.</div>
+    {% else %}
+      <div class="row g-3">
+        {% for c in companies %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  {% if c.logo_path %}
+                    <img src="{{ c.logo_path }}" alt="logo" style="width:48px;height:48px;object-fit:cover;border-radius:8px">
+                  {% endif %}
+                  <div class="d-flex align-items-center justify-content-between w-100">
+                    <strong>{{ c.name }}</strong>
+                    <span class="badge text-bg-success">حد: {{ '%.0f'|format(c.limit_value or 0) }}</span>
+                  </div>
+                </div>
+                <div class="mt-auto d-flex gap-2">
+                  <a class="btn btn-outline-primary btn-sm flex-fill" href="{{ url_for('main.company_detail', company_id=c.id) }}">تفاصيل</a>
+                  <a class="btn btn-primary btn-sm flex-fill" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}">طلب تثمين</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
