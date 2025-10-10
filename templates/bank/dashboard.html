@@ -137,6 +137,78 @@
 
 <hr>
 
+<!-- إدارة الشركات المعتمدة لدى البنك -->
+<div class="row g-4 mt-1">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><strong>الشركات المعتمدة</strong></div>
+      <div class="card-body p-0">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>الشركة</th>
+              <th>الحد المعتمد</th>
+              <th class="text-end">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if approved_companies and approved_companies|length > 0 %}
+              {% for c in approved_companies %}
+              <tr>
+                <td class="fw-semibold">{{ c.name }}</td>
+                <td style="width: 240px;">
+                  <form class="d-flex gap-2" method="post" action="{{ url_for('bank.update_approved_company', cab_id=c.cab_id) }}">
+                    <input type="number" step="0.01" name="limit_value" class="form-control" value="{{ c.limit_value or '' }}" placeholder="اختياري">
+                    <button class="btn btn-sm btn-outline-primary">تحديث</button>
+                  </form>
+                </td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('bank.delete_approved_company', cab_id=c.cab_id) }}" onsubmit="return confirm('تأكيد حذف الاعتماد؟');">
+                    <button class="btn btn-sm btn-outline-danger">إزالة</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="3" class="text-center py-3 text-muted">لا توجد شركات معتمدة بعد</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><strong>اعتماد شركة جديدة</strong></div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('bank.add_approved_company') }}" class="row g-3 align-items-end">
+          <div class="col-12">
+            <label class="form-label">اختر الشركة</label>
+            <select name="company_user_id" class="form-select" required>
+              <option value="">— اختر —</option>
+              {% for item in companies_to_add or [] %}
+                <option value="{{ item.user_id }}">{{ item.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">الحد المعتمد (اختياري)</label>
+            <input type="number" step="0.01" name="limit_value" class="form-control" placeholder="مثال: 100000">
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-primary">اعتماد</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
 <div class="card mt-3">
   <div class="card-header"><strong>حاسبة القروض</strong></div>
   <div class="card-body">
