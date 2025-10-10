@@ -101,6 +101,12 @@ if __name__ == '__main__':
                     conn.execute(text("ALTER TABLE users ADD COLUMN oauth_subject VARCHAR(255)"))
                 if 'email_verified' not in user_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0 NOT NULL"))
+
+            # Ensure advertisements.stored_in_utc exists
+            ads_cols = [c['name'] for c in inspector.get_columns('advertisements')]
+            if 'stored_in_utc' not in ads_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE advertisements ADD COLUMN stored_in_utc BOOLEAN DEFAULT 0 NOT NULL'))
         except Exception:
             pass
 

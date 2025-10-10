@@ -3,6 +3,7 @@ from models import db, User, InviteToken, News, Advertisement
 from flask_login import login_required, current_user
 from urllib.parse import urljoin
 from flask import current_app
+from zoneinfo import ZoneInfo
 import os
 from werkzeug.utils import secure_filename
 
@@ -210,11 +211,28 @@ def ads_new():
         start_at = request.form.get('start_at') or None
         end_at = request.form.get('end_at') or None
 
-        # Parse datetimes if provided
+        # Parse datetimes if provided and normalize to UTC (naive)
         from datetime import datetime
         fmt = '%Y-%m-%dT%H:%M'
-        start_dt = datetime.strptime(start_at, fmt) if start_at else None
-        end_dt = datetime.strptime(end_at, fmt) if end_at else None
+        tz_name = current_app.config.get('TIMEZONE', 'Asia/Muscat')
+        local_tz = ZoneInfo(tz_name)
+        utc_tz = ZoneInfo('UTC')
+
+        def to_utc_naive(dt_str: str):
+            if not dt_str:
+                return None
+            local_dt = datetime.strptime(dt_str, fmt).replace(tzinfo=local_tz)
+            return local_dt.astimezone(utc_tz).replace(tzinfo=None)
+
+        try:
+            start_dt = to_utc_naive(start_at)
+            end_dt = to_utc_naive(end_at)
+            dates_in_utc = True
+        except Exception:
+            # Fallback to naive values without conversion
+            start_dt = datetime.strptime(start_at, fmt) if start_at else None
+            end_dt = datetime.strptime(end_at, fmt) if end_at else None
+            dates_in_utc = False
 
         image_path_rel = None
         file = request.files.get('image')
@@ -249,6 +267,7 @@ def ads_new():
             is_active=is_active,
             start_at=start_dt,
             end_at=end_dt,
+            stored_in_utc=dates_in_utc,
         )
         db.session.add(ad)
         db.session.commit()
