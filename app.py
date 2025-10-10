@@ -73,7 +73,7 @@ def create_app() -> Flask:
         elif current_user.role == 'bank':
             return redirect(url_for('bank.dashboard'))
         else:
-            return redirect(url_for('client.dashboard'))
+            return redirect(url_for('main.landing'))
 
     # ✅ نرجع الكائنات المهمة لاستخدامها في باقي الملفات
     app.oauth = oauth

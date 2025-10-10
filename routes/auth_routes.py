@@ -60,7 +60,7 @@ def login():
             elif user.role == 'bank':
                 return redirect(url_for('bank.dashboard'))
             else:
-                return redirect(url_for('client.dashboard'))
+                return redirect(url_for('main.landing'))
         else:
             flash('البريد الإلكتروني أو كلمة المرور خاطئة', 'danger')
 
@@ -236,7 +236,7 @@ def google_callback():
 
     login_user(user)
     flash('تم تسجيل الدخول عبر Google', 'success')
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('main.landing'))
 
 
 # --- Apple OAuth ---
@@ -283,7 +283,7 @@ def apple_callback():
 
     login_user(user)
     flash('تم تسجيل الدخول عبر Apple', 'success')
-    return redirect(url_for('client.dashboard'))
+    return redirect(url_for('main.landing'))
 
 
 # --- تسجيل الخروج ---
