@@ -1,15 +1,17 @@
 {% extends 'layout.html' %}
 {% block content %}
 <h2 class="mb-3">طلب تثمين جديد</h2>
-<form method="POST">
-  <div class="mb-3">
-    <label class="form-label">العنوان</label>
-    <input type="text" class="form-control" name="title" required>
+
+<div class="mb-4">
+  <div class="progress" style="height: 8px;">
+    <div class="progress-bar" role="progressbar" style="width: 50%"></div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">الوصف</label>
-    <textarea class="form-control" name="description" rows="4"></textarea>
-  </div>
+  <small class="text-muted">الخطوة 1/2: نوع التثمين</small>
+  <div class="text-muted">اختر النوع للمتابعة تلقائيًا</div>
+  <hr>
+</div>
+
+<form method="POST" id="typeForm">
   <div class="mb-3">
     <label class="form-label d-block">نوع التثمين</label>
     <div class="tile-grid">
@@ -39,18 +41,26 @@
       </label>
     </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">اختر شركة التثمين</label>
-    <select class="form-select" name="company_id">
-      <option value="">— بدون تحديد —</option>
-      {% for c in companies %}
-        <option value="{{ c.id }}" {% if preselected_company_id and preselected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
+  <input type="hidden" name="company_id" value="{{ preselected_company_id or '' }}">
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" type="submit">متابعة</button>
+    <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
   </div>
-  <button class="btn btn-primary" type="submit">إرسال الطلب</button>
-  <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
   
 </form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  const form = document.getElementById('typeForm');
+  document.querySelectorAll('input[name="valuation_type"]').forEach(function(r){
+    r.addEventListener('change', function(){
+      form.requestSubmit();
+    });
+  });
+})();
+</script>
 {% endblock %}
 

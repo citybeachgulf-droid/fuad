@@ -130,6 +130,7 @@ class ValuationRequest(db.Model):
     client = db.relationship('User', foreign_keys=[client_id], backref='client_requests')
     company = db.relationship('User', foreign_keys=[company_id], backref='company_requests')
     bank = db.relationship('User', foreign_keys=[bank_id], backref='bank_requests')
+    documents = db.relationship('RequestDocument', backref='valuation_request', cascade='all, delete-orphan')
 
 # ================================
 # نموذج دعوة التسجيل
@@ -234,6 +235,19 @@ class BankOffer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     bank_profile = db.relationship('BankProfile', backref=db.backref('offers', cascade='all, delete-orphan'))
+
+# ================================
+# مستندات طلب التثمين
+# ================================
+class RequestDocument(db.Model):
+    __tablename__ = 'request_documents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    valuation_request_id = db.Column(db.Integer, db.ForeignKey('valuation_requests.id'), nullable=False, index=True)
+    doc_type = db.Column(db.String(100), nullable=False)  # مثل: kroki, deed, completion_certificate, maps, ids, contractor_agreement
+    file_path = db.Column(db.String(255), nullable=False)  # مسار داخل static/uploads
+    original_filename = db.Column(db.String(255), nullable=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 # ================================
 # نموذج الأخبار

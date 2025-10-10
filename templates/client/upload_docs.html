@@ -1,0 +1,69 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2 class="mb-3">رفع المستندات - طلب رقم {{ request_obj.id }}</h2>
+
+<div class="mb-4">
+  <div class="progress" style="height: 8px;">
+    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+  </div>
+  <small class="text-muted">الخطوة 2/2: رفع المستندات</small>
+</div>
+
+<form method="POST" enctype="multipart/form-data" id="docsForm">
+  <div class="row g-3">
+    {% for key, label, icon in required_docs %}
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi {{ icon }} me-2"></i>{{ label }}</h5>
+          <input class="form-control" type="file" name="{{ key }}[]" multiple accept="image/*,application/pdf" required>
+          <div class="form-text">المسموح: صور أو PDF. الحد الأقصى {{ (max_bytes // (1024*1024)) }}MB.</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <button class="btn btn-primary" type="submit">إرسال</button>
+    <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  const form = document.getElementById('docsForm');
+  const MAX = {{ max_bytes | int }};
+  form.addEventListener('submit', function(e){
+    // Validate files: type and size
+    const inputs = form.querySelectorAll('input[type="file"]');
+    for (const input of inputs) {
+      if (!input.files || input.files.length === 0) {
+        alert('يرجى اختيار الملفات المطلوبة');
+        e.preventDefault();
+        return false;
+      }
+      for (const f of input.files) {
+        if (f.size > MAX) {
+          alert('حجم ملف كبير جدًا. الحد الأقصى ' + (MAX/1024/1024).toFixed(1) + 'MB');
+          e.preventDefault();
+          return false;
+        }
+        const ok = (
+          f.type.startsWith('image/') ||
+          f.type === 'application/pdf'
+        );
+        if (!ok) {
+          alert('نوع ملف غير مدعوم. المسموح صور أو PDF');
+          e.preventDefault();
+          return false;
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

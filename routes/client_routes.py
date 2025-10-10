@@ -1,7 +1,10 @@
 """Blueprint for client portal routes and templates."""
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy
+from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument
+from werkzeug.utils import secure_filename
+import os
+import time
 from utils import calculate_max_loan, format_phone_e164
 
 client_bp = Blueprint('client', __name__, template_folder='../templates/client', static_folder='../static')
@@ -103,17 +106,15 @@ def submit_request():
     companies = User.query.filter_by(role='company').all()
 
     if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
+        # Step 1: Only valuation type (guided)
         valuation_type = (request.form.get('valuation_type') or '').strip() or None
 
-        # Company selection (optional but recommended)
+        # Company selection (optional)
         company_id_raw = request.form.get('company_id')
         company_id = None
         if company_id_raw:
             try:
                 company_id_candidate = int(company_id_raw)
-                # Validate that the selected user is actually a company
                 company_user = User.query.filter_by(id=company_id_candidate, role='company').first()
                 if company_user:
                     company_id = company_user.id
@@ -121,20 +122,102 @@ def submit_request():
                 company_id = None
 
         vr = ValuationRequest(
-            title=title,
-            description=description,
+            title=None,
+            description=None,
             valuation_type=valuation_type,
             client_id=current_user.id,
             company_id=company_id,
         )
         db.session.add(vr)
         db.session.commit()
-        flash('Valuation request submitted', 'success')
-        return redirect(url_for('client.dashboard'))
+        # Proceed to documents step
+        return redirect(url_for('client.upload_docs', request_id=vr.id))
 
     # Preselect company if passed as query parameter from company detail page
     preselected_company_id = request.args.get('company_id', type=int)
     return render_template('client/submit.html', companies=companies, preselected_company_id=preselected_company_id)
+
+
+# -------------------------------
+# Guided documents upload step
+# -------------------------------
+
+ALLOWED_DOC_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "pdf"}
+
+def _allowed_doc(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_DOC_EXTENSIONS
+
+
+def _required_docs_for_type(valuation_type: str):
+    # Returns list of (key, label, icon)
+    common_ids = ("ids", "بطاقات هوية", "bi-person-vcard")
+    kroki = ("kroki", "كروكي", "bi-map")
+    deed = ("deed", "صك الملكية", "bi-file-earmark-text")
+    completion = ("completion_certificate", "شهادة إتمام البناء", "bi-patch-check")
+    maps = ("maps", "خرائط", "bi-diagram-3")
+    contractor = ("contractor_agreement", "اتفاقية المقاول", "bi-file-earmark-richtext")
+
+    if valuation_type == "property":
+        return [kroki, deed, completion, maps, common_ids]
+    if valuation_type == "land":
+        return [kroki, deed, common_ids]
+    if valuation_type == "house":
+        return [kroki, deed, completion, maps, common_ids, contractor]
+    # Default to minimal
+    return [common_ids]
+
+
+@client_bp.route('/submit/docs/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+def upload_docs(request_id: int):
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    required_docs = _required_docs_for_type(vr.valuation_type or "")
+
+    if request.method == 'POST':
+        # Ensure each required doc has at least one file
+        for key, _, _ in required_docs:
+            files = request.files.getlist(f'{key}[]')
+            if not files or all((not f or not f.filename) for f in files):
+                flash(f'يرجى رفع مستند: {dict((k,l) for k,l,_ in required_docs)[key]}', 'danger')
+                return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
+
+        # Save files
+        static_root = os.path.join(current_app.root_path, 'static')
+        requests_root = os.path.join(static_root, 'uploads', 'requests', f'req_{vr.id}')
+        os.makedirs(requests_root, exist_ok=True)
+
+        for key, _, _ in required_docs:
+            files = request.files.getlist(f'{key}[]')
+            for fs in files:
+                if not fs or not fs.filename:
+                    continue
+                if not _allowed_doc(fs.filename):
+                    flash('نوع الملف غير مدعوم. المسموح: صور أو PDF', 'danger')
+                    return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
+
+                safe_name = secure_filename(fs.filename)
+                ts = int(time.time())
+                filename = f"{key}_{ts}_{safe_name}"
+                abs_path = os.path.join(requests_root, filename)
+                fs.save(abs_path)
+
+                rel_path = os.path.relpath(abs_path, static_root).replace('\\', '/')
+                rd = RequestDocument(
+                    valuation_request_id=vr.id,
+                    doc_type=key,
+                    file_path=rel_path,
+                    original_filename=safe_name,
+                )
+                db.session.add(rd)
+
+        db.session.commit()
+        flash('تم رفع المستندات بنجاح', 'success')
+        return redirect(url_for('client.dashboard'))
+
+    return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
 
 
 # -------------------------------
