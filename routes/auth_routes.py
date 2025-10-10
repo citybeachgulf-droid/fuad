@@ -4,7 +4,7 @@ from models import db, User, InviteToken, OTPCode
 from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 import secrets
-from utils import generate_otp_code, format_phone_e164, send_sms_via_twilio
+from utils import format_phone_e164
 from sqlalchemy import and_
 from flask import current_app, redirect, url_for
 from models import User
@@ -65,96 +65,59 @@ def login():
 def phone_entry():
     if request.method == 'POST':
         raw_phone = (request.form.get('phone') or '').strip()
-        phone = format_phone_e164(raw_phone)
-        if not phone:
+        normalized_phone = format_phone_e164(raw_phone)
+        if not normalized_phone:
             flash('يرجى إدخال رقم هاتف صالح', 'danger')
             return render_template('phone.html')
 
-        # لا ترسل رمز تحقق للحسابات الجديدة برقم هاتف جديد
-        existing_user = User.query.filter_by(phone=phone).first()
-        if not existing_user:
-            flash('إنشاء حساب جديد برقم الهاتف غير متاح حاليًا. الرجاء التسجيل بالبريد الإلكتروني.', 'warning')
-            return redirect(url_for('auth.signup'))
-
-        purpose = (request.form.get('purpose') or 'login').strip()
-        # توليد رمز OTP وتخزينه
-        code = generate_otp_code(6)
-        ttl_seconds = int(current_app.config.get('OTP_TTL_SECONDS', 300))
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
-        otp = OTPCode(phone=phone, code=code, purpose=purpose, expires_at=expires_at)
-        db.session.add(otp)
-        db.session.commit()
-
-        message = f"رمز الدخول: {code}. صالح لمدة 5 دقائق"
-        sent = send_sms_via_twilio(phone, message)
-        if sent:
-            flash('تم إرسال رمز التحقق عبر الرسائل القصيرة', 'info')
+        # ابحث عن مستخدم بنفس رقم الهاتف، أو أنشئ حسابًا جديدًا مباشرةً
+        user = User.query.filter_by(phone=normalized_phone).first()
+        if not user:
+            pseudo_email = f"phone-{normalized_phone.replace('+','')}@users.local"
+            if User.query.filter_by(email=pseudo_email).first():
+                pseudo_email = f"phone-{normalized_phone.replace('+','')}-{secrets.token_hex(4)}@users.local"
+            user = User(name=normalized_phone, email=pseudo_email, role='client', phone=normalized_phone)
+            user.set_password(secrets.token_urlsafe(16))
+            db.session.add(user)
+            db.session.commit()
+            flash('تم إنشاء حساب جديد برقم الهاتف', 'success')
         else:
-            flash('تعذر إرسال الرسالة القصيرة. الرجاء إدخال الرمز يدويًا في بيئة التطوير: ' + code, 'warning')
+            flash('تم تسجيل الدخول برقم الهاتف', 'success')
 
-        return redirect(url_for('auth.verify_otp', phone=phone, purpose=purpose))
+        # سجّل دخول المستخدم ووجّهه لواجهة حسابه حسب الدور
+        login_user(user)
+        if user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        elif user.role == 'company':
+            return redirect(url_for('company.dashboard'))
+        elif user.role == 'bank':
+            return redirect(url_for('bank.dashboard'))
+        else:
+            return redirect(url_for('client.profile'))
 
     return render_template('phone.html')
 
 
-# --- التحقق من رمز OTP ---
+# --- التحقق من رمز OTP (تم إيقافه: إعادة التوجيه مباشرة) ---
 @auth.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
     phone = request.args.get('phone') if request.method == 'GET' else request.form.get('phone')
-    purpose = request.args.get('purpose') if request.method == 'GET' else request.form.get('purpose')
-    if request.method == 'POST':
-        code = (request.form.get('code') or '').strip()
-        normalized_phone = format_phone_e164(phone)
-        if not (code and normalized_phone):
-            flash('يرجى إدخال الرمز ورقم الهاتف', 'danger')
-            return render_template('verify_otp.html', phone=phone, purpose=purpose)
-
-        # احصل على أحدث رمز غير مستخدم لهذا الهاتف والغرض
-        otp = OTPCode.query.filter(
-            and_(
-                OTPCode.phone == normalized_phone,
-                OTPCode.purpose == purpose,
-                OTPCode.consumed_at.is_(None)
-            )
-        ).order_by(OTPCode.id.desc()).first()
-
-        if not otp:
-            flash('لم يتم العثور على رمز صالح. الرجاء إعادة الإرسال.', 'danger')
-            return redirect(url_for('auth.phone_entry'))
-        if otp.is_expired():
-            flash('انتهت صلاحية الرمز. الرجاء إعادة الإرسال.', 'danger')
-            return redirect(url_for('auth.phone_entry'))
-
-        otp.attempts += 1
-        if otp.code != code:
-            db.session.commit()
-            flash('رمز غير صحيح', 'danger')
-            return render_template('verify_otp.html', phone=normalized_phone, purpose=purpose)
-
-        # الرمز صحيح: اعتبره مستهلكًا
-        otp.consumed_at = datetime.utcnow()
-        db.session.commit()
-
-        # أنشئ/اجلب المستخدم بناءً على الهاتف
+    normalized_phone = format_phone_e164(phone or '') if phone else None
+    if normalized_phone:
         user = User.query.filter_by(phone=normalized_phone).first()
         if not user:
-            # إنشاء حساب عميل افتراضي باستخدام هاتف فقط
-            # ضع بريدًا اصطناعيًا فريدًا لتلبية القيد الحالي
-            pseudo_email = f"phone-{normalized_phone.replace('+','') }@users.local"
+            pseudo_email = f"phone-{normalized_phone.replace('+','')}@users.local"
             if User.query.filter_by(email=pseudo_email).first():
-                pseudo_email = f"phone-{normalized_phone.replace('+','')}-{otp.id}@users.local"
+                pseudo_email = f"phone-{normalized_phone.replace('+','')}-{secrets.token_hex(4)}@users.local"
             user = User(name=normalized_phone, email=pseudo_email, role='client', phone=normalized_phone)
-            # كلمة مرور عشوائية
             user.set_password(secrets.token_urlsafe(16))
             db.session.add(user)
             db.session.commit()
-
         login_user(user)
         flash('تم تسجيل الدخول برقم الهاتف', 'success')
         return redirect(url_for('client.profile'))
-
-    # GET
-    return render_template('verify_otp.html', phone=phone, purpose=purpose)
+    # في حال عدم توفر رقم، أعد المستخدم إلى إدخال الهاتف
+    return redirect(url_for('auth.phone_entry'))
 
 
 # --- بوابة إنشاء حساب للعميل (إيميل) ---
