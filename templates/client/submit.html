@@ -11,13 +11,33 @@
     <textarea class="form-control" name="description" rows="4"></textarea>
   </div>
   <div class="mb-3">
-    <label class="form-label">نوع التثمين</label>
-    <select class="form-select" name="valuation_type" required>
-      <option value="">— اختر —</option>
-      <option value="land">أرض</option>
-      <option value="property">عقار</option>
-      <option value="house">بناء منزل</option>
-    </select>
+    <label class="form-label d-block">نوع التثمين</label>
+    <div class="tile-grid">
+      <label class="tile-select tile-success">
+        <input type="radio" name="valuation_type" value="property" required>
+        <span class="tile-icon bg-white text-success"><i class="bi bi-house"></i></span>
+        <div>
+          <p class="tile-label m-0">شراء منزل</p>
+          <p class="tile-desc m-0">تقييم لغرض الشراء</p>
+        </div>
+      </label>
+      <label class="tile-select tile-primary">
+        <input type="radio" name="valuation_type" value="land" required>
+        <span class="tile-icon bg-white text-primary"><i class="bi bi-geo"></i></span>
+        <div>
+          <p class="tile-label m-0">شراء أرض</p>
+          <p class="tile-desc m-0">قطعة أرض بدون بناء</p>
+        </div>
+      </label>
+      <label class="tile-select tile-warning">
+        <input type="radio" name="valuation_type" value="house" required>
+        <span class="tile-icon bg-white text-warning"><i class="bi bi-tools"></i></span>
+        <div>
+          <p class="tile-label m-0">بناء منزل</p>
+          <p class="tile-desc m-0">تقييم لغرض البناء</p>
+        </div>
+      </label>
+    </div>
   </div>
   <div class="mb-3">
     <label class="form-label">اختر شركة التثمين</label>
