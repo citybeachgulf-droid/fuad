@@ -77,6 +77,12 @@ def phone_entry():
             flash('يرجى إدخال رقم هاتف صالح', 'danger')
             return render_template('phone.html')
 
+        # لا ترسل رمز تحقق للحسابات الجديدة برقم هاتف جديد
+        existing_user = User.query.filter_by(phone=phone).first()
+        if not existing_user:
+            flash('إنشاء حساب جديد برقم الهاتف غير متاح حاليًا. الرجاء التسجيل بالبريد الإلكتروني.', 'warning')
+            return redirect(url_for('auth.signup'))
+
         purpose = (request.form.get('purpose') or 'login').strip()
         # توليد رمز OTP وتخزينه
         code = generate_otp_code(6)
