@@ -236,6 +236,14 @@ def upload_docs(request_id: int):
     required_docs = _required_docs_for_type(vr.valuation_type or "")
 
     if request.method == 'POST':
+        # Optional: requested valuation amount from bank
+        amt_raw = (request.form.get('requested_amount') or '').strip()
+        if amt_raw:
+            try:
+                vr.requested_amount = float(amt_raw.replace(',', ''))
+            except Exception:
+                flash('تنسيق مبلغ غير صالح', 'danger')
+                return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
         # Ensure each required doc has at least one file
         for key, _, _ in required_docs:
             files = request.files.getlist(f'{key}[]')

@@ -115,6 +115,11 @@ if __name__ == '__main__':
             if 'valuation_type' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN valuation_type VARCHAR(50)'))
+            # Ensure valuation_requests.requested_amount exists
+            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
+            if 'requested_amount' not in vr_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN requested_amount FLOAT'))
         except Exception:
             pass
 

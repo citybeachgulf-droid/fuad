@@ -15,6 +15,7 @@
         <th>البنك</th>
         <th>الحالة</th>
         <th>القيمة</th>
+        <th>قيمة مطلوبة</th>
       </tr>
     </thead>
     <tbody>
@@ -28,6 +29,7 @@
           <td>{{ r.bank.name if r.bank else '-' }}</td>
           <td><span class="badge bg-secondary">{{ r.status }}</span></td>
           <td>{% if r.value %}{{ r.value }}{% else %}-{% endif %}</td>
+          <td>{% if r.requested_amount is not none %}{{ r.requested_amount }}{% else %}-{% endif %}</td>
         </tr>
       {% endfor %}
     </tbody>
