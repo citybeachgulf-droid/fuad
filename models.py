@@ -278,6 +278,63 @@ class Testimonial(db.Model):
 
 
 # ================================
+# نظام المحادثات الداخلية (Client <-> Company)
+# ================================
+class Conversation(db.Model):
+    __tablename__ = 'conversations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default='open')  # open/pending/closed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    client = db.relationship('User', foreign_keys=[client_id], backref='client_conversations')
+    company = db.relationship('User', foreign_keys=[company_id], backref='company_conversations')
+
+    messages = db.relationship(
+        'Message',
+        backref='conversation',
+        cascade='all, delete-orphan',
+        order_by='Message.timestamp.asc()'
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('client_id', 'company_id', name='uq_conversation_client_company'),
+    )
+
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False, index=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    sender = db.relationship('User')
+
+    __table_args__ = (
+        db.Index('ix_messages_conv_time', 'conversation_id', 'timestamp'),
+    )
+
+
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False, index=True)
+    actor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # message_sent, status_changed, conversation_created
+    meta = db.Column(db.Text, nullable=True)  # JSON string or free-form text
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    conversation = db.relationship('Conversation', backref=db.backref('activity_logs', cascade='all, delete-orphan'))
+    actor = db.relationship('User')
+
+
+# ================================
 # الإعلانات (Advertisements)
 # ================================
 class Advertisement(db.Model):

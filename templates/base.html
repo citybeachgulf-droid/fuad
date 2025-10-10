@@ -35,6 +35,9 @@
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.banks_list') }}">البنوك</a></li>
                         <li class="nav-item"><a class="nav-link ms-lg-2" href="{{ url_for('main.companies_list') }}">طلب تثمين عقاري</a></li>
                         {% if current_user.is_authenticated %}
+                        {% if current_user.role in ['client', 'company'] %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('conversations.list_conversations') }}">المحادثات</a></li>
+                        {% endif %}
                         <li class="nav-item"><a class="nav-link ms-lg-2" href="{{ url_for('client.profile') }}">ملفي الشخصي</a></li>
                         {% else %}
                         <li class="nav-item"><a class="nav-link ms-lg-2" href="{{ url_for('auth.login') }}">تسجيل الدخول</a></li>
