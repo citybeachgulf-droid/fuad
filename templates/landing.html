@@ -85,27 +85,23 @@
 <section id="testimonials" class="py-5 bg-light">
     <div class="container">
         <h2 class="text-center mb-5">تجارب العملاء</h2>
-        
-        <!-- Existing Testimonials -->
-        <div class="row g-4 mb-5">
-            <div class="col-md-4 text-center" data-aos="fade-up">
-                <blockquote class="blockquote">
-                    <p>"خدمة رائعة وسريعة جدًا، أنصح الجميع باستخدام المنصة."</p>
-                    <footer class="blockquote-footer">أحمد علي</footer>
-                </blockquote>
-            </div>
-            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
-                <blockquote class="blockquote">
-                    <p>"تجربة مميزة وفريق محترف، كل شيء كان سلسًا."</p>
-                    <footer class="blockquote-footer">سارة حسن</footer>
-                </blockquote>
-            </div>
-            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
-                <blockquote class="blockquote">
-                    <p>"الحصول على التقرير كان سريع ودقيق، أنصح بهذه الخدمة."</p>
-                    <footer class="blockquote-footer">محمد سالم</footer>
-                </blockquote>
-            </div>
+
+        <!-- Existing Testimonials (dynamic) -->
+        <div class="row g-4 mb-5" id="testimonials-list">
+            {% if testimonials and testimonials|length > 0 %}
+                {% for t in testimonials %}
+                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                    <blockquote class="blockquote">
+                        <p>{{ t.body }}</p>
+                        <footer class="blockquote-footer">{{ t.name }}</footer>
+                    </blockquote>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center mb-0">لا توجد تجارب بعد. كن أول من يشارك!</div>
+                </div>
+            {% endif %}
         </div>
 
         <!-- Share Your Experience Form -->
@@ -115,11 +111,31 @@
                 <form id="testimonial-form">
                     <div class="mb-3">
                         <label for="name" class="form-label">الاسم</label>
-                        <input type="text" class="form-control" id="name" placeholder="اسمك">
+                        <input type="text" class="form-control" id="name" name="name" placeholder="اسمك" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="property_type" class="form-label">نوع العقار (اختياري)</label>
+                        <select class="form-select" id="property_type" name="property_type">
+                            <option value="">— اختر —</option>
+                            <option value="سكني">سكني</option>
+                            <option value="تجاري">تجاري</option>
+                            <option value="أرض">أرض</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">تقييم الخدمة (اختياري)</label>
+                        <select class="form-select" id="rating" name="rating">
+                            <option value="">— بدون تقييم —</option>
+                            <option value="5">★★★★★</option>
+                            <option value="4">★★★★☆</option>
+                            <option value="3">★★★☆☆</option>
+                            <option value="2">★★☆☆☆</option>
+                            <option value="1">★☆☆☆☆</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="experience" class="form-label">تجربتك</label>
-                        <textarea class="form-control" id="experience" rows="4" placeholder="اكتب تجربتك هنا"></textarea>
+                        <textarea class="form-control" id="experience" name="experience" rows="4" placeholder="اكتب تجربتك هنا" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">إرسال تجربتك</button>
                 </form>
