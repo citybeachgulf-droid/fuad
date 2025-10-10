@@ -26,6 +26,9 @@
           <span class="badge text-bg-secondary" id="resultsCount">0</span>
         </div>
         <div id="resultsList" class="vstack gap-2"></div>
+        <div class="d-flex justify-content-end mt-2">
+          <a id="continueLink" href="#" class="btn btn-primary" hidden>متابعة إلى الملخص</a>
+        </div>
       </div>
     </div>
   </div>
@@ -40,6 +43,7 @@
   const results = document.getElementById('results');
   const resultsList = document.getElementById('resultsList');
   const resultsCount = document.getElementById('resultsCount');
+  const continueLink = document.getElementById('continueLink');
 
   if (!container) return;
 
@@ -57,7 +61,7 @@
             <img src="${it.logo_path || ''}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">
             <strong>${it.name}</strong>
           </div>
-          <span class="badge text-bg-success">حد: ${it.limit_value ?? '—'}</span>
+          <span class="badge text-bg-success">حد: ${new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 0 }).format(Number(it.limit_value || 0))}</span>
         `;
         resultsList.appendChild(row);
       });
@@ -81,6 +85,10 @@
       const res = await fetch(apiUrl.toString());
       const items = await res.json();
       renderResults(Array.isArray(items) ? items : []);
+      if (continueLink) {
+        continueLink.setAttribute('href', href);
+        continueLink.hidden = false;
+      }
     } catch (err) {
       renderResults([]);
     }
