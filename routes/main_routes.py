@@ -112,10 +112,33 @@ def certified_step_bank():
     purpose = request.args.get('purpose', 'buy')
     banks = BankProfile.query.order_by(BankProfile.id.asc()).all()
     options = [
-        {"title": (b.user.name if b.user else b.slug), "href": url_for('main.certified_summary', entity=entity, purpose=purpose, bank=b.slug), "icon_class": "bi bi-bank", "color_class": "tile-primary", "subtitle": (b.website or '')}
+        {"title": (b.user.name if b.user else b.slug), "href": url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=b.slug), "icon_class": "bi bi-bank", "color_class": "tile-primary", "subtitle": (b.website or '')}
         for b in banks
     ]
     return render_template('certified_steps/step_bank.html', options=options, entity=entity, purpose=purpose)
+
+
+@main.route('/certified/step/amount')
+def certified_step_amount():
+    entity = request.args.get('entity', 'person')
+    purpose = request.args.get('purpose', 'buy')
+    bank_slug = request.args.get('bank')
+
+    bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
+
+    # Generate amounts from 10k to 100k (step 10k)
+    amounts = list(range(10000, 100001, 10000))
+    options = []
+    for amt in amounts:
+        options.append({
+            "title": f"{amt:,}",
+            "href": url_for('main.certified_summary', entity=entity, purpose=purpose, bank=bank_slug, amount=amt),
+            "icon_class": "bi bi-cash-stack",
+            "color_class": "tile-success",
+            "subtitle": "ريال"
+        })
+
+    return render_template('certified_steps/step_amount.html', options=options, entity=entity, purpose=purpose, bank=bank)
 
 
 @main.route('/certified/summary')
@@ -124,7 +147,12 @@ def certified_summary():
     purpose = request.args.get('purpose', 'buy')
     bank_slug = request.args.get('bank')
     bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
-    return render_template('certified_steps/summary.html', entity=entity, purpose=purpose, bank=bank)
+    amount_raw = request.args.get('amount')
+    try:
+        amount = int(amount_raw) if amount_raw not in (None, '') else None
+    except Exception:
+        amount = None
+    return render_template('certified_steps/summary.html', entity=entity, purpose=purpose, bank=bank, amount=amount)
 
 
 @main.route('/companies')
