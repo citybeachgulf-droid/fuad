@@ -1,7 +1,7 @@
 """Blueprint for valuation company portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from models import db, ValuationRequest, CompanyProfile, CompanyContact
+from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -40,7 +40,100 @@ def request_detail(request_id: int):
     req = ValuationRequest.query.get_or_404(request_id)
     if req.company_id != current_user.id:
         return "غير مصرح لك بالوصول", 403
-    return render_template('company/request_detail.html', request_obj=req)
+    # احضار المواعيد المرتبطة بأحدث ترتيب
+    appts = VisitAppointment.query.filter_by(valuation_request_id=req.id).order_by(VisitAppointment.created_at.desc()).all()
+    return render_template('company/request_detail.html', request_obj=req, appointments=appts)
+
+
+@company_bp.route('/appointments/<int:appointment_id>/accept', methods=['POST'])
+@login_required
+def accept_appointment(appointment_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    appt = VisitAppointment.query.get_or_404(appointment_id)
+    vr = ValuationRequest.query.get_or_404(appt.valuation_request_id)
+    if vr.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    appt.status = 'accepted'
+    db.session.commit()
+    flash('تمت الموافقة على الموعد. يمكنك تأكيده كموعد نهائي لاحقاً.', 'success')
+    return redirect(url_for('company.request_detail', request_id=vr.id))
+
+
+@company_bp.route('/appointments/<int:appointment_id>/reject', methods=['POST'])
+@login_required
+def reject_appointment(appointment_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    appt = VisitAppointment.query.get_or_404(appointment_id)
+    vr = ValuationRequest.query.get_or_404(appt.valuation_request_id)
+    if vr.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    appt.status = 'rejected'
+    db.session.commit()
+    flash('تم رفض الموعد. يرجى اقتراح موعد بديل.', 'info')
+    return redirect(url_for('company.request_detail', request_id=vr.id))
+
+
+@company_bp.route('/appointments/<int:appointment_id>/finalize', methods=['POST'])
+@login_required
+def finalize_appointment(appointment_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    appt = VisitAppointment.query.get_or_404(appointment_id)
+    vr = ValuationRequest.query.get_or_404(appt.valuation_request_id)
+    if vr.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # ضع جميع المواعيد الأخرى كـ rejected إذا لم تكن نهائية
+    others = VisitAppointment.query.filter(
+        VisitAppointment.valuation_request_id == vr.id,
+        VisitAppointment.id != appt.id,
+    ).all()
+    for o in others:
+        if o.status != 'final':
+            o.status = 'rejected'
+
+    appt.status = 'final'
+    db.session.commit()
+    flash('تم تحديد موعد الزيارة النهائي', 'success')
+    return redirect(url_for('company.request_detail', request_id=vr.id))
+
+
+@company_bp.route('/appointments/propose/<int:request_id>', methods=['POST'])
+@login_required
+def propose_company_appointment(request_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    from datetime import datetime
+    proposed_raw = (request.form.get('proposed_time') or '').strip()
+    notes = (request.form.get('notes') or '').strip() or None
+    if not proposed_raw:
+        flash('يرجى تحديد وقت الموعد', 'danger')
+        return redirect(url_for('company.request_detail', request_id=vr.id))
+    try:
+        proposed_dt = datetime.fromisoformat(proposed_raw)
+    except Exception:
+        flash('تنسيق وقت غير صالح', 'danger')
+        return redirect(url_for('company.request_detail', request_id=vr.id))
+
+    appt = VisitAppointment(
+        valuation_request_id=vr.id,
+        proposed_time=proposed_dt,
+        proposed_by='company',
+        status='pending',
+        notes=notes,
+    )
+    db.session.add(appt)
+    db.session.commit()
+    flash('تم اقتراح موعد بديل للعميل', 'success')
+    return redirect(url_for('company.request_detail', request_id=vr.id))
 
 
 # ================================
