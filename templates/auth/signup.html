@@ -44,6 +44,7 @@
             </form>
             <hr>
             <div class="d-grid gap-2">
+              <a href="{{ url_for('auth.phone_entry') }}" class="btn btn-outline-primary">التسجيل/الدخول برقم الهاتف</a>
               <a href="{{ url_for('auth.login_google') }}" class="btn btn-outline-danger">المتابعة مع Google</a>
               <a href="{{ url_for('auth.login_apple') }}" class="btn btn-dark">المتابعة مع Apple</a>
             </div>
