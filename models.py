@@ -293,14 +293,40 @@ class Advertisement(db.Model):
     start_at = db.Column(db.DateTime, nullable=True)
     end_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    # يحدد إن كانت تواريخ البداية/النهاية مخزنة بتوقيت UTC (naive)
+    stored_in_utc = db.Column(db.Boolean, nullable=False, default=False)
 
     def is_currently_visible(self) -> bool:
-        """تحقق من صلاحية العرض حسب تاريخي البداية والنهاية وحالة التفعيل."""
-        now = datetime.utcnow()
+        """تحقق من صلاحية العرض حسب تاريخي البداية والنهاية وحالة التفعيل.
+
+        نعتمد مقارنة بتوقيت UTC. إذا كانت الحقول مخزنة بتوقيت محلي قديم
+        (قبل اعتماد التخزين على UTC)، نقوم بتحويلها إلى UTC بناءً على الإعداد.
+        """
+        now_utc = datetime.utcnow()
+
+        def normalize(dt):
+            if dt is None:
+                return None
+            if getattr(self, 'stored_in_utc', False):
+                return dt
+            try:
+                # اعتبر القيمة المخزنة محلية ثم حوّلها إلى UTC
+                from zoneinfo import ZoneInfo
+                from flask import current_app
+                tz_name = (current_app.config.get('TIMEZONE') if current_app else None) or 'Asia/Muscat'
+                local_dt = dt.replace(tzinfo=ZoneInfo(tz_name))
+                return local_dt.astimezone(ZoneInfo('UTC')).replace(tzinfo=None)
+            except Exception:
+                # في حال عدم توفر المنطقة الزمنية لأي سبب، نستخدم القيمة كما هي
+                return dt
+
+        start_dt = normalize(self.start_at)
+        end_dt = normalize(self.end_at)
+
         if not self.is_active:
             return False
-        if self.start_at and now < self.start_at:
+        if start_dt and now_utc < start_dt:
             return False
-        if self.end_at and now > self.end_at:
+        if end_dt and now_utc > end_dt:
             return False
         return True

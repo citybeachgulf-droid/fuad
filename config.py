@@ -6,6 +6,8 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-123')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(basedir, "valuation.db")}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Timezone used to interpret naive datetime inputs from admin forms
+    TIMEZONE = os.environ.get('TIMEZONE', 'Asia/Muscat')
     # Uploads
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(basedir, 'static', 'uploads', 'logos'))
     NEWS_UPLOAD_FOLDER = os.environ.get('NEWS_UPLOAD_FOLDER', os.path.join(basedir, 'static', 'uploads', 'news'))
