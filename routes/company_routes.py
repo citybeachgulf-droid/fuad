@@ -15,8 +15,20 @@ def dashboard():
         return "غير مصرح لك بالوصول", 403
     # جلب الطلبات المرتبطة بالشركة
     requests = ValuationRequest.query.filter_by(company_id=current_user.id).all()
+    # المواعيد المقترحة من العميل والتي ما زالت بانتظار موافقة الشركة
+    pending_appts = (
+        VisitAppointment.query
+        .join(ValuationRequest, VisitAppointment.valuation_request_id == ValuationRequest.id)
+        .filter(
+            ValuationRequest.company_id == current_user.id,
+            VisitAppointment.status == 'pending',
+            VisitAppointment.proposed_by == 'client',
+        )
+        .order_by(VisitAppointment.created_at.desc())
+        .all()
+    )
     profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
-    return render_template('company/dashboard.html', requests=requests, profile=profile)
+    return render_template('company/dashboard.html', requests=requests, profile=profile, pending_appointments=pending_appts)
 
 @company_bp.route('/submit/<int:request_id>', methods=['GET', 'POST'])
 @login_required
@@ -131,6 +143,17 @@ def propose_company_appointment(request_id: int):
         notes=notes,
     )
     db.session.add(appt)
+
+    # خيارياً: رفض الموعد الأصلي الذي اقترحه العميل إذا طُلب ذلك
+    reject_original_id_raw = request.form.get('reject_original_id')
+    if reject_original_id_raw:
+        try:
+            reject_id = int(reject_original_id_raw)
+            original_appt = VisitAppointment.query.get(reject_id)
+        except Exception:
+            original_appt = None
+        if original_appt and original_appt.valuation_request_id == vr.id:
+            original_appt.status = 'rejected'
     db.session.commit()
     flash('تم اقتراح موعد بديل للعميل', 'success')
     return redirect(url_for('company.request_detail', request_id=vr.id))

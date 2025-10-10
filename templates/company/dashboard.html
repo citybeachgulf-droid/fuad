@@ -7,6 +7,59 @@
     <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" style="height:40px;" class="ms-2">
   {% endif %}
 </div>
+
+{% if pending_appointments and pending_appointments|length > 0 %}
+  <div class="alert alert-info">
+    <div class="d-flex align-items-start justify-content-between">
+      <div>
+        <strong>مواعيد زيارة بانتظار موافقتك</strong>
+        <div class="small text-muted">يمكنك الموافقة أو اقتراح موعد بديل مباشرة.</div>
+      </div>
+    </div>
+    <div class="mt-3">
+      {% for ap in pending_appointments %}
+        <div class="card mb-2">
+          <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+              <div>
+                <div><strong>طلب #{{ ap.valuation_request_id }}</strong> — العميل: {{ ap.valuation_request.client.name if ap.valuation_request and ap.valuation_request.client else '-' }}</div>
+                <div class="text-muted small">الموعد المقترح: {{ ap.proposed_time }}</div>
+                {% if ap.notes %}
+                  <div class="text-muted small">ملاحظات: {{ ap.notes }}</div>
+                {% endif %}
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <form method="post" action="{{ url_for('company.accept_appointment', appointment_id=ap.id) }}">
+                  <button type="submit" class="btn btn-sm btn-success">موافقة</button>
+                </form>
+                <form method="post" action="{{ url_for('company.reject_appointment', appointment_id=ap.id) }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">رفض</button>
+                </form>
+              </div>
+            </div>
+            <div class="mt-2">
+              <form class="row g-2" method="post" action="{{ url_for('company.propose_company_appointment', request_id=ap.valuation_request_id) }}">
+                <div class="col-auto">
+                  <input class="form-control form-control-sm" type="datetime-local" name="proposed_time" required>
+                </div>
+                <div class="col-auto">
+                  <input class="form-control form-control-sm" type="text" name="notes" placeholder="ملاحظات (اختياري)">
+                </div>
+                <input type="hidden" name="reject_original_id" value="{{ ap.id }}">
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-sm btn-primary">اقتراح موعد بديل</button>
+                </div>
+                <div class="col-auto">
+                  <a class="btn btn-sm btn-link" href="{{ url_for('company.request_detail', request_id=ap.valuation_request_id) }}">فتح التفاصيل</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
 <p>Requests assigned to your company:</p>
 <table class="table">
   <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Client</th><th>Status</th><th>Actions</th></tr></thead>
