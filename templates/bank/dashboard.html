@@ -3,12 +3,13 @@
 <h2>Bank Dashboard</h2>
 <p>Valuations awaiting review:</p>
 <table class="table">
-  <thead><tr><th>ID</th><th>Title</th><th>Company</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
+<thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Company</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
   <tbody>
     {% for r in requests %}
       <tr>
         <td>{{ r.id }}</td>
         <td>{{ r.title }}</td>
+        <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
         <td>{{ r.company.name if r.company else '-' }}</td>
         <td>{{ r.value or '-' }}</td>
         <td>{{ r.status }}</td>

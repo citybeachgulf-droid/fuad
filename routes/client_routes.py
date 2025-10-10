@@ -105,6 +105,7 @@ def submit_request():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
+        valuation_type = (request.form.get('valuation_type') or '').strip() or None
 
         # Company selection (optional but recommended)
         company_id_raw = request.form.get('company_id')
@@ -122,6 +123,7 @@ def submit_request():
         vr = ValuationRequest(
             title=title,
             description=description,
+            valuation_type=valuation_type,
             client_id=current_user.id,
             company_id=company_id,
         )
