@@ -26,10 +26,7 @@ class Config:
     # OAuth configuration
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
-
-    # Apple Sign In (set APPLE_CLIENT_SECRET to a pre-generated JWT)
-    APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
-    APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET')
+    # Third-party sign-in config removed
 
     # SMS provider (Twilio) for OTP
     TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
