@@ -6,7 +6,8 @@ from authlib.integrations.flask_client import OAuth
 import secrets
 from utils import generate_otp_code, format_phone_e164, send_sms_via_twilio
 from sqlalchemy import and_
-
+from flask import current_app, redirect, url_for
+from models import User
 # Blueprint مع مسار صحيح لمجلد القوالب
 auth = Blueprint('auth', __name__, template_folder='../templates/auth')
 
@@ -191,18 +192,16 @@ def signup():
 # --- Google OAuth ---
 @auth.route('/login/google')
 def login_google():
-    oauth = get_oauth()
     redirect_uri = url_for('auth.google_callback', _external=True)
-    print("Redirect URI:", redirect_uri)  # ✅ أضف هذا السطر لمراجعة الرابط الحقيقي
-    return oauth.google.authorize_redirect(redirect_uri)
+    return current_app.google.authorize_redirect(redirect_uri)
 
 
 
 @auth.route('/auth/google/callback')
 def google_callback():
-    oauth = get_oauth()
-    token = oauth.google.authorize_access_token()
-    userinfo = token.get('userinfo') or oauth.google.parse_id_token(token)
+    token = current_app.google.authorize_access_token()
+    userinfo = token.get('userinfo') or current_app.google.parse_id_token(token)
+    
     if not userinfo:
         flash('تعذر الحصول على بيانات Google', 'danger')
         return redirect(url_for('auth.login'))
@@ -215,12 +214,10 @@ def google_callback():
     user = User.query.filter_by(email=email).first()
     if not user:
         user = User(name=name, email=email, role='client', oauth_provider='google', oauth_subject=sub, email_verified=email_verified)
-        # set a random password placeholder
         user.set_password(secrets.token_urlsafe(16))
         db.session.add(user)
         db.session.commit()
     else:
-        # Link account if not already linked
         if not user.oauth_provider:
             user.oauth_provider = 'google'
             user.oauth_subject = sub
