@@ -1,5 +1,15 @@
 from flask import Blueprint, render_template, abort, request, jsonify, url_for, redirect
-from models import db, User, CompanyProfile, News, BankProfile, BankOffer, CompanyApprovedBank, Advertisement
+from models import (
+    db,
+    User,
+    CompanyProfile,
+    News,
+    BankProfile,
+    BankOffer,
+    CompanyApprovedBank,
+    Advertisement,
+    Testimonial,
+)
 
 main = Blueprint('main', __name__)
 
@@ -9,7 +19,8 @@ def landing():
     # Fetch active ads for homepage top
     ads_qs = Advertisement.query.filter_by(placement='homepage_top').order_by(Advertisement.sort_order.asc(), Advertisement.created_at.desc()).all()
     active_ads = [ad for ad in ads_qs if ad.is_currently_visible()]
-    return render_template('landing.html', latest_news=latest_news, ads_top=active_ads)
+    testimonials = Testimonial.query.order_by(Testimonial.created_at.desc()).limit(6).all()
+    return render_template('landing.html', latest_news=latest_news, ads_top=active_ads, testimonials=testimonials)
 
 
 # -------------------------------
@@ -223,3 +234,71 @@ def api_certified_companies():
             })
 
     return jsonify(results)
+
+
+# -------------------------------
+# Testimonials API (list + create)
+# -------------------------------
+@main.route('/api/testimonials', methods=['GET'])
+def api_testimonials_list():
+    try:
+        limit_raw = request.args.get('limit')
+        limit = int(limit_raw) if limit_raw else 10
+    except Exception:
+        limit = 10
+
+    qs = (
+        Testimonial.query
+        .order_by(Testimonial.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    def serialize(t: Testimonial):
+        return {
+            'id': t.id,
+            'name': t.name,
+            'property_type': t.property_type,
+            'rating': t.rating,
+            'body': t.body,
+            'created_at': t.created_at.isoformat() if t.created_at else None,
+        }
+    return jsonify([serialize(t) for t in qs])
+
+
+@main.route('/api/testimonials', methods=['POST'])
+def api_testimonials_create():
+    # Accept JSON or form-encoded payloads
+    payload = request.get_json(silent=True) or request.form
+
+    name = (payload.get('name') or '').strip()
+    body = (payload.get('body') or payload.get('experience') or '').strip()
+    property_type = (payload.get('property_type') or '').strip() or None
+
+    rating_val = payload.get('rating')
+    rating = None
+    if rating_val not in (None, ''):
+        try:
+            rating = int(rating_val)
+        except Exception:
+            rating = None
+    if rating is not None:
+        if rating < 1:
+            rating = 1
+        if rating > 5:
+            rating = 5
+
+    if not name or not body:
+        return jsonify({'error': 'name and body are required'}), 400
+
+    t = Testimonial(name=name, body=body, property_type=property_type, rating=rating)
+    db.session.add(t)
+    db.session.commit()
+
+    return jsonify({
+        'id': t.id,
+        'name': t.name,
+        'property_type': t.property_type,
+        'rating': t.rating,
+        'body': t.body,
+        'created_at': t.created_at.isoformat() if t.created_at else None,
+    }), 201
