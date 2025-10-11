@@ -257,15 +257,8 @@ def edit_profile():
 
     if request.method == 'POST':
         services = request.form.get('services') or None
-        limit_value_raw = request.form.get('limit_value')
         about = request.form.get('about') or None
         website = request.form.get('website') or None
-
-        try:
-            limit_value = float(limit_value_raw) if limit_value_raw else None
-        except ValueError:
-            flash('الرجاء إدخال قيمة حد صحيحة للحد العام', 'danger')
-            return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list)
 
         # معالجة رفع الشعار
         file = request.files.get('logo')
@@ -283,7 +276,6 @@ def edit_profile():
             profile.logo_path = rel_path.replace('\\', '/')
 
         profile.services = services
-        profile.limit_value = limit_value
         profile.about = about
         profile.website = website
 
