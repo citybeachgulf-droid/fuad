@@ -6,7 +6,10 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>شركات التثمين المسجلة في المنصة</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompanyModal">إضافة شركة جديدة</button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadLandPricesModal">رفع أسعار الأراضي (Excel)</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompanyModal">إضافة شركة جديدة</button>
+        </div>
     </div>
 
     <!-- جدول الشركات -->
@@ -72,3 +75,28 @@
 
 </div>
 {% endblock %}
+
+<!-- Modal: رفع أسعار الأراضي -->
+<div class="modal fade" id="uploadLandPricesModal" tabindex="-1" aria-labelledby="uploadLandPricesModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.upload_land_prices') }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadLandPricesModalLabel">رفع أسعار الأراضي (ملف إكسل)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="prices_file" class="form-label">ملف الأسعار (.xlsx أو .csv)</label>
+            <input type="file" class="form-control" id="prices_file" name="prices_file" accept=".xlsx,.csv" required>
+            <div class="form-text">الأعمدة المطلوبة: الولاية، المنطقة، سعر المتر</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">رفع ومعالجة</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User, InviteToken, News, Advertisement
+from models import db, User, InviteToken, News, Advertisement, LandPrice
 from flask_login import login_required, current_user
 from urllib.parse import urljoin
 from flask import current_app
@@ -97,6 +97,121 @@ def companies():
         return "غير مصرح لك بالوصول", 403
     companies = User.query.filter_by(role='company').all()
     return render_template('companies.html', companies=companies)
+
+
+# --- رفع أسعار الأراضي (إكسل) ---
+@admin_bp.route('/land_prices/upload', methods=['POST'])
+@login_required
+def upload_land_prices():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+
+    file = request.files.get('prices_file')
+    if not file or not file.filename:
+        flash('الرجاء اختيار ملف .xlsx أو .csv', 'danger')
+        return redirect(url_for('admin.companies'))
+
+    filename_lower = file.filename.lower()
+    header_row = None
+    rows_iter = None
+
+    # Parse XLSX
+    if filename_lower.endswith('.xlsx'):
+        try:
+            from openpyxl import load_workbook  # lazy import
+            wb = load_workbook(file, data_only=True)
+            ws = wb.active
+            rows_iter = ws.iter_rows(values_only=True)
+            header_row = next(rows_iter, None)
+            if header_row is None:
+                flash('ملف الإكسل فارغ.', 'danger')
+                return redirect(url_for('admin.companies'))
+        except ImportError:
+            flash('مكتبة openpyxl غير متوفرة. يرجى رفع ملف CSV بدلاً من ذلك.', 'danger')
+            return redirect(url_for('admin.companies'))
+        except Exception:
+            flash('تعذر قراءة ملف الإكسل. تأكد من أن الصيغة .xlsx صحيحة.', 'danger')
+            return redirect(url_for('admin.companies'))
+
+    # Parse CSV
+    elif filename_lower.endswith('.csv'):
+        import csv, io
+        try:
+            raw = file.stream.read()
+            try:
+                text = raw.decode('utf-8-sig')
+            except Exception:
+                try:
+                    text = raw.decode('cp1256')
+                except Exception:
+                    text = raw.decode('latin1')
+            reader = csv.reader(io.StringIO(text))
+            header_row = next(reader, None)
+            if header_row is None:
+                flash('ملف CSV فارغ.', 'danger')
+                return redirect(url_for('admin.companies'))
+            rows_iter = reader
+        except Exception:
+            flash('تعذر قراءة ملف CSV.', 'danger')
+            return redirect(url_for('admin.companies'))
+    else:
+        flash('صيغة غير مدعومة. الرجاء رفع .xlsx أو .csv', 'danger')
+        return redirect(url_for('admin.companies'))
+
+    def norm(val):
+        return str(val or '').strip().lower()
+
+    header_map = {}
+    for idx, col in enumerate(header_row):
+        key = norm(col)
+        if key in ('wilaya', 'الولاية', 'ولاية'):
+            header_map['wilaya'] = idx
+        elif key in ('region', 'المنطقة', 'منطقة'):
+            header_map['region'] = idx
+        elif key in ('price', 'price_per_sqm', 'سعر المتر', 'سعر_المتر', 'السعر'):
+            header_map['price_per_sqm'] = idx
+
+    if not {'wilaya', 'region', 'price_per_sqm'}.issubset(header_map.keys()):
+        flash('العناوين يجب أن تتضمن: الولاية، المنطقة، سعر المتر', 'danger')
+        return redirect(url_for('admin.companies'))
+
+    inserted = 0
+    updated = 0
+    skipped = 0
+
+    for row in rows_iter:
+        if row is None:
+            skipped += 1
+            continue
+
+        wilaya_val = row[header_map['wilaya']] if len(row) > header_map['wilaya'] else None
+        region_val = row[header_map['region']] if len(row) > header_map['region'] else None
+        price_val = row[header_map['price_per_sqm']] if len(row) > header_map['price_per_sqm'] else None
+
+        wilaya_str = str(wilaya_val or '').strip()
+        region_str = str(region_val or '').strip()
+
+        try:
+            price_num = float(str(price_val).replace(',', '').strip()) if price_val not in (None, '') else None
+        except Exception:
+            price_num = None
+
+        if not wilaya_str or not region_str or price_num is None:
+            skipped += 1
+            continue
+
+        existing = LandPrice.query.filter_by(wilaya=wilaya_str, region=region_str).first()
+        if existing:
+            if existing.price_per_sqm != price_num:
+                existing.price_per_sqm = price_num
+                updated += 1
+        else:
+            db.session.add(LandPrice(wilaya=wilaya_str, region=region_str, price_per_sqm=price_num))
+            inserted += 1
+
+    db.session.commit()
+    flash(f'تمت معالجة الملف: تمت إضافة {inserted} وتحديث {updated} وتجاوز {skipped} صف.', 'success')
+    return redirect(url_for('admin.companies'))
 
 # --- صفحة عرض العملاء ---
 @admin_bp.route('/clients')
