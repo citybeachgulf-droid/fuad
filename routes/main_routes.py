@@ -9,6 +9,8 @@ from models import (
     CompanyApprovedBank,
     Advertisement,
     Testimonial,
+    LandPrice,
+    CompanyLandPrice,
 )
 
 main = Blueprint('main', __name__)
@@ -88,7 +90,26 @@ def quick_step_summary():
     prop_type = request.args.get('prop_type') or 'land'
     # نحافظ على قيمة تقديرية ابتدائية ثابتة لإظهار أعلى البطاقة
     estimate = 50000
-    return render_template('quick/summary.html', estimate=estimate, prop_type=prop_type, loc=None)
+    # قائمة الشركات لعرضها في التقييم الفوري
+    companies = User.query.filter_by(role='company').order_by(User.name.asc()).all()
+    # اختيار مُسبق عبر الاستعلام (اختياري) + التحقق من وجود الشركة
+    selected_company_id = None
+    try:
+        selected_company_id = int(request.args.get('company_id')) if request.args.get('company_id') else None
+    except Exception:
+        selected_company_id = None
+    if selected_company_id is not None:
+        exists = User.query.filter_by(id=selected_company_id, role='company').first()
+        if not exists:
+            selected_company_id = None
+    return render_template(
+        'quick/summary.html',
+        estimate=estimate,
+        prop_type=prop_type,
+        loc=None,
+        companies=companies,
+        selected_company_id=selected_company_id,
+    )
 
 
 # -------------------------------
@@ -408,3 +429,75 @@ def api_testimonials_create():
         'body': t.body,
         'created_at': t.created_at.isoformat() if t.created_at else None,
     }), 201
+
+
+# -------------------------------
+# APIs for quick valuation company selections
+# -------------------------------
+@main.route('/api/companies', methods=['GET'])
+def api_companies():
+    companies = User.query.filter_by(role='company').order_by(User.name.asc()).all()
+    return jsonify([
+        {
+            'id': c.id,
+            'name': c.name,
+            'logo_path': (f"/static/{c.company_profile.logo_path}" if getattr(c, 'company_profile', None) and c.company_profile.logo_path else None),
+        } for c in companies
+    ])
+
+
+@main.route('/api/company_region_price', methods=['GET'])
+def api_company_region_price():
+    """Return land/build prices for wilaya/region considering selected company.
+
+    Query params:
+      - company_id: int (optional)
+      - wilaya: str (required)
+      - region: str (required)
+    """
+    wilaya = request.args.get('wilaya')
+    region = request.args.get('region')
+    company_id = request.args.get('company_id', type=int)
+
+    if not wilaya or not region:
+        return jsonify({'error': 'wilaya and region are required'}), 400
+
+    land_price = None
+
+    # Try company-specific first
+    if company_id:
+        company_profile = CompanyProfile.query.filter_by(user_id=company_id).first()
+        if company_profile:
+            clp = CompanyLandPrice.query.filter_by(
+                company_profile_id=company_profile.id,
+                wilaya=wilaya,
+                region=region,
+            ).first()
+            if clp:
+                land_price = (
+                    clp.price_housing
+                    if clp.price_housing is not None else (
+                        clp.price_per_sqm if clp.price_per_sqm is not None else clp.price_per_meter
+                    )
+                )
+
+    # Fallback to public land price
+    if land_price is None:
+        lp = LandPrice.query.filter_by(wilaya=wilaya, region=region).first()
+        if lp:
+            land_price = (
+                lp.price_housing
+                if lp.price_housing is not None else (
+                    lp.price_per_sqm if lp.price_per_sqm is not None else lp.price_per_meter
+                )
+            )
+
+    # Defaults for build price and location factor if not modeled per company
+    build_price = 220.0
+    loc_factor = 1.0
+
+    return jsonify({
+        'landPrice': float(land_price) if land_price is not None else None,
+        'buildPrice': float(build_price),
+        'locFactor': float(loc_factor),
+    })

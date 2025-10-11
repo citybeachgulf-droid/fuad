@@ -28,6 +28,15 @@
                 <option value="apartment">شقة</option>
               </select>
             </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">الشركة المعتمدة</label>
+              <select id="company_id" class="form-select" aria-label="اختر الشركة">
+                <option value="">— بدون شركة —</option>
+                {% for c in (companies or []) %}
+                <option value="{{ c.id }}" {% if selected_company_id and selected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
 
           <div class="row g-3 mb-3">
@@ -135,6 +144,13 @@
             const totalValueEl = el('total_value');
 
             const quickValueEl = document.querySelector('.quick-result .value');
+            const companySel = el('company_id');
+            const resetBtn = document.getElementById('resetBtn');
+            const resetBaseUrl = "{{ url_for('main.quick_step_summary') }}";
+
+            let currentPricing = null; // { w, r, companyId, landPrice, buildPrice, locFactor }
+            let lastFetchKey = null;
+            const LS_KEY = 'quick_selected_company_id';
 
             function populateWilayas() {
               wilayaSel.innerHTML = '';
@@ -173,9 +189,29 @@
                 return;
               }
 
-              const landPrice = Number(regionData.landPrice || 0);
-              const buildPrice = Number(regionData.buildPrice || 220);
-              const locFactor = Number(regionData.locFactor || 1.0);
+              const selectedCompanyId = companySel ? (companySel.value || null) : null;
+              const useApiPricing = (
+                currentPricing &&
+                currentPricing.w === w &&
+                currentPricing.r === r &&
+                (currentPricing.companyId || null) === selectedCompanyId
+              );
+
+              const landPrice = Number(
+                (useApiPricing && currentPricing.landPrice != null)
+                  ? currentPricing.landPrice
+                  : (regionData.landPrice || 0)
+              );
+              const buildPrice = Number(
+                (useApiPricing && currentPricing.buildPrice != null)
+                  ? currentPricing.buildPrice
+                  : (regionData.buildPrice || 220)
+              );
+              const locFactor = Number(
+                (useApiPricing && currentPricing.locFactor != null)
+                  ? currentPricing.locFactor
+                  : (regionData.locFactor || 1.0)
+              );
 
               // معدل استهلاك البناء: 2% سنويًا، حد أدنى 40%
               const depreciationRate = 0.02;
@@ -227,25 +263,82 @@
               }
             }
 
+            async function updatePricingFromAPI() {
+              const w = wilayaSel.value;
+              const r = regionSel.value;
+              const companyId = companySel ? (companySel.value || null) : null;
+              if (!w || !r) {
+                currentPricing = null;
+                recalc();
+                return;
+              }
+              const key = `${w}::${r}::${companyId || ''}`;
+              lastFetchKey = key;
+              try {
+                const params = new URLSearchParams({ wilaya: w, region: r });
+                if (companyId) params.append('company_id', companyId);
+                const res = await fetch(`/api/company_region_price?${params.toString()}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (lastFetchKey !== key) return; // stale
+                  currentPricing = {
+                    w, r, companyId,
+                    landPrice: (data && typeof data.landPrice !== 'undefined') ? data.landPrice : null,
+                    buildPrice: (data && typeof data.buildPrice !== 'undefined') ? data.buildPrice : null,
+                    locFactor: (data && typeof data.locFactor !== 'undefined') ? data.locFactor : null,
+                  };
+                } else {
+                  currentPricing = null;
+                }
+              } catch (e) {
+                currentPricing = null;
+              }
+              recalc();
+            }
+
+            function updateResetHref() {
+              if (!resetBtn) return;
+              const companyId = companySel ? (companySel.value || '') : '';
+              resetBtn.href = companyId ? `${resetBaseUrl}?company_id=${encodeURIComponent(companyId)}` : resetBaseUrl;
+            }
+
             // Init
             populateWilayas();
             populateRegions();
             initPropType();
             applyPropTypeState();
-            recalc();
+            // Restore selected company from server or localStorage
+            if (companySel) {
+              const serverSelected = "{{ selected_company_id or '' }}";
+              if (!serverSelected) {
+                const stored = localStorage.getItem(LS_KEY) || '';
+                if (stored && [...companySel.options].some(o => o.value === stored)) {
+                  companySel.value = stored;
+                }
+              }
+            }
+            updateResetHref();
+            updatePricingFromAPI();
 
             // Events
-            wilayaSel.addEventListener('change', () => { populateRegions(); recalc(); });
-            regionSel.addEventListener('change', recalc);
+            wilayaSel.addEventListener('change', () => { populateRegions(); updatePricingFromAPI(); });
+            regionSel.addEventListener('change', updatePricingFromAPI);
             landAreaInp.addEventListener('input', recalc);
             buildAreaInp.addEventListener('input', recalc);
             ageInp.addEventListener('input', recalc);
+            if (companySel) {
+              companySel.addEventListener('change', () => {
+                localStorage.setItem(LS_KEY, companySel.value || '');
+                updateResetHref();
+                updatePricingFromAPI();
+              });
+            }
           })();
         </script>
 
         <div class="d-flex gap-2">
           <a class="btn btn-primary" href="{{ url_for('main.certified_step_entity') }}">الانتقال للتقييم المعتمد</a>
-          <a class="btn btn-outline-secondary" href="{{ url_for('main.quick_step_summary') }}">إعادة التهيئة</a>
+          <a id="resetBtn" class="btn btn-outline-secondary" href="{{ url_for('main.quick_step_summary', company_id=selected_company_id) }}">إعادة التهيئة</a>
         </div>
       </div>
     </div>
