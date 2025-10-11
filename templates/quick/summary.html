@@ -166,9 +166,17 @@
               const w = wilayaSel.value;
               const r = regionSel.value;
 
-              const landArea = Number(landAreaInp.value || 0);
-              const buildArea = Number(buildAreaInp.value || 0);
-              const ageYears = Math.max(0, Number(ageInp.value || 0));
+              // Treat empty inputs as NaN so UI shows '—' instead of 0
+              const landAreaStr = (landAreaInp.value || '').toString().trim();
+              const buildAreaStr = (buildAreaInp.value || '').toString().trim();
+              const ageStr = (ageInp.value || '').toString().trim();
+
+              const landArea = landAreaStr === '' ? NaN : Number(landAreaStr);
+              const buildArea = buildAreaStr === '' ? NaN : Number(buildAreaStr);
+              const ageYears = Math.max(0, (ageStr === '' ? 0 : Number(ageStr)));
+
+              const hasLandArea = isFinite(landArea) && landArea > 0;
+              const hasBuildArea = isFinite(buildArea) && buildArea > 0;
 
               if (!w || !r) {
                 landFormula.textContent = '—';
@@ -181,18 +189,22 @@
               }
 
               const selectedCompanyId = companySel ? (companySel.value || null) : null;
+              const currentLandUse = landUseSel ? (landUseSel.value || null) : null;
               const useApiPricing = (
                 currentPricing &&
                 currentPricing.w === w &&
                 currentPricing.r === r &&
-                (currentPricing.companyId || null) === selectedCompanyId
+                (currentPricing.companyId || null) === selectedCompanyId &&
+                (currentPricing.landUse || null) === currentLandUse
               );
 
-              const landPrice = Number(
-                (useApiPricing && currentPricing && currentPricing.landPrice != null)
-                  ? currentPricing.landPrice
-                  : 0
-              );
+              // Use NaN when land price is unavailable to avoid showing 0
+              const landPriceRaw = (
+                useApiPricing && currentPricing && currentPricing.landPrice != null
+              ) ? currentPricing.landPrice : null;
+              const landPrice = (landPriceRaw === null || landPriceRaw === undefined)
+                ? NaN
+                : Number(landPriceRaw);
               const buildPrice = Number(
                 (useApiPricing && currentPricing && currentPricing.buildPrice != null)
                   ? currentPricing.buildPrice
@@ -208,14 +220,24 @@
               const depreciationRate = 0.02;
               const depreciationFactor = Math.max(0.40, 1 - ageYears * depreciationRate);
 
-              const landValue = landArea * landPrice;
-              const buildingValue = (propType === 'land') ? 0 : (buildArea * buildPrice * depreciationFactor);
-              const total = (landValue + buildingValue) * locFactor;
+              const landValue = (isFinite(landPrice) && hasLandArea) ? (landArea * landPrice) : NaN;
+              const buildingValue = (propType === 'land')
+                ? 0
+                : (hasBuildArea ? (buildArea * buildPrice * depreciationFactor) : NaN);
+              const totalBase = (
+                (isFinite(landValue) ? landValue : 0) +
+                (isFinite(buildingValue) ? buildingValue : 0)
+              );
+              const total = (totalBase > 0) ? (totalBase * locFactor) : NaN;
 
-              landFormula.textContent = `${fmt(landArea)} × ${fmt(landPrice)}`;
+              landFormula.textContent = (hasLandArea && isFinite(landPrice))
+                ? `${fmt(landArea)} × ${fmt(landPrice)}`
+                : '—';
               buildFormula.textContent = (propType === 'land')
                 ? '—'
-                : `${fmt(buildArea)} × ${fmt(buildPrice)} × ${depreciationFactor.toFixed(2)}`;
+                : (hasBuildArea
+                  ? `${fmt(buildArea)} × ${fmt(buildPrice)} × ${depreciationFactor.toFixed(2)}`
+                  : '—');
               locFactorEl.textContent = locFactor.toFixed(2);
 
               landValueEl.textContent = fmt(Math.round(landValue));
