@@ -486,6 +486,15 @@ def upload_company_land_prices():
     updated = 0
     skipped = 0
 
+    # تحقق من وجود عمود price_per_meter في قاعدة البيانات لملائمة الإصدارات القديمة
+    try:
+        from sqlalchemy import inspect as sa_inspect
+        inspector = sa_inspect(db.engine)
+        company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
+        has_price_per_meter = 'price_per_meter' in company_land_cols
+    except Exception:
+        has_price_per_meter = False
+
     for row in rows_iter:
         if row is None:
             skipped += 1
@@ -529,6 +538,7 @@ def upload_company_land_prices():
                 s = s.replace('\u066b', '.').replace('٫', '.').replace('٬', '').replace(',', '')
 
                 import re
+                # استخرج الأرقام، واسمح بالسالب لدعم قيم سالبة إن وُجدت
                 numbers = re.findall(r'-?\d+(?:\.\d+)?', s)
                 if not numbers:
                     return None
@@ -579,11 +589,17 @@ def upload_company_land_prices():
             if fallback_price is not None and (existing.price_per_sqm is None or existing.price_per_sqm != fallback_price):
                 existing.price_per_sqm = fallback_price
                 changed = True
+            # حافظ على التوافق مع قواعد البيانات التي لديها عمود price_per_meter
+            if has_price_per_meter and fallback_price is not None:
+                current_val = getattr(existing, 'price_per_meter', None)
+                if current_val is None or current_val != fallback_price:
+                    existing.price_per_meter = fallback_price
+                    changed = True
             if changed:
                 updated += 1
         else:
             fallback_price = next((v for v in (price_housing, price_commercial, price_industrial, price_agricultural, legacy_price) if v is not None), None)
-            db.session.add(CompanyLandPrice(
+            new_obj = CompanyLandPrice(
                 company_profile_id=profile.id,
                 wilaya=wilaya_str,
                 region=region_str,
@@ -592,7 +608,10 @@ def upload_company_land_prices():
                 price_industrial=price_industrial,
                 price_agricultural=price_agricultural,
                 price_per_sqm=fallback_price,
-            ))
+            )
+            if has_price_per_meter:
+                new_obj.price_per_meter = fallback_price
+            db.session.add(new_obj)
             inserted += 1
 
     db.session.commit()
