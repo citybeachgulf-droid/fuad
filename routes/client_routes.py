@@ -1,7 +1,7 @@
 """Blueprint for client portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment
+from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment, Conversation, Message
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -114,8 +114,52 @@ def request_detail(request_id: int):
     if vr.client_id != current_user.id:
         return "غير مصرح لك بالوصول", 403
 
+    # استخراج آخر ملاحظة من شركة التثمين عن "مستندات ناقصة" لهذا الطلب (إن وُجدت)
+    missing_docs_note = None
+    missing_docs_time = None
+    try:
+        if (vr.status or '').lower() == 'revision_requested' and vr.company_id:
+            conv = Conversation.query.filter_by(client_id=current_user.id, company_id=vr.company_id).first()
+            if conv:
+                # ابحث عن آخر رسالة تخص هذا الطلب تشير إلى مستندات ناقصة
+                pattern_part = f"#{vr.id}"
+                q = (
+                    Message.query
+                    .filter(
+                        Message.conversation_id == conv.id,
+                        Message.content.like('%طلب مستندات ناقصة%'),
+                        Message.content.like(f'%{pattern_part}%'),
+                    )
+                    .order_by(Message.timestamp.desc())
+                )
+                last_msg = q.first()
+                if last_msg:
+                    content = last_msg.content or ''
+                    # استخرج الملاحظات بعد أول سطر أو بعد النقطتين إن وُجدتا
+                    if '\n' in content:
+                        missing_docs_note = content.split('\n', 1)[1].strip() or None
+                    else:
+                        # محاولة إزالة المقدمة الثابتة والإبقاء على الملاحظة فقط
+                        split_marker = 'طلب مستندات ناقصة'
+                        if split_marker in content:
+                            possible = content.split(':', 1)
+                            missing_docs_note = (possible[1] if len(possible) > 1 else '').strip() or None
+                        else:
+                            missing_docs_note = content.strip() or None
+                    missing_docs_time = last_msg.timestamp
+    except Exception:
+        # لا نفشل صفحة التفاصيل إن تعذّر استخراج الرسالة
+        missing_docs_note = None
+        missing_docs_time = None
+
     companies = User.query.filter_by(role='company').all()
-    return render_template('client/request_detail.html', request_obj=vr, companies=companies)
+    return render_template(
+        'client/request_detail.html',
+        request_obj=vr,
+        companies=companies,
+        missing_docs_note=missing_docs_note,
+        missing_docs_time=missing_docs_time,
+    )
 
 
 @client_bp.route('/requests/<int:request_id>/transfer', methods=['POST'])

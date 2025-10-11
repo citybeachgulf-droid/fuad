@@ -11,6 +11,19 @@
     </p>
     <p><strong>الشركة الحالية:</strong> {{ request_obj.company.name if request_obj.company else '-' }}</p>
     <p><strong>الحالة:</strong> {{ request_obj.status }}</p>
+    {% if (request_obj.status or '').lower() == 'revision_requested' %}
+      <div class="alert alert-warning mt-2">
+        <div><strong>مستندات ناقصة مطلوبة لهذه المعاملة.</strong></div>
+        {% if missing_docs_note %}
+          <div class="mt-1">{{ missing_docs_note }}</div>
+        {% else %}
+          <div class="mt-1">يرجى تزويد الشركة بالمستندات المطلوبة.</div>
+        {% endif %}
+        {% if missing_docs_time %}
+          <div class="small text-muted mt-1">آخر تحديث: {{ missing_docs_time }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
     {% if request_obj.status == 'rejected' and request_obj.rejection_reason %}
       <div class="alert alert-danger mt-2">
         <div><strong>تم رفض المعاملة</strong></div>
