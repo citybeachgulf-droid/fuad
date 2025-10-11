@@ -1,7 +1,7 @@
 """Blueprint for valuation company portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment
+from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -55,6 +55,41 @@ def request_detail(request_id: int):
     # احضار المواعيد المرتبطة بأحدث ترتيب
     appts = VisitAppointment.query.filter_by(valuation_request_id=req.id).order_by(VisitAppointment.created_at.desc()).all()
     return render_template('company/request_detail.html', request_obj=req, appointments=appts)
+
+
+@company_bp.route('/requests/<int:request_id>/missing-docs', methods=['POST'])
+@login_required
+def mark_missing_documents(request_id: int):
+    """تحديد أن الطلب لديه مستندات ناقصة مع إرسال ملاحظات للعميل."""
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    req = ValuationRequest.query.get_or_404(request_id)
+    if req.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    notes = (request.form.get('notes') or '').strip()
+    if not notes:
+        flash('يرجى كتابة الملاحظات حول المستندات الناقصة', 'danger')
+        return redirect(url_for('company.request_detail', request_id=req.id) + '#missing-docs')
+
+    # تحديث حالة الطلب
+    req.status = 'revision_requested'
+
+    # إرسال رسالة عبر نظام المحادثات إلى العميل
+    conv = Conversation.query.filter_by(client_id=req.client_id, company_id=current_user.id).first()
+    if not conv:
+        conv = Conversation(client_id=req.client_id, company_id=current_user.id, status='open')
+        db.session.add(conv)
+        db.session.flush()
+        db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+
+    content = f"طلب مستندات ناقصة بخصوص طلب التثمين #{req.id}:\n{notes}"
+    db.session.add(Message(conversation_id=conv.id, sender_id=current_user.id, content=content))
+    db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+    db.session.commit()
+    flash('تم إرسال طلب المستندات الناقصة إلى العميل مع الملاحظات', 'success')
+    return redirect(url_for('company.request_detail', request_id=req.id))
 
 
 @company_bp.route('/appointments/<int:appointment_id>/accept', methods=['POST'])
