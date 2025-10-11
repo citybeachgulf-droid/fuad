@@ -442,9 +442,13 @@ class Advertisement(db.Model):
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # ================================
 # أسعار الأراضي العامة (اختياري للنظام)
 # ================================
+=======
+
+>>>>>>> Stashed changes
 =======
 
 >>>>>>> Stashed changes
@@ -452,6 +456,7 @@ class LandPrice(db.Model):
     __tablename__ = 'land_prices'
 
     id = db.Column(db.Integer, primary_key=True)
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     wilaya = db.Column(db.String(100), nullable=False, index=True)
     region = db.Column(db.String(150), nullable=False, index=True)
@@ -485,10 +490,16 @@ class CompanyLandPrice(db.Model):
         db.UniqueConstraint('company_profile_id', 'wilaya', 'region', name='uq_company_landprice_company_loc'),
     )
 =======
+=======
+>>>>>>> Stashed changes
     region = db.Column(db.String(100), nullable=False)
     price_per_meter = db.Column(db.Float, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
+<<<<<<< Updated upstream
+        return f"<LandPrice {self.region}: {self.price_per_meter}>"
+>>>>>>> Stashed changes
+=======
         return f"<LandPrice {self.region}: {self.price_per_meter}>"
 >>>>>>> Stashed changes
