@@ -73,17 +73,16 @@
       <tbody>
       {% for it in items %}
         <tr>
-          <form method="post" action="{{ url_for('company.edit_land_price', item_id=it.id, q=q) }}">
-            <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}"></td>
-            <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}"></td>
-            <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}"></td>
-            <td><input class="form-control form-control-sm" name="price_commercial" value="{{ it.price_commercial if it.price_commercial is not none else '' }}"></td>
-            <td><input class="form-control form-control-sm" name="price_industrial" value="{{ it.price_industrial if it.price_industrial is not none else '' }}"></td>
-            <td><input class="form-control form-control-sm" name="price_agricultural" value="{{ it.price_agricultural if it.price_agricultural is not none else '' }}"></td>
-            <td><input class="form-control form-control-sm" name="price_per_sqm" value="{{ it.price_per_sqm if it.price_per_sqm is not none else '' }}"></td>
+            <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}" form="form-{{ it.id }}"></td>
+            <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}" form="form-{{ it.id }}"></td>
+            <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}" form="form-{{ it.id }}"></td>
+            <td><input class="form-control form-control-sm" name="price_commercial" value="{{ it.price_commercial if it.price_commercial is not none else '' }}" form="form-{{ it.id }}"></td>
+            <td><input class="form-control form-control-sm" name="price_industrial" value="{{ it.price_industrial if it.price_industrial is not none else '' }}" form="form-{{ it.id }}"></td>
+            <td><input class="form-control form-control-sm" name="price_agricultural" value="{{ it.price_agricultural if it.price_agricultural is not none else '' }}" form="form-{{ it.id }}"></td>
+            <td><input class="form-control form-control-sm" name="price_per_sqm" value="{{ it.price_per_sqm if it.price_per_sqm is not none else '' }}" form="form-{{ it.id }}"></td>
             <td class="text-nowrap">
-              <button class="btn btn-sm btn-primary" type="submit">حفظ</button>
-          </form>
+              <form id="form-{{ it.id }}" method="post" action="{{ url_for('company.edit_land_price', item_id=it.id, q=q) }}"></form>
+              <button class="btn btn-sm btn-primary" type="submit" form="form-{{ it.id }}">حفظ</button>
               <form method="post" class="d-inline" action="{{ url_for('company.delete_land_price', item_id=it.id) }}" onsubmit="return confirm('تأكيد حذف السجل؟');">
                 <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
               </form>
