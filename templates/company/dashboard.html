@@ -78,6 +78,36 @@
             <input type="hidden" name="notes" value="يرجى تزويدنا بالمستندات الناقصة.">
             <button type="submit" class="btn btn-sm btn-outline-warning">مستندات ناقصة</button>
           </form>
+          {% if r.status != 'rejected' %}
+          <button type="button" class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal{{ r.id }}">رفض المعاملة</button>
+          {% endif %}
+
+          <!-- Reject Modal -->
+          <div class="modal fade" id="rejectModal{{ r.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ r.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post" action="{{ url_for('company.reject_request', request_id=r.id) }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel{{ r.id }}">رفض المعاملة #{{ r.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">سبب الرفض</label>
+                      <textarea name="reason" class="form-control" rows="3" placeholder="اكتب سبب الرفض ليظهر للعميل والإدارة" required></textarea>
+                    </div>
+                    {% if r.rejection_reason %}
+                      <div class="alert alert-secondary small">آخر سبب محفوظ: {{ r.rejection_reason }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">تأكيد الرفض</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </td>
       </tr>
     {% endfor %}

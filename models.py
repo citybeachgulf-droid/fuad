@@ -124,9 +124,13 @@ class ValuationRequest(db.Model):
     value = db.Column(db.Float, nullable=True)
     # القيمة التي طلبها البنك من العميل كتقدير مبدئي/مطلوب
     requested_amount = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(50), default='pending')  # pending/approved/completed/revision_requested
+    status = db.Column(db.String(50), default='pending')  # pending/approved/completed/revision_requested/rejected
     # نوع التثمين: أرض/عقار/بناء منزل
     valuation_type = db.Column(db.String(50), nullable=True)  # values: land, property, house
+    # سبب الرفض إن وُجد
+    rejection_reason = db.Column(db.Text, nullable=True)
+    # تاريخ الرفض
+    rejected_at = db.Column(db.DateTime, nullable=True)
 
     # علاقات ORM (اختياري لكن مفيد)
     client = db.relationship('User', foreign_keys=[client_id], backref='client_requests')

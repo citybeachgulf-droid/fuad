@@ -11,6 +11,15 @@
     </p>
     <p><strong>الشركة الحالية:</strong> {{ request_obj.company.name if request_obj.company else '-' }}</p>
     <p><strong>الحالة:</strong> {{ request_obj.status }}</p>
+    {% if request_obj.status == 'rejected' and request_obj.rejection_reason %}
+      <div class="alert alert-danger mt-2">
+        <div><strong>تم رفض المعاملة</strong></div>
+        <div><strong>السبب:</strong> {{ request_obj.rejection_reason }}</div>
+        {% if request_obj.rejected_at %}
+          <div class="small text-muted mt-1">تاريخ الرفض: {{ request_obj.rejected_at }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
     <p><strong>القيمة المقدّرة:</strong> {{ request_obj.value if request_obj.value is not none else '-' }}</p>
     <p><strong>قيمة التثمين المطلوبة (من البنك):</strong> {{ request_obj.requested_amount if request_obj.requested_amount is not none else '-' }}</p>
   </div>
