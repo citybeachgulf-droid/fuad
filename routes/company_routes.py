@@ -491,11 +491,35 @@ def upload_company_land_prices():
         region_str = str(region_val or '').strip()
 
         def to_float(v):
+            """Parse numeric or range values and return a float.
+
+            Accepts single numbers like "80" or ranges like "70-105" / "70 – 105".
+            Uses the average for ranges. Normalizes Arabic/Persian digits and separators.
+            """
             if v in (None, ''):
                 return None
+            s = str(v).strip()
+            if s in {'-', '–', '—'}:
+                return None
             try:
-                s = str(v).replace('\u066b', '.').replace('٬', '').replace(',', '').strip()
-                return float(s)
+                # Normalize Arabic/Persian digits to ASCII
+                digits_src = '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'
+                digits_dst = '01234567890123456789'
+                trans = str.maketrans({src: dst for src, dst in zip(digits_src, digits_dst)})
+                s = s.translate(trans)
+
+                # Normalize decimal separator and strip thousands separators
+                s = s.replace('\u066b', '.').replace('٫', '.').replace('٬', '').replace(',', '')
+
+                import re
+                numbers = re.findall(r'-?\d+(?:\.\d+)?', s)
+                if not numbers:
+                    return None
+                if len(numbers) == 1:
+                    return float(numbers[0])
+                a = float(numbers[0])
+                b = float(numbers[1])
+                return (a + b) / 2.0
             except Exception:
                 return None
 
