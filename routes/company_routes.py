@@ -437,26 +437,43 @@ def upload_company_land_prices():
         flash('صيغة غير مدعومة. الرجاء رفع .xlsx أو .csv', 'danger')
         return redirect(url_for('company.edit_profile'))
 
-    def norm(val):
-        return str(val or '').strip().lower()
+    def normalize_header_key(val):
+        s = str(val or '').strip().lower()
+        s = s.replace('ـ', '')
+        import re
+        # remove Arabic diacritics
+        s = re.sub(r'[\u0617-\u061A\u064B-\u0652\u0670\u0653-\u065F]', '', s)
+        # normalize common separators to spaces
+        s = s.replace('_', ' ').replace('-', ' ').replace('/', ' ')
+        s = re.sub(r'\s+', ' ', s).strip()
+        return s
+
+    # Synonyms for supported headers (normalized)
+    header_synonyms = {
+        'wilaya': {
+            'wilaya', 'الولاية', 'ولاية', 'ولايه', 'الولايه',
+            'محافظة', 'المحافظة', 'governorate', 'state', 'province'
+        },
+        'region': {
+            'region', 'المنطقة', 'منطقة', 'المنطقه', 'منطقه',
+            'حي', 'الحي', 'حى', 'الحى', 'المدينة', 'مدينة',
+            'district', 'area', 'neighborhood', 'neighbourhood', 'locality', 'city'
+        },
+        'housing': {'سكني', 'سكنية', 'سكن', 'housing'},
+        'commercial': {'تجاري', 'تجارية', 'commercial'},
+        'industrial': {'صناعي', 'صناعية', 'industrial'},
+        'agricultural': {'زراعي', 'زراعية', 'agricultural', 'agriculture'},
+        'price_per_sqm': {'price', 'price per sqm', 'price_per_sqm', 'سعر المتر', 'سعر_المتر', 'السعر'},
+    }
+    normalized_synonyms = {k: {normalize_header_key(v) for v in vs} for k, vs in header_synonyms.items()}
 
     header_map = {}
     for idx, col in enumerate(header_row):
-        key = norm(col)
-        if key in ('wilaya', 'الولاية', 'ولاية'):
-            header_map['wilaya'] = idx
-        elif key in ('region', 'المنطقة', 'منطقة'):
-            header_map['region'] = idx
-        elif key in ('سكني', 'سكنية', 'housing'):
-            header_map['housing'] = idx
-        elif key in ('تجاري', 'commercial'):
-            header_map['commercial'] = idx
-        elif key in ('صناعي', 'industrial'):
-            header_map['industrial'] = idx
-        elif key in ('زراعي', 'agricultural'):
-            header_map['agricultural'] = idx
-        elif key in ('price', 'price_per_sqm', 'سعر المتر', 'سعر_المتر', 'السعر'):
-            header_map['price_per_sqm'] = idx
+        key = normalize_header_key(col)
+        for canonical, syns in normalized_synonyms.items():
+            if key in syns and canonical not in header_map:
+                header_map[canonical] = idx
+                break
 
     if 'wilaya' not in header_map or 'region' not in header_map:
         flash('العناوين يجب أن تتضمن: الولاية، المنطقة', 'danger')
