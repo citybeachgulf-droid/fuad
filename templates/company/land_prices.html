@@ -1,0 +1,98 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h2 class="m-0">أسعار الأراضي</h2>
+    <a href="{{ url_for('company.dashboard') }}" class="btn btn-outline-secondary ms-auto">رجوع</a>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <form class="row g-2 align-items-end" method="get" action="{{ url_for('company.land_prices') }}">
+        <div class="col-12 col-md-4">
+          <label class="form-label">بحث (ولاية/منطقة)</label>
+          <input type="text" class="form-control" name="q" value="{{ q or '' }}" placeholder="اكتب هنا...">
+        </div>
+        <div class="col-12 col-md-auto">
+          <button type="submit" class="btn btn-primary">بحث</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">إضافة سجل جديد</h5>
+      <form class="row g-2" method="post" action="{{ url_for('company.create_land_price') }}">
+        <div class="col-12 col-md-2">
+          <input class="form-control" name="wilaya" placeholder="الولاية" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" name="region" placeholder="المنطقة" required>
+        </div>
+        <div class="col-6 col-md-1">
+          <input class="form-control" name="price_housing" placeholder="سكني">
+        </div>
+        <div class="col-6 col-md-1">
+          <input class="form-control" name="price_commercial" placeholder="تجاري">
+        </div>
+        <div class="col-6 col-md-1">
+          <input class="form-control" name="price_industrial" placeholder="صناعي">
+        </div>
+        <div class="col-6 col-md-1">
+          <input class="form-control" name="price_agricultural" placeholder="زراعي">
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" name="price_per_sqm" placeholder="سعر/م² (اختياري)">
+        </div>
+        <div class="col-12 col-md-1">
+          <button class="btn btn-success w-100" type="submit">إضافة</button>
+        </div>
+      </form>
+      <div class="form-text mt-1">يمكن إدخال رقم أو مدى مثل 70-105 وسيتم أخذ المتوسط.</div>
+    </div>
+  </div>
+
+  {% if items|length == 0 %}
+    <div class="alert alert-light">لا توجد سجلات.</div>
+  {% else %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>الولاية</th>
+          <th>المنطقة</th>
+          <th>سكني</th>
+          <th>تجاري</th>
+          <th>صناعي</th>
+          <th>زراعي</th>
+          <th>سعر/م²</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for it in items %}
+        <tr>
+          <form method="post" action="{{ url_for('company.edit_land_price', item_id=it.id, q=q) }}">
+            <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}"></td>
+            <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}"></td>
+            <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}"></td>
+            <td><input class="form-control form-control-sm" name="price_commercial" value="{{ it.price_commercial if it.price_commercial is not none else '' }}"></td>
+            <td><input class="form-control form-control-sm" name="price_industrial" value="{{ it.price_industrial if it.price_industrial is not none else '' }}"></td>
+            <td><input class="form-control form-control-sm" name="price_agricultural" value="{{ it.price_agricultural if it.price_agricultural is not none else '' }}"></td>
+            <td><input class="form-control form-control-sm" name="price_per_sqm" value="{{ it.price_per_sqm if it.price_per_sqm is not none else '' }}"></td>
+            <td class="text-nowrap">
+              <button class="btn btn-sm btn-primary" type="submit">حفظ</button>
+          </form>
+              <form method="post" class="d-inline" action="{{ url_for('company.delete_land_price', item_id=it.id) }}" onsubmit="return confirm('تأكيد حذف السجل؟');">
+                <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
+              </form>
+            </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

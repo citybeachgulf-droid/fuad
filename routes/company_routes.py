@@ -1,5 +1,6 @@
 """Blueprint for valuation company portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from sqlalchemy import or_
 from flask_login import login_required, current_user
 from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog, CompanyLandPrice
 from werkzeug.utils import secure_filename
@@ -300,6 +301,180 @@ def propose_company_appointment(request_id: int):
     flash('تم اقتراح موعد بديل للعميل', 'success')
     return redirect(url_for('company.request_detail', request_id=vr.id))
 
+
+# ================================
+# إدارة أسعار الأراضي للشركة
+# ================================
+@company_bp.route('/land_prices', methods=['GET'])
+@login_required
+def land_prices():
+    """عرض قائمة أسعار الأراضي التي رفعتها الشركة مع البحث والتعديل."""
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        profile = CompanyProfile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    q = (request.args.get('q') or '').strip()
+    base = CompanyLandPrice.query.filter_by(company_profile_id=profile.id)
+    if q:
+        like = f"%{q}%"
+        base = base.filter(or_(CompanyLandPrice.wilaya.ilike(like), CompanyLandPrice.region.ilike(like)))
+
+    prices = base.order_by(CompanyLandPrice.wilaya.asc(), CompanyLandPrice.region.asc()).all()
+    return render_template('company/land_prices.html', items=prices, q=q)
+
+
+def _parse_float_field(raw_value):
+    """Normalize Arabic/Persian digits, accept ranges, return float or None."""
+    if raw_value in (None, ''):
+        return None
+    try:
+        s = str(raw_value).strip()
+        if s in {'-', '–', '—'}:
+            return None
+        digits_src = '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'
+        digits_dst = '01234567890123456789'
+        trans = str.maketrans({src: dst for src, dst in zip(digits_src, digits_dst)})
+        s = s.translate(trans)
+        s = s.replace('\u066b', '.').replace('٫', '.').replace('٬', '').replace(',', '')
+        import re
+        nums = re.findall(r'-?\d+(?:\.\d+)?', s)
+        if not nums:
+            return None
+        if len(nums) == 1:
+            return float(nums[0])
+        a, b = float(nums[0]), float(nums[1])
+        return (a + b) / 2.0
+    except Exception:
+        return None
+
+
+@company_bp.route('/land_prices/<int:item_id>/edit', methods=['POST'])
+@login_required
+def edit_land_price(item_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        return "غير مصرح لك بالوصول", 403
+
+    obj = CompanyLandPrice.query.get_or_404(item_id)
+    if obj.company_profile_id != profile.id:
+        return "غير مصرح لك بالوصول", 403
+
+    wilaya = (request.form.get('wilaya') or obj.wilaya).strip()
+    region = (request.form.get('region') or obj.region).strip()
+    ph = _parse_float_field(request.form.get('price_housing'))
+    pc = _parse_float_field(request.form.get('price_commercial'))
+    pi = _parse_float_field(request.form.get('price_industrial'))
+    pa = _parse_float_field(request.form.get('price_agricultural'))
+    pps = _parse_float_field(request.form.get('price_per_sqm'))
+
+    # التحديثات
+    obj.wilaya = wilaya or obj.wilaya
+    obj.region = region or obj.region
+    if ph is not None:
+        obj.price_housing = ph
+    if pc is not None:
+        obj.price_commercial = pc
+    if pi is not None:
+        obj.price_industrial = pi
+    if pa is not None:
+        obj.price_agricultural = pa
+    if pps is not None:
+        obj.price_per_sqm = pps
+
+    # حافظ على price_per_sqm كقيمة افتراضية عند غيابها
+    if obj.price_per_sqm is None:
+        fallback = next((v for v in [obj.price_housing, obj.price_commercial, obj.price_industrial, obj.price_agricultural] if v is not None), None)
+        if fallback is not None:
+            obj.price_per_sqm = fallback
+
+    try:
+        db.session.commit()
+        flash('تم تحديث السجل بنجاح', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر حفظ التعديلات. تأكد من عدم تكرار الولاية/المنطقة.', 'danger')
+
+    return redirect(url_for('company.land_prices', q=request.args.get('q') or None))
+
+
+@company_bp.route('/land_prices/new', methods=['POST'])
+@login_required
+def create_land_price():
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        profile = CompanyProfile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    wilaya = (request.form.get('wilaya') or '').strip()
+    region = (request.form.get('region') or '').strip()
+    if not wilaya or not region:
+        flash('يرجى إدخال الولاية والمنطقة', 'danger')
+        return redirect(url_for('company.land_prices'))
+
+    ph = _parse_float_field(request.form.get('price_housing'))
+    pc = _parse_float_field(request.form.get('price_commercial'))
+    pi = _parse_float_field(request.form.get('price_industrial'))
+    pa = _parse_float_field(request.form.get('price_agricultural'))
+    pps = _parse_float_field(request.form.get('price_per_sqm'))
+
+    fallback = next((v for v in [ph, pc, pi, pa, pps] if v is not None), None)
+    obj = CompanyLandPrice(
+        company_profile_id=profile.id,
+        wilaya=wilaya,
+        region=region,
+        price_housing=ph,
+        price_commercial=pc,
+        price_industrial=pi,
+        price_agricultural=pa,
+        price_per_sqm=pps if pps is not None else fallback,
+    )
+
+    try:
+        db.session.add(obj)
+        db.session.commit()
+        flash('تمت إضافة السجل بنجاح', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر إضافة السجل. تأكد من عدم تكرار الولاية/المنطقة.', 'danger')
+
+    return redirect(url_for('company.land_prices'))
+
+
+@company_bp.route('/land_prices/<int:item_id>/delete', methods=['POST'])
+@login_required
+def delete_land_price(item_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        return redirect(url_for('company.land_prices'))
+
+    obj = CompanyLandPrice.query.get_or_404(item_id)
+    if obj.company_profile_id != profile.id:
+        return "غير مصرح لك بالوصول", 403
+
+    try:
+        db.session.delete(obj)
+        db.session.commit()
+        flash('تم حذف السجل', 'info')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر حذف السجل', 'danger')
+
+    return redirect(url_for('company.land_prices'))
 
 # ================================
 # إدارة ملف تعريف الشركة
