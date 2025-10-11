@@ -147,6 +147,11 @@ if __name__ == '__main__':
             try:
                 land_cols = [c['name'] for c in inspector.get_columns('land_prices')]
                 with db.engine.connect() as conn:
+                    # Ensure essential lookup columns exist on land_prices
+                    if 'wilaya' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN wilaya VARCHAR(100)'))
+                    if 'created_at' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN created_at DATETIME'))
                     if 'price_housing' not in land_cols:
                         conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_housing FLOAT'))
                     if 'price_commercial' not in land_cols:
@@ -163,6 +168,8 @@ if __name__ == '__main__':
 
                 company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
                 with db.engine.connect() as conn:
+                    if 'created_at' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN created_at DATETIME'))
                     if 'price_housing' not in company_land_cols:
                         conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_housing FLOAT'))
                     if 'price_commercial' not in company_land_cols:
