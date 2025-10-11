@@ -14,7 +14,16 @@ def dashboard():
     if current_user.role != 'company':
         return "غير مصرح لك بالوصول", 403
     # جلب الطلبات المرتبطة بالشركة
-    requests = ValuationRequest.query.filter_by(company_id=current_user.id).all()
+    # اعرض فقط المعاملات الجديدة (pending)
+    requests = (
+        ValuationRequest.query
+        .filter(
+            ValuationRequest.company_id == current_user.id,
+            (ValuationRequest.status == 'pending')
+        )
+        .order_by(ValuationRequest.id.desc())
+        .all()
+    )
     # المواعيد المقترحة من العميل والتي ما زالت بانتظار موافقة الشركة
     pending_appts = (
         VisitAppointment.query
