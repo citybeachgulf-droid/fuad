@@ -105,6 +105,13 @@
                     {% for t in testimonials %}
                     <div class="carousel-item {% if loop.first %}active{% endif %}">
                         <div class="card h-100 card-hover p-4">
+                            {% if t.rating %}
+                            <div class="d-flex justify-content-center mb-2" aria-label="تقييم الخدمة">
+                                <span class="badge bg-light text-dark">
+                                    {% for _ in range(t.rating) %}★{% endfor %}{% for _ in range(5 - t.rating) %}☆{% endfor %}
+                                </span>
+                            </div>
+                            {% endif %}
                             <blockquote class="blockquote mb-0 text-center">
                                 <p class="mb-2">{{ t.body }}</p>
                                 <footer class="blockquote-footer">{{ t.name }}</footer>
