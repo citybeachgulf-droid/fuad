@@ -1,13 +1,20 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User, InviteToken, News, Advertisement, LandPrice
+from models import db, User, InviteToken, News, Advertisement, LandPrice, BankProfile
 from flask_login import login_required, current_user
 from urllib.parse import urljoin
 from flask import current_app
 from zoneinfo import ZoneInfo
 import os
+import time
 from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__, template_folder='../templates/admin', static_folder='../static')
+# --- Logo upload helpers (admin) ---
+ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+
+def _allowed_logo_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_LOGO_EXTENSIONS
+
 
 
 # --- Dashboard (محمي ويعرض البنوك والشركات) ---
@@ -583,6 +590,29 @@ def update_bank(bank_id: int):
 
     if password:
         bank_user.set_password(password)
+
+    # معالجة رفع الشعار من قبل المدير
+    file = request.files.get('logo')
+    if file and file.filename:
+        if not _allowed_logo_file(file.filename):
+            flash('صيغة الشعار غير مدعومة', 'danger')
+            return redirect(url_for('admin.banks'))
+
+        upload_dir = current_app.config.get('UPLOAD_FOLDER')
+        os.makedirs(upload_dir, exist_ok=True)
+        filename = f"bank_{bank_user.id}_{int(time.time())}_" + secure_filename(file.filename)
+        save_path = os.path.join(upload_dir, filename)
+        file.save(save_path)
+
+        # ضمان وجود ملف تعريف للبنك
+        profile = bank_user.bank_profile
+        if profile is None:
+            profile = BankProfile(user_id=bank_user.id, slug=f"bank-{bank_user.id}")
+            db.session.add(profile)
+            db.session.flush()
+
+        rel_path = os.path.relpath(save_path, os.path.join(current_app.root_path, 'static'))
+        profile.logo_path = rel_path.replace('\\', '/')
 
     db.session.commit()
     flash('تم تحديث بيانات البنك بنجاح', 'success')
