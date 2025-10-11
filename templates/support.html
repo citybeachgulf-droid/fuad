@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}الدعم - ثمِّن{% endblock %}
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <h1 class="mb-4">الدعم</h1>
+    <p class="text-muted">يسعدنا مساعدتك. استخدم النموذج التالي للتواصل معنا.</p>
+
+    <div class="row">
+      <div class="col-md-8">
+        <form method="post" action="#" onsubmit="event.preventDefault(); alert('تم إرسال طلبك، سنعاود التواصل قريباً.');">
+          <div class="mb-3">
+            <label class="form-label">الاسم</label>
+            <input type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الموضوع</label>
+            <input type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الرسالة</label>
+            <textarea class="form-control" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">إرسال</button>
+        </form>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">معلومات التواصل</h5>
+            <p class="mb-1"><i class="bi bi-envelope"></i> support@example.com</p>
+            <p class="mb-0"><i class="bi bi-telephone"></i> +968 0000 0000</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

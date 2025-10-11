@@ -24,6 +24,24 @@ def landing():
 
 
 # -------------------------------
+# Static info pages
+# -------------------------------
+@main.route('/privacy')
+def privacy():
+    return render_template('legal/privacy.html')
+
+
+@main.route('/terms')
+def terms():
+    return render_template('legal/terms.html')
+
+
+@main.route('/support')
+def support():
+    return render_template('support.html')
+
+
+# -------------------------------
 # صفحات منفصلة للتقييم الفوري والمعتمد
 # -------------------------------
 @main.route('/quick')
