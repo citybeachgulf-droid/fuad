@@ -23,7 +23,17 @@
     {% for r in requests %}
       <tr>
         <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
-        <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
+        <td>
+          <a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.title }}</a>
+          {% if (r.status or '').lower() == 'revision_requested' %}
+            <div class="small mt-1">
+              <span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>مستندات ناقصة</span>
+              {% if r.revision_notes %}
+                <span class="text-muted">— {{ r.revision_notes[:80] }}{% if r.revision_notes|length > 80 %}...{% endif %}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </td>
         <td>
           {% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
         </td>

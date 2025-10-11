@@ -120,6 +120,12 @@ if __name__ == '__main__':
             if 'requested_amount' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN requested_amount FLOAT'))
+
+            # Ensure valuation_requests.revision_notes exists
+            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
+            if 'revision_notes' not in vr_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN revision_notes TEXT'))
         except Exception:
             pass
 

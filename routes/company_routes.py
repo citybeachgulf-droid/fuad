@@ -72,8 +72,9 @@ def mark_missing_documents(request_id: int):
         flash('يرجى كتابة الملاحظات حول المستندات الناقصة', 'danger')
         return redirect(url_for('company.request_detail', request_id=req.id) + '#missing-docs')
 
-    # تحديث حالة الطلب
+    # تحديث حالة الطلب وحفظ الملاحظات لعرضها للعميل
     req.status = 'revision_requested'
+    req.revision_notes = notes
 
     # إرسال رسالة عبر نظام المحادثات إلى العميل
     conv = Conversation.query.filter_by(client_id=req.client_id, company_id=current_user.id).first()

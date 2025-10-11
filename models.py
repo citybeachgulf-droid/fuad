@@ -125,6 +125,8 @@ class ValuationRequest(db.Model):
     # القيمة التي طلبها البنك من العميل كتقدير مبدئي/مطلوب
     requested_amount = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), default='pending')  # pending/approved/completed/revision_requested
+    # ملاحظات الشركة عند طلب مستندات ناقصة
+    revision_notes = db.Column(db.Text, nullable=True)
     # نوع التثمين: أرض/عقار/بناء منزل
     valuation_type = db.Column(db.String(50), nullable=True)  # values: land, property, house
 
