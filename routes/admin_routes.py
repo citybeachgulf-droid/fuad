@@ -215,12 +215,43 @@ def upload_land_prices():
         region_str = str(region_val or '').strip()
 
         def to_float(v):
+            """Parse a numeric cell that may contain a single value or a range.
+
+            Supported examples:
+            - "75"
+            - "60-100", "60 – 100", "60 — 100", "60 الى 100", "60 إلى 100"
+            - Arabic digits are normalized (٠١٢٣٤٥٦٧٨٩ / ۰۱۲۳۴۵۶۷۸۹)
+            - Thousand separators like "," or "٬" are removed
+            Returns the average when a range is provided.
+            """
             if v in (None, ''):
                 return None
+            s = str(v).strip()
+            # Treat placeholders for empty as None
+            if s in {'-', '–', '—'}:
+                return None
             try:
-                s = str(v).replace('\u066b', '.').replace('٬', '').replace(',', '').strip()
-                # \u066b is Arabic decimal separator
-                return float(s)
+                # Normalize Arabic/Persian digits to ASCII
+                digits_src = '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'
+                digits_dst = '01234567890123456789'
+                trans = str.maketrans({src: dst for src, dst in zip(digits_src, digits_dst)})
+                s = s.translate(trans)
+
+                # Normalize decimal separator and remove thousands separators
+                s = s.replace('\u066b', '.').replace('٫', '.').replace('٬', '').replace(',', '')
+
+                # Normalize common range connectors to a hyphen for readability
+                # but use regex to extract numbers to be robust
+                import re
+                numbers = re.findall(r'-?\d+(?:\.\d+)?', s)
+                if not numbers:
+                    return None
+                if len(numbers) == 1:
+                    return float(numbers[0])
+                # Average first two numbers if a range is given
+                a = float(numbers[0])
+                b = float(numbers[1])
+                return (a + b) / 2.0
             except Exception:
                 return None
 
