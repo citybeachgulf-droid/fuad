@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}تجارب العملاء - ثمِّن{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h1 class="h4 mb-0">تجارب العملاء</h1>
+      <a href="{{ url_for('main.landing') }}#testimonials" class="btn btn-outline-secondary">العودة للصفحة الرئيسية</a>
+    </div>
+
+    {% if testimonials and testimonials|length > 0 %}
+      <div id="testimonials-list" class="row g-4">
+        {% for t in testimonials %}
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 card-hover p-4">
+            {% if t.rating %}
+            <div class="mb-2" aria-label="تقييم الخدمة">
+              <span class="badge bg-light text-dark">
+                {% for _ in range(t.rating) %}★{% endfor %}{% for _ in range(5 - t.rating) %}☆{% endfor %}
+              </span>
+            </div>
+            {% endif %}
+            <blockquote class="blockquote mb-0">
+              <p class="mb-2">{{ t.body }}</p>
+              <footer class="blockquote-footer">{{ t.name }}</footer>
+            </blockquote>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if pagination and (pagination.pages or 0) > 1 %}
+      <nav class="mt-4" aria-label="تصفح الصفحات">
+        <ul class="pagination justify-content-center">
+          <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('main.testimonials_page', page=1) }}" aria-label="الأولى">&laquo;</a>
+          </li>
+          <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('main.testimonials_page', page=pagination.prev_num) }}" aria-label="السابق">السابق</a>
+          </li>
+
+          {# نطاق صفحات قصيرة حول الصفحة الحالية #}
+          {% set start = pagination.page - 2 if pagination.page - 2 > 1 else 1 %}
+          {% set end = pagination.page + 2 if pagination.page + 2 < pagination.pages else pagination.pages %}
+          {% for p in range(start, end + 1) %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('main.testimonials_page', page=p) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+
+          <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('main.testimonials_page', page=pagination.next_num) }}" aria-label="التالي">التالي</a>
+          </li>
+          <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('main.testimonials_page', page=pagination.pages) }}" aria-label="الأخيرة">&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="alert alert-info">
+        لا توجد تجارب بعد. كن أول من يشارك تجربته.
+      </div>
+    {% endif %}
+
+    <hr class="my-5" />
+
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-8 col-lg-6">
+        <h2 class="h5 mb-3 text-center">شارك تجربتك معنا</h2>
+        <form id="testimonial-form" class="card p-3 p-lg-4 card-hover">
+          <div class="mb-3">
+            <label for="name" class="form-label">الاسم</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="اسمك" required>
+          </div>
+          <div class="mb-3">
+            <label for="property_type" class="form-label">نوع العقار (اختياري)</label>
+            <select class="form-select" id="property_type" name="property_type">
+              <option value="">— اختر —</option>
+              <option value="سكني">سكني</option>
+              <option value="تجاري">تجاري</option>
+              <option value="أرض">أرض</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="rating" class="form-label">تقييم الخدمة (اختياري)</label>
+            <select class="form-select" id="rating" name="rating">
+              <option value="">— بدون تقييم —</option>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="experience" class="form-label">تجربتك</label>
+            <textarea class="form-control" id="experience" name="experience" rows="4" placeholder="اكتب تجربتك هنا" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">إرسال تجربتك</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
