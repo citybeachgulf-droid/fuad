@@ -142,13 +142,22 @@ def certified_step_amount():
 
     bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
 
-    # Generate amounts from 10k to 100k (step 10k)
-    amounts = list(range(10000, 100001, 10000))
+    # Generate amount ranges as requested:
+    # - First card: 10k–100k
+    # - Then: 100k–200k, 200k–300k, ... up to 900k–1,000k
+    ranges = []
+    ranges.append((10000, 100000))
+    for start_amount in range(100000, 1000000, 100000):
+        end_amount = start_amount + 100000
+        ranges.append((start_amount, end_amount))
+
     options = []
-    for amt in amounts:
+    for min_amount, max_amount in ranges:
+        title = f"{min_amount:,} – {max_amount:,}"
+        # For filtering, use the upper bound as the required amount
         options.append({
-            "title": f"{amt:,}",
-            "href": url_for('main.certified_companies', entity=entity, purpose=purpose, bank=bank_slug, amount=amt),
+            "title": title,
+            "href": url_for('main.certified_companies', entity=entity, purpose=purpose, bank=bank_slug, amount=max_amount),
             "icon_class": "bi bi-cash-stack",
             "color_class": "tile-success",
             "subtitle": "ريال"
