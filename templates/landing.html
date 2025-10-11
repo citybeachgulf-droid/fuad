@@ -98,21 +98,35 @@
     <div class="container">
         <h2 class="text-center mb-5">تجارب العملاء</h2>
 
-        <!-- Existing Testimonials (dynamic) -->
-        <div class="row g-4 mb-5" id="testimonials-list">
-            {% if testimonials and testimonials|length > 0 %}
-                {% for t in testimonials %}
-                <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
-                    <blockquote class="blockquote">
-                        <p>{{ t.body }}</p>
-                        <footer class="blockquote-footer">{{ t.name }}</footer>
-                    </blockquote>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info text-center mb-0">لا توجد تجارب بعد. كن أول من يشارك!</div>
-                </div>
+        <!-- Existing Testimonials (dynamic) as animated carousel -->
+        <div id="testimonialsCarousel" class="carousel slide carousel-fade mb-5" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="hover" data-bs-touch="true">
+            <div class="carousel-inner">
+                {% if testimonials and testimonials|length > 0 %}
+                    {% for t in testimonials %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="card h-100 card-hover p-4">
+                            <blockquote class="blockquote mb-0 text-center">
+                                <p class="mb-2">{{ t.body }}</p>
+                                <footer class="blockquote-footer">{{ t.name }}</footer>
+                            </blockquote>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="carousel-item active">
+                        <div class="alert alert-info text-center mb-0">لا توجد تجارب بعد. كن أول من يشارك!</div>
+                    </div>
+                {% endif %}
+            </div>
+            {% if testimonials and testimonials|length > 1 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">السابق</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">التالي</span>
+            </button>
             {% endif %}
         </div>
 
