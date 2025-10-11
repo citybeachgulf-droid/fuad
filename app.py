@@ -110,16 +110,23 @@ if __name__ == '__main__':
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE advertisements ADD COLUMN stored_in_utc BOOLEAN DEFAULT 0 NOT NULL'))
 
-            # Ensure valuation_requests.valuation_type exists
+            # Ensure valuation_requests extra columns exist
             vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'valuation_type' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN valuation_type VARCHAR(50)'))
-            # Ensure valuation_requests.requested_amount exists
             vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'requested_amount' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN requested_amount FLOAT'))
+            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
+            if 'rejection_reason' not in vr_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN rejection_reason TEXT'))
+            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
+            if 'rejected_at' not in vr_cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN rejected_at DATETIME'))
         except Exception:
             pass
 

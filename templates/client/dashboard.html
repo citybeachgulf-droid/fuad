@@ -28,7 +28,12 @@
           {% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
         </td>
         <td>{{ r.company.name if r.company else '-' }}</td>
-        <td>{{ r.status }}</td>
+        <td>
+          {{ r.status }}
+          {% if r.status == 'rejected' and r.rejection_reason %}
+            <div class="small text-danger">سبب الرفض: {{ r.rejection_reason }}</div>
+          {% endif %}
+        </td>
         <td class="d-flex gap-2">
           <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.request_detail', request_id=r.id) }}">تفاصيل</a>
           {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}

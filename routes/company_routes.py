@@ -57,6 +57,43 @@ def request_detail(request_id: int):
     return render_template('company/request_detail.html', request_obj=req, appointments=appts)
 
 
+@company_bp.route('/requests/<int:request_id>/reject', methods=['POST'])
+@login_required
+def reject_request(request_id: int):
+    """رفض معاملة مع كتابة سبب يظهر للعميل والإدارة."""
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    req = ValuationRequest.query.get_or_404(request_id)
+    if req.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    reason = (request.form.get('reason') or '').strip()
+    if not reason:
+        flash('يرجى كتابة سبب الرفض', 'danger')
+        return redirect(url_for('company.request_detail', request_id=req.id))
+
+    from datetime import datetime
+    req.status = 'rejected'
+    req.rejection_reason = reason
+    req.rejected_at = datetime.utcnow()
+
+    # إرسال رسالة إلى العميل عبر نظام المحادثة
+    conv = Conversation.query.filter_by(client_id=req.client_id, company_id=current_user.id).first()
+    if not conv:
+        conv = Conversation(client_id=req.client_id, company_id=current_user.id, status='open')
+        db.session.add(conv)
+        db.session.flush()
+        db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+
+    content = f"تم رفض طلب التثمين #{req.id}. السبب:\n{reason}"
+    db.session.add(Message(conversation_id=conv.id, sender_id=current_user.id, content=content))
+    db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+    db.session.commit()
+    flash('تم رفض المعاملة مع توضيح السبب للعميل', 'success')
+    return redirect(url_for('company.dashboard'))
+
+
 @company_bp.route('/requests/<int:request_id>/missing-docs', methods=['POST'])
 @login_required
 def mark_missing_documents(request_id: int):
