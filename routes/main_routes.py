@@ -44,6 +44,25 @@ def support():
 
 
 # -------------------------------
+# صفحة تجارب العملاء (عرض جميع التعليقات)
+# -------------------------------
+@main.route('/testimonials')
+def testimonials_page():
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+    pagination = (
+        Testimonial.query
+        .order_by(Testimonial.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    return render_template(
+        'testimonials.html',
+        testimonials=pagination.items,
+        pagination=pagination,
+    )
+
+
+# -------------------------------
 # صفحات منفصلة للتقييم الفوري والمعتمد
 # -------------------------------
 @main.route('/quick')
