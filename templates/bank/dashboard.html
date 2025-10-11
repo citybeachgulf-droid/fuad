@@ -1,6 +1,24 @@
 {% extends 'layout.html' %}
 {% block content %}
 <h2>Bank Dashboard</h2>
+<div class="d-flex align-items-center gap-3 mb-3">
+  {% if bank_profile and bank_profile.logo_path %}
+    <img src="{{ url_for('static', filename=bank_profile.logo_path) }}" alt="Logo" style="width:56px;height:56px;object-fit:cover;border-radius:8px" class="border bg-white p-1">
+  {% endif %}
+  <form method="post" action="{{ url_for('bank.update_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+    <input type="file" name="logo" accept="image/*" class="form-control form-control-sm" required>
+    <button class="btn btn-sm btn-outline-primary">تحديث الشعار</button>
+  </form>
+  {% if bank_profile and bank_profile.logo_path %}
+    <a href="{{ url_for('bank.dashboard') }}" class="btn btn-sm btn-outline-secondary">تحديث العرض</a>
+  {% endif %}
+  <span class="text-muted">ارفع شعار البنك ليظهر للعملاء.</span>
+  <div class="ms-auto"></div>
+  {% if bank_profile and bank_profile.slug %}
+    <a class="btn btn-sm btn-link" href="{{ url_for('main.bank_detail', slug=bank_profile.slug) }}" target="_blank">عرض صفحة البنك</a>
+  {% endif %}
+  
+</div>
 <p>Valuations awaiting review:</p>
 <table class="table">
 <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Company</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
