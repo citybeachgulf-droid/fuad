@@ -19,10 +19,6 @@
       <h4 class="h6">الخدمات</h4>
       <p>{{ company.company_profile.services or 'لم يتم تحديد الخدمات' }}</p>
     </div>
-    <div class="mb-3">
-      <h4 class="h6">الحد المالي</h4>
-      <p>{% if company.company_profile and company.company_profile.limit_value %}{{ company.company_profile.limit_value }} OMR{% else %}-{% endif %}</p>
-    </div>
 
     <div class="mb-3">
       <h4 class="h6">البنوك المعتمِدة لهذه الشركة</h4>
@@ -30,9 +26,8 @@
       {% if profile and profile.approved_banks and profile.approved_banks|length > 0 %}
         <ul class="list-group">
           {% for ab in profile.approved_banks %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
+          <li class="list-group-item d-flex align-items-center">
             <span>{{ ab.bank_user.name }}{% if ab.bank_user.phone %} — {{ ab.bank_user.phone }}{% endif %}</span>
-            <span class="badge bg-secondary">{% if ab.limit_value %}{{ ab.limit_value }} OMR{% elif profile.limit_value %}{{ profile.limit_value }} OMR{% else %}-{% endif %}</span>
           </li>
           {% endfor %}
         </ul>
