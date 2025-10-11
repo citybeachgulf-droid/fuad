@@ -74,7 +74,7 @@
     <div class="modal fade" id="editBankModal" tabindex="-1" aria-labelledby="editBankModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <form id="editBankForm" method="POST">
+          <form id="editBankForm" method="POST" enctype="multipart/form-data">
             <div class="modal-header">
               <h5 class="modal-title" id="editBankModalLabel">تعديل بيانات البنك</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -95,6 +95,10 @@
                 <div class="mb-3">
                     <label for="edit_password" class="form-label">كلمة المرور الجديدة (اختياري)</label>
                     <input type="password" class="form-control" id="edit_password" name="password" placeholder="اتركها فارغة لعدم التغيير">
+                </div>
+                <div class="mb-3">
+                    <label for="edit_logo" class="form-label">شعار البنك (اختياري)</label>
+                    <input type="file" class="form-control" id="edit_logo" name="logo" accept="image/*">
                 </div>
             </div>
             <div class="modal-footer">
