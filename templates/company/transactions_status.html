@@ -1,0 +1,68 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>حالة المعاملات</h2>
+<div class="mb-3">
+  <a class="btn btn-secondary" href="{{ url_for('company.dashboard') }}">لوحة الشركة</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'rejected' %}active{% endif %}" href="{{ url_for('company.transactions_status', tab='rejected') }}">
+      مرفوضة <span class="badge bg-secondary">{{ counts.rejected }}</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'missing_docs' %}active{% endif %}" href="{{ url_for('company.transactions_status', tab='missing_docs') }}">
+      مستندات ناقصة <span class="badge bg-secondary">{{ counts.missing_docs }}</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'completed' %}active{% endif %}" href="{{ url_for('company.transactions_status', tab='completed') }}">
+      تم التثمين <span class="badge bg-secondary">{{ counts.completed }}</span>
+    </a>
+  </li>
+</ul>
+
+{% if items|length == 0 %}
+  <div class="alert alert-light">لا توجد سجلات لعرضها في هذا التبويب.</div>
+{% else %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>العنوان</th>
+          <th>العميل</th>
+          <th>النوع</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
+          <td>{{ r.title or '-' }}</td>
+          <td>{{ r.client.name if r.client else '-' }}</td>
+          <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
+          <td>
+            {% if r.status == 'rejected' %}
+              <span class="badge bg-danger">مرفوض</span>
+            {% elif r.status == 'revision_requested' %}
+              <span class="badge bg-warning text-dark">مستندات ناقصة</span>
+            {% elif r.status == 'completed' %}
+              <span class="badge bg-success">تم التثمين</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ r.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('company.request_detail', request_id=r.id) }}">تفاصيل</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

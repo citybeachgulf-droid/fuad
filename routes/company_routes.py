@@ -30,6 +30,47 @@ def dashboard():
     profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
     return render_template('company/dashboard.html', requests=requests, profile=profile, pending_appointments=pending_appts)
 
+
+# صفحة تعرض معاملات الشركة حسب الحالة (مرفوضة / مستندات ناقصة / تم التثمين)
+@company_bp.route('/transactions/status')
+@login_required
+def transactions_status():
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    # تبويب نشط من الاستعلام
+    active_tab = (request.args.get('tab') or 'rejected').lower()
+    if active_tab not in {'rejected', 'missing_docs', 'completed'}:
+        active_tab = 'rejected'
+
+    base = ValuationRequest.query.filter(ValuationRequest.company_id == current_user.id)
+
+    # القوائم حسب الحالة
+    rejected_list = base.filter(ValuationRequest.status == 'rejected').order_by(ValuationRequest.id.desc()).all()
+    missing_docs_list = base.filter(ValuationRequest.status == 'revision_requested').order_by(ValuationRequest.id.desc()).all()
+    completed_list = base.filter(ValuationRequest.status == 'completed').order_by(ValuationRequest.id.desc()).all()
+
+    counts = {
+        'rejected': len(rejected_list),
+        'missing_docs': len(missing_docs_list),
+        'completed': len(completed_list),
+    }
+
+    # اختر القائمة حسب التبويب
+    if active_tab == 'rejected':
+        active_list = rejected_list
+    elif active_tab == 'missing_docs':
+        active_list = missing_docs_list
+    else:
+        active_list = completed_list
+
+    return render_template(
+        'company/transactions_status.html',
+        active_tab=active_tab,
+        items=active_list,
+        counts=counts,
+    )
+
 @company_bp.route('/submit/<int:request_id>', methods=['GET', 'POST'])
 @login_required
 def submit_valuation(request_id):
