@@ -60,9 +60,9 @@
         <div class="container d-flex flex-column flex-lg-row align-items-center justify-content-between gap-2">
             <span class="text-muted">© {{ 2025 }} ثمِّن</span>
             <div class="d-flex gap-3 small">
-                <a class="link-secondary" href="#">الخصوصية</a>
-                <a class="link-secondary" href="#">الشروط</a>
-                <a class="link-secondary" href="#">الدعم</a>
+                <a class="link-secondary" href="{{ url_for('main.privacy') }}">الخصوصية</a>
+                <a class="link-secondary" href="{{ url_for('main.terms') }}">الشروط</a>
+                <a class="link-secondary" href="{{ url_for('main.support') }}">الدعم</a>
             </div>
         </div>
     </footer>
