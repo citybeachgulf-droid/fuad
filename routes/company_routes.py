@@ -1,7 +1,7 @@
 """Blueprint for valuation company portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog
+from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog, CompanyLandPrice
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -368,3 +368,135 @@ def edit_profile():
     # تمرير البيانات إلى الواجهة
     contacts_list = list(getattr(profile, 'contacts', []))
     return render_template('company/profile_edit.html', profile=profile, contacts=contacts_list)
+
+
+# ================================
+# رفع أسعار الأراضي المعتمدة للشركة (Excel/CSV)
+# ================================
+@company_bp.route('/land_prices/upload', methods=['POST'])
+@login_required
+def upload_company_land_prices():
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+
+    profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        profile = CompanyProfile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    file = request.files.get('prices_file')
+    if not file or not file.filename:
+        flash('الرجاء اختيار ملف .xlsx أو .csv', 'danger')
+        return redirect(url_for('company.edit_profile'))
+
+    filename_lower = file.filename.lower()
+    header_row = None
+    rows_iter = None
+
+    # Parse XLSX
+    if filename_lower.endswith('.xlsx'):
+        try:
+            from openpyxl import load_workbook  # lazy import
+            wb = load_workbook(file, data_only=True)
+            ws = wb.active
+            rows_iter = ws.iter_rows(values_only=True)
+            header_row = next(rows_iter, None)
+            if header_row is None:
+                flash('ملف الإكسل فارغ.', 'danger')
+                return redirect(url_for('company.edit_profile'))
+        except ImportError:
+            flash('مكتبة openpyxl غير متوفرة. يرجى رفع ملف CSV بدلاً من ذلك.', 'danger')
+            return redirect(url_for('company.edit_profile'))
+        except Exception:
+            flash('تعذر قراءة ملف الإكسل. تأكد من أن الصيغة .xlsx صحيحة.', 'danger')
+            return redirect(url_for('company.edit_profile'))
+
+    # Parse CSV
+    elif filename_lower.endswith('.csv'):
+        import csv, io
+        try:
+            raw = file.stream.read()
+            try:
+                text = raw.decode('utf-8-sig')
+            except Exception:
+                try:
+                    text = raw.decode('cp1256')
+                except Exception:
+                    text = raw.decode('latin1')
+            reader = csv.reader(io.StringIO(text))
+            header_row = next(reader, None)
+            if header_row is None:
+                flash('ملف CSV فارغ.', 'danger')
+                return redirect(url_for('company.edit_profile'))
+            rows_iter = reader
+        except Exception:
+            flash('تعذر قراءة ملف CSV.', 'danger')
+            return redirect(url_for('company.edit_profile'))
+    else:
+        flash('صيغة غير مدعومة. الرجاء رفع .xlsx أو .csv', 'danger')
+        return redirect(url_for('company.edit_profile'))
+
+    def norm(val):
+        return str(val or '').strip().lower()
+
+    header_map = {}
+    for idx, col in enumerate(header_row):
+        key = norm(col)
+        if key in ('wilaya', 'الولاية', 'ولاية'):
+            header_map['wilaya'] = idx
+        elif key in ('region', 'المنطقة', 'منطقة'):
+            header_map['region'] = idx
+        elif key in ('price', 'price_per_sqm', 'سعر المتر', 'سعر_المتر', 'السعر'):
+            header_map['price_per_sqm'] = idx
+
+    if not {'wilaya', 'region', 'price_per_sqm'}.issubset(header_map.keys()):
+        flash('العناوين يجب أن تتضمن: الولاية، المنطقة، سعر المتر', 'danger')
+        return redirect(url_for('company.edit_profile'))
+
+    inserted = 0
+    updated = 0
+    skipped = 0
+
+    for row in rows_iter:
+        if row is None:
+            skipped += 1
+            continue
+
+        wilaya_val = row[header_map['wilaya']] if len(row) > header_map['wilaya'] else None
+        region_val = row[header_map['region']] if len(row) > header_map['region'] else None
+        price_val = row[header_map['price_per_sqm']] if len(row) > header_map['price_per_sqm'] else None
+
+        wilaya_str = str(wilaya_val or '').strip()
+        region_str = str(region_val or '').strip()
+
+        try:
+            price_num = float(str(price_val).replace(',', '').strip()) if price_val not in (None, '') else None
+        except Exception:
+            price_num = None
+
+        if not wilaya_str or not region_str or price_num is None:
+            skipped += 1
+            continue
+
+        existing = (
+            CompanyLandPrice.query
+            .filter_by(company_profile_id=profile.id, wilaya=wilaya_str, region=region_str)
+            .first()
+        )
+        if existing:
+            if existing.price_per_sqm != price_num:
+                existing.price_per_sqm = price_num
+                updated += 1
+        else:
+            db.session.add(CompanyLandPrice(
+                company_profile_id=profile.id,
+                wilaya=wilaya_str,
+                region=region_str,
+                price_per_sqm=price_num
+            ))
+            inserted += 1
+
+    db.session.commit()
+    flash(f'تمت معالجة الملف: تمت إضافة {inserted} وتحديث {updated} وتجاوز {skipped} صف.', 'success')
+    return redirect(url_for('company.edit_profile'))
