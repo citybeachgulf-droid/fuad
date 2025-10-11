@@ -48,6 +48,15 @@
               <label class="form-label">المنطقة</label>
               <select id="region" class="form-select" aria-label="اختر المنطقة"></select>
             </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">استعمال الأرض</label>
+              <select id="land_use" class="form-select" aria-label="اختر الاستعمال">
+                <option value="سكني" selected>سكني</option>
+                <option value="تجاري">تجاري</option>
+                <option value="صناعي">صناعي</option>
+                <option value="زراعي">زراعي</option>
+              </select>
+            </div>
           </div>
 
           <div class="row g-3 mb-3">
@@ -112,6 +121,7 @@
 
             const wilayaSel = el('wilaya');
             const regionSel = el('region');
+            const landUseSel = el('land_use');
             const landAreaInp = el('land_area');
             const buildAreaInp = el('build_area');
             const ageInp = el('age');
@@ -129,7 +139,7 @@
             const resetBtn = document.getElementById('resetBtn');
             const resetBaseUrl = "{{ url_for('main.quick_step_summary') }}";
 
-            let currentPricing = null; // { w, r, companyId, landPrice, buildPrice, locFactor }
+            let currentPricing = null; // { w, r, companyId, landUse, landPrice, buildPrice, locFactor }
             let lastFetchKey = null;
             const LS_KEY = 'quick_selected_company_id';
 
@@ -248,22 +258,24 @@
               const w = wilayaSel.value;
               const r = regionSel.value;
               const companyId = companySel ? (companySel.value || null) : null;
+              const landUse = landUseSel ? (landUseSel.value || null) : null;
               if (!w || !r) {
                 currentPricing = null;
                 recalc();
                 return;
               }
-              const key = `${w}::${r}::${companyId || ''}`;
+              const key = `${w}::${r}::${companyId || ''}::${landUse || ''}`;
               lastFetchKey = key;
               try {
                 const params = new URLSearchParams({ wilaya: w, region: r });
                 if (companyId) params.append('company_id', companyId);
+                if (landUse) params.append('use', landUse);
                 const res = await fetch(`/api/company_region_price?${params.toString()}`);
                 if (res.ok) {
                   const data = await res.json();
                   if (lastFetchKey !== key) return; // stale
                   currentPricing = {
-                    w, r, companyId,
+                    w, r, companyId, landUse,
                     landPrice: (data && typeof data.landPrice !== 'undefined') ? data.landPrice : null,
                     buildPrice: (data && typeof data.buildPrice !== 'undefined') ? data.buildPrice : null,
                     locFactor: (data && typeof data.locFactor !== 'undefined') ? data.locFactor : null,
@@ -321,6 +333,7 @@
             // Events
             wilayaSel.addEventListener('change', () => { populateRegions(); updatePricingFromAPI(); });
             regionSel.addEventListener('change', updatePricingFromAPI);
+            if (landUseSel) { landUseSel.addEventListener('change', updatePricingFromAPI); }
             landAreaInp.addEventListener('input', recalc);
             buildAreaInp.addEventListener('input', recalc);
             ageInp.addEventListener('input', recalc);
