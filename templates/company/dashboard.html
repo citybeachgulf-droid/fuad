@@ -74,6 +74,10 @@
         <td>
           <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company.request_detail', request_id=r.id) }}">تفاصيل</a>
           <a class="btn btn-sm btn-primary" href="{{ url_for('company.submit_valuation', request_id=r.id) }}">Submit Valuation</a>
+          <form method="post" action="{{ url_for('company.mark_missing_documents', request_id=r.id) }}" class="d-inline-flex align-items-center gap-1 ms-2">
+            <input type="hidden" name="notes" value="يرجى تزويدنا بالمستندات الناقصة.">
+            <button type="submit" class="btn btn-sm btn-outline-warning">مستندات ناقصة</button>
+          </form>
         </td>
       </tr>
     {% endfor %}

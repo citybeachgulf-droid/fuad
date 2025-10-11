@@ -33,4 +33,22 @@
   <a class="btn btn-secondary" href="{{ url_for('company.dashboard') }}">عودة إلى لوحة التحكم</a>
   <a class="btn btn-primary" href="{{ url_for('company.submit_valuation', request_id=request_obj.id) }}">إرسال القيمة</a>
 </div>
+<hr>
+<div id="missing-docs" class="mt-3">
+  <h5>طلب مستندات ناقصة</h5>
+  <form method="post" action="{{ url_for('company.mark_missing_documents', request_id=request_obj.id) }}" class="row g-2">
+    <div class="col-12 col-md-8">
+      <input type="text" name="notes" class="form-control" placeholder="اكتب الملاحظات للعميل (المستندات المطلوبة)" required>
+    </div>
+    <div class="col-12 col-md-4">
+      <button type="submit" class="btn btn-outline-warning w-100">مستندات ناقصة — إرسال ملاحظات</button>
+    </div>
+  </form>
+  {% if request_obj.status == 'revision_requested' %}
+    <div class="form-text mt-2 text-warning">تم طلب مستندات إضافية لهذا الطلب.</div>
+  {% endif %}
+  <small class="text-muted d-block">سيتم إرسال الملاحظات للعميل عبر نظام المحادثات وتحديث حالة الطلب.</small>
+  <small class="text-muted d-block">رقم الطلب: #{{ request_obj.id }}</small>
+  
+</div>
 {% endblock %}
