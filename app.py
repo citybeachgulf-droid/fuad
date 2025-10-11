@@ -25,6 +25,22 @@ def create_app() -> Flask:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
     db.init_app(app)
 
+    # Arabic labels for request document types and Jinja filter
+    DOC_TYPE_LABELS_AR = {
+        "ids": "بطاقات هوية",
+        "kroki": "كروكي",
+        "deed": "صك الملكية",
+        "completion_certificate": "شهادة إتمام البناء",
+        "maps": "خرائط",
+        "contractor_agreement": "اتفاقية المقاول",
+    }
+
+    @app.template_filter('doc_label_ar')
+    def doc_label_ar(doc_type: str) -> str:
+        """Return Arabic label for stored document type key; fallback to the key."""
+        key = str(doc_type or "").strip()
+        return DOC_TYPE_LABELS_AR.get(key, key)
+
     # إعداد OAuth
     oauth = OAuth(app)
     google = oauth.register(
