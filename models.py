@@ -441,36 +441,27 @@ class Advertisement(db.Model):
         return True
 
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-# ================================
-# أسعار الأراضي العامة (اختياري للنظام)
-# ================================
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
 class LandPrice(db.Model):
     __tablename__ = 'land_prices'
 
     id = db.Column(db.Integer, primary_key=True)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     wilaya = db.Column(db.String(100), nullable=False, index=True)
     region = db.Column(db.String(150), nullable=False, index=True)
-    price_per_sqm = db.Column(db.Float, nullable=False)
+    # الأسعار حسب الاستعمال
+    price_housing = db.Column(db.Float, nullable=True)       # سكني
+    price_commercial = db.Column(db.Float, nullable=True)    # تجاري
+    price_industrial = db.Column(db.Float, nullable=True)    # صناعي
+    price_agricultural = db.Column(db.Float, nullable=True)  # زراعي
+    # إبقاء الحقل السابق للتوافق إن وجد
+    price_per_sqm = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint('wilaya', 'region', name='uq_landprice_wilaya_region'),
     )
+
+    def __repr__(self):
+        return f"<LandPrice {self.wilaya}/{self.region}>"
 
 
 # ================================
@@ -483,7 +474,13 @@ class CompanyLandPrice(db.Model):
     company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False, index=True)
     wilaya = db.Column(db.String(100), nullable=False, index=True)
     region = db.Column(db.String(150), nullable=False, index=True)
-    price_per_sqm = db.Column(db.Float, nullable=False)
+    # الأسعار حسب الاستعمال
+    price_housing = db.Column(db.Float, nullable=True)       # سكني
+    price_commercial = db.Column(db.Float, nullable=True)    # تجاري
+    price_industrial = db.Column(db.Float, nullable=True)    # صناعي
+    price_agricultural = db.Column(db.Float, nullable=True)  # زراعي
+    # إبقاء الحقل السابق للتوافق إن وجد
+    price_per_sqm = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     company_profile = db.relationship(
@@ -494,23 +491,6 @@ class CompanyLandPrice(db.Model):
     __table_args__ = (
         db.UniqueConstraint('company_profile_id', 'wilaya', 'region', name='uq_company_landprice_company_loc'),
     )
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    region = db.Column(db.String(100), nullable=False)
-    price_per_meter = db.Column(db.Float, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        return f"<LandPrice {self.region}: {self.price_per_meter}>"
->>>>>>> Stashed changes
-=======
-        return f"<LandPrice {self.region}: {self.price_per_meter}>"
->>>>>>> Stashed changes
-=======
-        return f"<LandPrice {self.region}: {self.price_per_meter}>"
->>>>>>> Stashed changes
+        return f"<CompanyLandPrice {self.company_profile_id}:{self.wilaya}/{self.region}>"

@@ -143,6 +143,36 @@ if __name__ == '__main__':
             if 'rejected_at' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN rejected_at DATETIME'))
+            # Ensure new land price columns exist
+            try:
+                land_cols = [c['name'] for c in inspector.get_columns('land_prices')]
+                with db.engine.connect() as conn:
+                    if 'price_housing' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_housing FLOAT'))
+                    if 'price_commercial' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_commercial FLOAT'))
+                    if 'price_industrial' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_industrial FLOAT'))
+                    if 'price_agricultural' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_agricultural FLOAT'))
+                    if 'price_per_sqm' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_per_sqm FLOAT'))
+
+                company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
+                with db.engine.connect() as conn:
+                    if 'price_housing' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_housing FLOAT'))
+                    if 'price_commercial' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_commercial FLOAT'))
+                    if 'price_industrial' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_industrial FLOAT'))
+                    if 'price_agricultural' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_agricultural FLOAT'))
+                    if 'price_per_sqm' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_per_sqm FLOAT'))
+            except Exception:
+                pass
+
         except Exception:
             pass
 
