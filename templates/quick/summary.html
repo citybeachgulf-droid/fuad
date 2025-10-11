@@ -21,6 +21,17 @@
 
           <div class="row g-3 mb-3">
             <div class="col-12 col-md-4">
+              <label class="form-label">نوع العقار</label>
+              <select id="prop_type" class="form-select" aria-label="اختر نوع العقار">
+                <option value="land">أرض فقط</option>
+                <option value="house">منزل/فيلا</option>
+                <option value="apartment">شقة</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
               <label class="form-label">الولاية</label>
               <select id="wilaya" class="form-select" aria-label="اختر الولاية"></select>
             </div>
@@ -107,13 +118,14 @@
             const el = (id) => document.getElementById(id);
             const fmt = (n) => (isFinite(n) ? n.toLocaleString('en-US') : '—');
 
-            const propType = (document.getElementById('dynamicCalc')?.dataset?.propType || 'land').toLowerCase();
+            let propType = (document.getElementById('dynamicCalc')?.dataset?.propType || 'land').toLowerCase();
 
             const wilayaSel = el('wilaya');
             const regionSel = el('region');
             const landAreaInp = el('land_area');
             const buildAreaInp = el('build_area');
             const ageInp = el('age');
+            const propTypeSel = el('prop_type');
 
             const landFormula = el('land_formula');
             const buildFormula = el('build_formula');
@@ -200,9 +212,25 @@
               }
             }
 
+            function initPropType() {
+              if (propTypeSel) {
+                propTypeSel.value = propType;
+                propTypeSel.addEventListener('change', () => {
+                  propType = (propTypeSel.value || 'land').toLowerCase();
+                  const container = document.getElementById('dynamicCalc');
+                  if (container) {
+                    container.dataset.propType = propType;
+                  }
+                  applyPropTypeState();
+                  recalc();
+                });
+              }
+            }
+
             // Init
             populateWilayas();
             populateRegions();
+            initPropType();
             applyPropTypeState();
             recalc();
 
