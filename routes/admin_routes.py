@@ -168,11 +168,24 @@ def upload_land_prices():
             header_map['wilaya'] = idx
         elif key in ('region', 'المنطقة', 'منطقة'):
             header_map['region'] = idx
+        elif key in ('سكني', 'سكنية', 'housing'):
+            header_map['housing'] = idx
+        elif key in ('تجاري', 'commercial'):
+            header_map['commercial'] = idx
+        elif key in ('صناعي', 'industrial'):
+            header_map['industrial'] = idx
+        elif key in ('زراعي', 'agricultural'):
+            header_map['agricultural'] = idx
         elif key in ('price', 'price_per_sqm', 'سعر المتر', 'سعر_المتر', 'السعر'):
+            # دعم قديم: عمود سعر واحد
             header_map['price_per_sqm'] = idx
 
-    if not {'wilaya', 'region', 'price_per_sqm'}.issubset(header_map.keys()):
-        flash('العناوين يجب أن تتضمن: الولاية، المنطقة، سعر المتر', 'danger')
+    # مطلوب: الولاية والمنطقة، وأحد أعمدة (سكني/تجاري/صناعي/زراعي) أو السعر القديم
+    if 'wilaya' not in header_map or 'region' not in header_map:
+        flash('العناوين يجب أن تتضمن: الولاية، المنطقة', 'danger')
+        return redirect(url_for('admin.companies'))
+    if not any(k in header_map for k in ('housing', 'commercial', 'industrial', 'agricultural', 'price_per_sqm')):
+        flash('العناوين يجب أن تتضمن أحد الأعمدة: سكني، تجاري، صناعي، زراعي (أو سعر المتر القديم)', 'danger')
         return redirect(url_for('admin.companies'))
 
     inserted = 0
@@ -186,27 +199,82 @@ def upload_land_prices():
 
         wilaya_val = row[header_map['wilaya']] if len(row) > header_map['wilaya'] else None
         region_val = row[header_map['region']] if len(row) > header_map['region'] else None
-        price_val = row[header_map['price_per_sqm']] if len(row) > header_map['price_per_sqm'] else None
+        # استخراج أسعار حسب الاستعمال
+        def get_val(col_key):
+            if col_key in header_map and len(row) > header_map[col_key]:
+                return row[header_map[col_key]]
+            return None
+
+        housing_val = get_val('housing')
+        commercial_val = get_val('commercial')
+        industrial_val = get_val('industrial')
+        agricultural_val = get_val('agricultural')
+        legacy_price_val = get_val('price_per_sqm')
 
         wilaya_str = str(wilaya_val or '').strip()
         region_str = str(region_val or '').strip()
 
-        try:
-            price_num = float(str(price_val).replace(',', '').strip()) if price_val not in (None, '') else None
-        except Exception:
-            price_num = None
+        def to_float(v):
+            if v in (None, ''):
+                return None
+            try:
+                s = str(v).replace('\u066b', '.').replace('٬', '').replace(',', '').strip()
+                # \u066b is Arabic decimal separator
+                return float(s)
+            except Exception:
+                return None
 
-        if not wilaya_str or not region_str or price_num is None:
+        price_housing = to_float(housing_val)
+        price_commercial = to_float(commercial_val)
+        price_industrial = to_float(industrial_val)
+        price_agricultural = to_float(agricultural_val)
+        legacy_price = to_float(legacy_price_val)
+
+        # إذا كان الملف قديماً بعمود واحد، عمّم السعر على كل الاستعمالات
+        if legacy_price is not None and not any(v is not None for v in (price_housing, price_commercial, price_industrial, price_agricultural)):
+            price_housing = price_housing or legacy_price
+            price_commercial = price_commercial or legacy_price
+            price_industrial = price_industrial or legacy_price
+            price_agricultural = price_agricultural or legacy_price
+
+        # يجب أن يتوفر على الأقل أحد الأسعار
+        if not wilaya_str or not region_str or all(v is None for v in (price_housing, price_commercial, price_industrial, price_agricultural, legacy_price)):
             skipped += 1
             continue
 
         existing = LandPrice.query.filter_by(wilaya=wilaya_str, region=region_str).first()
         if existing:
-            if existing.price_per_sqm != price_num:
-                existing.price_per_sqm = price_num
+            changed = False
+            if price_housing is not None and existing.price_housing != price_housing:
+                existing.price_housing = price_housing
+                changed = True
+            if price_commercial is not None and existing.price_commercial != price_commercial:
+                existing.price_commercial = price_commercial
+                changed = True
+            if price_industrial is not None and existing.price_industrial != price_industrial:
+                existing.price_industrial = price_industrial
+                changed = True
+            if price_agricultural is not None and existing.price_agricultural != price_agricultural:
+                existing.price_agricultural = price_agricultural
+                changed = True
+            # حدّث السعر القديم إذا متاح ولم يكن موجوداً
+            fallback_price = next((v for v in (price_housing, price_commercial, price_industrial, price_agricultural, legacy_price) if v is not None), None)
+            if fallback_price is not None and (existing.price_per_sqm is None or existing.price_per_sqm != fallback_price):
+                existing.price_per_sqm = fallback_price
+                changed = True
+            if changed:
                 updated += 1
         else:
-            db.session.add(LandPrice(wilaya=wilaya_str, region=region_str, price_per_sqm=price_num))
+            fallback_price = next((v for v in (price_housing, price_commercial, price_industrial, price_agricultural, legacy_price) if v is not None), None)
+            db.session.add(LandPrice(
+                wilaya=wilaya_str,
+                region=region_str,
+                price_housing=price_housing,
+                price_commercial=price_commercial,
+                price_industrial=price_industrial,
+                price_agricultural=price_agricultural,
+                price_per_sqm=fallback_price,
+            ))
             inserted += 1
 
     db.session.commit()
