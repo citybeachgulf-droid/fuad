@@ -29,6 +29,15 @@
               </select>
             </div>
             <div class="col-12 col-md-4">
+              <label class="form-label">نوع الاستعمال (للأراضي)</label>
+              <select id="land_use" class="form-select" aria-label="اختر نوع الاستعمال">
+                <option value="housing">سكني</option>
+                <option value="commercial">تجاري</option>
+                <option value="industrial">صناعي</option>
+                <option value="agricultural">زراعي</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
               <label class="form-label">الشركة المعتمدة</label>
               <select id="company_id" class="form-select" aria-label="اختر الشركة">
                 <option value="">— بدون شركة —</option>
@@ -135,6 +144,7 @@
             const buildAreaInp = el('build_area');
             const ageInp = el('age');
             const propTypeSel = el('prop_type');
+            const landUseSel = el('land_use');
 
             const landFormula = el('land_formula');
             const buildFormula = el('build_formula');
@@ -148,9 +158,21 @@
             const resetBtn = document.getElementById('resetBtn');
             const resetBaseUrl = "{{ url_for('main.quick_step_summary') }}";
 
-            let currentPricing = null; // { w, r, companyId, landPrice, buildPrice, locFactor }
+            let currentPricing = null; // { w, r, companyId, landPrice, buildPrice, locFactor, prices }
             let lastFetchKey = null;
             const LS_KEY = 'quick_selected_company_id';
+            let landUse = (landUseSel?.value || 'housing').toLowerCase();
+
+            function selectPriceByUse(prices, use) {
+              if (!prices) return null;
+              const u = (use || '').toLowerCase();
+              if (u && prices[u] != null) return prices[u];
+              if (prices.per_sqm != null) return prices.per_sqm;
+              for (const k of ['housing','commercial','industrial','agricultural']) {
+                if (prices[k] != null) return prices[k];
+              }
+              return null;
+            }
 
             function populateWilayas() {
               wilayaSel.innerHTML = '';
@@ -197,11 +219,8 @@
                 (currentPricing.companyId || null) === selectedCompanyId
               );
 
-              const landPrice = Number(
-                (useApiPricing && currentPricing.landPrice != null)
-                  ? currentPricing.landPrice
-                  : (regionData.landPrice || 0)
-              );
+              const apiPrices = (useApiPricing && currentPricing && currentPricing.prices) ? currentPricing.prices : null;
+              const landPrice = Number((apiPrices ? selectPriceByUse(apiPrices, landUse) : regionData.landPrice) || 0);
               const buildPrice = Number(
                 (useApiPricing && currentPricing.buildPrice != null)
                   ? currentPricing.buildPrice
@@ -263,6 +282,16 @@
               }
             }
 
+            function initLandUse() {
+              if (landUseSel) {
+                landUseSel.value = landUse;
+                landUseSel.addEventListener('change', () => {
+                  landUse = (landUseSel.value || 'housing').toLowerCase();
+                  updatePricingFromAPI();
+                });
+              }
+            }
+
             async function updatePricingFromAPI() {
               const w = wilayaSel.value;
               const r = regionSel.value;
@@ -277,6 +306,7 @@
               try {
                 const params = new URLSearchParams({ wilaya: w, region: r });
                 if (companyId) params.append('company_id', companyId);
+                if (landUse) params.append('use', landUse);
                 const res = await fetch(`/api/company_region_price?${params.toString()}`);
                 if (res.ok) {
                   const data = await res.json();
@@ -286,6 +316,7 @@
                     landPrice: (data && typeof data.landPrice !== 'undefined') ? data.landPrice : null,
                     buildPrice: (data && typeof data.buildPrice !== 'undefined') ? data.buildPrice : null,
                     locFactor: (data && typeof data.locFactor !== 'undefined') ? data.locFactor : null,
+                    prices: (data && data.prices) ? data.prices : null,
                   };
                 } else {
                   currentPricing = null;
@@ -306,6 +337,7 @@
             populateWilayas();
             populateRegions();
             initPropType();
+            initLandUse();
             applyPropTypeState();
             // Restore selected company from server or localStorage
             if (companySel) {

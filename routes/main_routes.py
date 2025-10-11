@@ -454,15 +454,32 @@ def api_company_region_price():
       - company_id: int (optional)
       - wilaya: str (required)
       - region: str (required)
+      - use: str (optional) one of housing/commercial/industrial/agricultural
     """
     wilaya = request.args.get('wilaya')
     region = request.args.get('region')
     company_id = request.args.get('company_id', type=int)
+    use_raw = (request.args.get('use') or '').strip().lower()
+
+    def normalize_use_token(token: str):
+        t = (token or '').strip().lower()
+        if t in {'housing', 'residential', 'سكني', 'سكنية', 'سكن'}:
+            return 'housing'
+        if t in {'commercial', 'تجاري', 'تجارية'}:
+            return 'commercial'
+        if t in {'industrial', 'صناعي', 'صناعية'}:
+            return 'industrial'
+        if t in {'agricultural', 'زراعي', 'زراعية', 'agriculture'}:
+            return 'agricultural'
+        return None
+
+    use = normalize_use_token(use_raw)
 
     if not wilaya or not region:
         return jsonify({'error': 'wilaya and region are required'}), 400
 
     land_price = None
+    prices_map = None  # {'housing': float|None, 'commercial': ..., 'industrial': ..., 'agricultural': ..., 'per_sqm': ...}
 
     # Try company-specific first
     if company_id:
@@ -474,23 +491,44 @@ def api_company_region_price():
                 region=region,
             ).first()
             if clp:
-                land_price = (
-                    clp.price_housing
-                    if clp.price_housing is not None else (
-                        clp.price_per_sqm if clp.price_per_sqm is not None else clp.price_per_meter
-                    )
-                )
+                prices_map = {
+                    'housing': clp.price_housing,
+                    'commercial': clp.price_commercial,
+                    'industrial': clp.price_industrial,
+                    'agricultural': clp.price_agricultural,
+                    'per_sqm': (clp.price_per_sqm if clp.price_per_sqm is not None else clp.price_per_meter),
+                }
 
     # Fallback to public land price
-    if land_price is None:
+    if prices_map is None:
         lp = LandPrice.query.filter_by(wilaya=wilaya, region=region).first()
         if lp:
-            land_price = (
-                lp.price_housing
-                if lp.price_housing is not None else (
-                    lp.price_per_sqm if lp.price_per_sqm is not None else lp.price_per_meter
-                )
-            )
+            prices_map = {
+                'housing': lp.price_housing,
+                'commercial': lp.price_commercial,
+                'industrial': lp.price_industrial,
+                'agricultural': lp.price_agricultural,
+                'per_sqm': (lp.price_per_sqm if lp.price_per_sqm is not None else lp.price_per_meter),
+            }
+
+    # Choose land_price based on requested use, falling back sensibly
+    def choose_price(pmap, requested_use: str):
+        if not pmap:
+            return None
+        if requested_use:
+            val = pmap.get(requested_use)
+            if val is not None:
+                return val
+        # fallback to generic per_sqm if available
+        if pmap.get('per_sqm') is not None:
+            return pmap.get('per_sqm')
+        # otherwise pick first non-null among all use types
+        for key in ('housing', 'commercial', 'industrial', 'agricultural'):
+            if pmap.get(key) is not None:
+                return pmap.get(key)
+        return None
+
+    land_price = choose_price(prices_map, use)
 
     # Defaults for build price and location factor if not modeled per company
     build_price = 220.0
@@ -500,4 +538,12 @@ def api_company_region_price():
         'landPrice': float(land_price) if land_price is not None else None,
         'buildPrice': float(build_price),
         'locFactor': float(loc_factor),
+        'use': use,
+        'prices': {
+            'housing': (float(prices_map['housing']) if prices_map and prices_map.get('housing') is not None else None),
+            'commercial': (float(prices_map['commercial']) if prices_map and prices_map.get('commercial') is not None else None),
+            'industrial': (float(prices_map['industrial']) if prices_map and prices_map.get('industrial') is not None else None),
+            'agricultural': (float(prices_map['agricultural']) if prices_map and prices_map.get('agricultural') is not None else None),
+            'per_sqm': (float(prices_map['per_sqm']) if prices_map and prices_map.get('per_sqm') is not None else None),
+        }
     })
