@@ -501,3 +501,57 @@ def api_company_region_price():
         'buildPrice': float(build_price),
         'locFactor': float(loc_factor),
     })
+
+
+@main.route('/api/land_locations', methods=['GET'])
+def api_land_locations():
+    """Return list of wilayas and their regions for quick valuation selectors.
+
+    If a company_id is provided and that company has uploaded land prices,
+    wilayas/regions are sourced from `CompanyLandPrice` for that company.
+    Otherwise, they fall back to the public `LandPrice` table.
+
+    Query params:
+      - company_id: int (optional)
+
+    Response shape:
+      {
+        "locations": [
+          {"wilaya": "مسقط", "regions": ["السيب", "بوشر", ...]},
+          ...
+        ]
+      }
+    """
+    company_id = request.args.get('company_id', type=int)
+
+    # Build mapping wilaya -> set(regions)
+    locations_map = {}
+
+    if company_id:
+        company_profile = CompanyProfile.query.filter_by(user_id=company_id).first()
+        if company_profile:
+            rows = (
+                db.session.query(CompanyLandPrice.wilaya, CompanyLandPrice.region)
+                .filter(CompanyLandPrice.company_profile_id == company_profile.id)
+                .all()
+            )
+            for w, r in rows:
+                if not w or not r:
+                    continue
+                locations_map.setdefault(w, set()).add(r)
+
+    # Fallback to public land prices if no company-specific locations
+    if not locations_map:
+        rows = db.session.query(LandPrice.wilaya, LandPrice.region).all()
+        for w, r in rows:
+            if not w or not r:
+                continue
+            locations_map.setdefault(w, set()).add(r)
+
+    # Convert to sorted lists
+    locations = []
+    for w in sorted(locations_map.keys()):
+        regions_sorted = sorted(locations_map[w])
+        locations.append({'wilaya': w, 'regions': regions_sorted})
+
+    return jsonify({'locations': locations})

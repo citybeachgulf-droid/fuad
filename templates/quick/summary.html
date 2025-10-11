@@ -102,27 +102,8 @@
 
         <script>
           (function() {
-            const DATA = {
-              'مسقط': {
-                regions: {
-                  'السيب': { landPrice: 35, locFactor: 1.30, buildPrice: 240 },
-                  'بوشر': { landPrice: 38, locFactor: 1.35, buildPrice: 250 },
-                  'مطرح': { landPrice: 28, locFactor: 1.15, buildPrice: 230 }
-                }
-              },
-              'ظفار': {
-                regions: {
-                  'صلالة': { landPrice: 20, locFactor: 1.00, buildPrice: 220 },
-                  'طاقة': { landPrice: 14, locFactor: 0.90, buildPrice: 210 }
-                }
-              },
-              'الداخلية': {
-                regions: {
-                  'نزوى': { landPrice: 16, locFactor: 0.95, buildPrice: 210 },
-                  'بهلا': { landPrice: 12, locFactor: 0.85, buildPrice: 200 }
-                }
-              }
-            };
+            // Locations and pricing will be fetched dynamically via API
+            let LOCATIONS = []; // [{ wilaya, regions: [] }]
 
             const el = (id) => document.getElementById(id);
             const fmt = (n) => (isFinite(n) ? n.toLocaleString('en-US') : '—');
@@ -154,16 +135,17 @@
 
             function populateWilayas() {
               wilayaSel.innerHTML = '';
-              Object.keys(DATA).forEach((w) => {
+              LOCATIONS.forEach((item) => {
                 const opt = document.createElement('option');
-                opt.value = w; opt.textContent = w; wilayaSel.appendChild(opt);
+                opt.value = item.wilaya; opt.textContent = item.wilaya; wilayaSel.appendChild(opt);
               });
             }
 
             function populateRegions() {
               const w = wilayaSel.value;
               regionSel.innerHTML = '';
-              const regions = (DATA[w] && DATA[w].regions) ? Object.keys(DATA[w].regions) : [];
+              const entry = LOCATIONS.find((x) => x.wilaya === w);
+              const regions = entry ? entry.regions : [];
               regions.forEach((r) => {
                 const opt = document.createElement('option');
                 opt.value = r; opt.textContent = r; regionSel.appendChild(opt);
@@ -173,13 +155,12 @@
             function recalc() {
               const w = wilayaSel.value;
               const r = regionSel.value;
-              const regionData = (DATA[w] && DATA[w].regions && DATA[w].regions[r]) ? DATA[w].regions[r] : null;
 
               const landArea = Number(landAreaInp.value || 0);
               const buildArea = Number(buildAreaInp.value || 0);
               const ageYears = Math.max(0, Number(ageInp.value || 0));
 
-              if (!regionData) {
+              if (!w || !r) {
                 landFormula.textContent = '—';
                 buildFormula.textContent = '—';
                 locFactorEl.textContent = '—';
@@ -198,19 +179,19 @@
               );
 
               const landPrice = Number(
-                (useApiPricing && currentPricing.landPrice != null)
+                (useApiPricing && currentPricing && currentPricing.landPrice != null)
                   ? currentPricing.landPrice
-                  : (regionData.landPrice || 0)
+                  : 0
               );
               const buildPrice = Number(
-                (useApiPricing && currentPricing.buildPrice != null)
+                (useApiPricing && currentPricing && currentPricing.buildPrice != null)
                   ? currentPricing.buildPrice
-                  : (regionData.buildPrice || 220)
+                  : 220
               );
               const locFactor = Number(
-                (useApiPricing && currentPricing.locFactor != null)
+                (useApiPricing && currentPricing && currentPricing.locFactor != null)
                   ? currentPricing.locFactor
-                  : (regionData.locFactor || 1.0)
+                  : 1.0
               );
 
               // معدل استهلاك البناء: 2% سنويًا، حد أدنى 40%
@@ -296,6 +277,22 @@
               recalc();
             }
 
+            async function reloadLocations() {
+              const companyId = companySel ? (companySel.value || '') : '';
+              const params = new URLSearchParams();
+              if (companyId) params.append('company_id', companyId);
+              try {
+                const res = await fetch(`/api/land_locations${params.toString() ? ('?' + params.toString()) : ''}`);
+                if (!res.ok) throw new Error('Failed to load locations');
+                const data = await res.json();
+                LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
+              } catch (e) {
+                LOCATIONS = [];
+              }
+              populateWilayas();
+              populateRegions();
+            }
+
             function updateResetHref() {
               if (!resetBtn) return;
               const companyId = companySel ? (companySel.value || '') : '';
@@ -303,8 +300,9 @@
             }
 
             // Init
-            populateWilayas();
-            populateRegions();
+            (async () => {
+              await reloadLocations();
+            })();
             initPropType();
             applyPropTypeState();
             // Restore selected company from server or localStorage
@@ -330,7 +328,7 @@
               companySel.addEventListener('change', () => {
                 localStorage.setItem(LS_KEY, companySel.value || '');
                 updateResetHref();
-                updatePricingFromAPI();
+                (async () => { await reloadLocations(); updatePricingFromAPI(); })();
               });
             }
           })();
