@@ -454,6 +454,8 @@ class LandPrice(db.Model):
     price_agricultural = db.Column(db.Float, nullable=True)  # زراعي
     # إبقاء الحقل السابق للتوافق إن وجد
     price_per_sqm = db.Column(db.Float, nullable=True)
+    # دعم التسمية القديمة (price_per_meter) لبعض قواعد البيانات القديمة
+    price_per_meter = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
@@ -481,6 +483,8 @@ class CompanyLandPrice(db.Model):
     price_agricultural = db.Column(db.Float, nullable=True)  # زراعي
     # إبقاء الحقل السابق للتوافق إن وجد
     price_per_sqm = db.Column(db.Float, nullable=True)
+    # دعم التسمية القديمة (price_per_meter) لبعض قواعد البيانات القديمة
+    price_per_meter = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     company_profile = db.relationship(

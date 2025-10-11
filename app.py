@@ -157,6 +157,9 @@ if __name__ == '__main__':
                         conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_agricultural FLOAT'))
                     if 'price_per_sqm' not in land_cols:
                         conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_per_sqm FLOAT'))
+                    # compatibility legacy column name (some DBs may still have NOT NULL)
+                    if 'price_per_meter' not in land_cols:
+                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_per_meter FLOAT'))
 
                 company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
                 with db.engine.connect() as conn:
@@ -170,6 +173,9 @@ if __name__ == '__main__':
                         conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_agricultural FLOAT'))
                     if 'price_per_sqm' not in company_land_cols:
                         conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_per_sqm FLOAT'))
+                    # compatibility legacy column name (some DBs may still have NOT NULL)
+                    if 'price_per_meter' not in company_land_cols:
+                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_per_meter FLOAT'))
             except Exception:
                 pass
 
