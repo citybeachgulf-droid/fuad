@@ -454,15 +454,54 @@ def api_company_region_price():
       - company_id: int (optional)
       - wilaya: str (required)
       - region: str (required)
+      - use: str (optional) one of: housing, commercial, industrial, agricultural
     """
     wilaya = request.args.get('wilaya')
     region = request.args.get('region')
     company_id = request.args.get('company_id', type=int)
+    use_raw = request.args.get('use')
 
     if not wilaya or not region:
         return jsonify({'error': 'wilaya and region are required'}), 400
 
-    land_price = None
+    # Normalize use parameter (support English and Arabic synonyms)
+    def normalize_use(value: str):
+        v = (value or '').strip().lower()
+        if not v:
+            return None
+        mapping = {
+            'housing': {'housing', 'residential', 'سكن', 'سكني', 'سكنية'},
+            'commercial': {'commercial', 'تجاري', 'تجارية'},
+            'industrial': {'industrial', 'صناعي', 'صناعية'},
+            'agricultural': {'agricultural', 'agriculture', 'زراعي', 'زراعية'},
+        }
+        for key, vals in mapping.items():
+            if v in vals:
+                return key
+        return None
+
+    normalized_use = normalize_use(use_raw)
+
+    # Helpers to extract per-use prices from a row
+    def prices_map_from(obj):
+        if not obj:
+            return {}
+        return {
+            'housing': obj.price_housing,
+            'commercial': obj.price_commercial,
+            'industrial': obj.price_industrial,
+            'agricultural': obj.price_agricultural,
+        }
+
+    def first_non_null_price(price_map: dict):
+        for k in ('housing', 'commercial', 'industrial', 'agricultural'):
+            if price_map.get(k) is not None:
+                return price_map.get(k)
+        return None
+
+    # Fetch company-specific and public rows (for robust fallback by selected use)
+    clp = None
+    lp = None
 
     # Try company-specific first
     if company_id:
@@ -473,31 +512,37 @@ def api_company_region_price():
                 wilaya=wilaya,
                 region=region,
             ).first()
-            if clp:
-                land_price = (
-                    clp.price_housing
-                    if clp.price_housing is not None else (
-                        clp.price_per_sqm if clp.price_per_sqm is not None else clp.price_per_meter
-                    )
-                )
+    # Always fetch public row as well for complete fallback
+    lp = LandPrice.query.filter_by(wilaya=wilaya, region=region).first()
 
-    # Fallback to public land price
-    if land_price is None:
-        lp = LandPrice.query.filter_by(wilaya=wilaya, region=region).first()
-        if lp:
-            land_price = (
-                lp.price_housing
-                if lp.price_housing is not None else (
-                    lp.price_per_sqm if lp.price_per_sqm is not None else lp.price_per_meter
-                )
-            )
+    company_prices = prices_map_from(clp)
+    public_prices = prices_map_from(lp)
+    company_legacy = (clp.price_per_sqm if clp and clp.price_per_sqm is not None else (clp.price_per_meter if clp else None))
+    public_legacy = (lp.price_per_sqm if lp and lp.price_per_sqm is not None else (lp.price_per_meter if lp else None))
+
+    # Selection logic prioritizes requested use across sources, then general fallbacks
+    selected_land_price = None
+    if normalized_use:
+        selected_land_price = (
+            (company_prices.get(normalized_use) if company_prices else None)
+            or (public_prices.get(normalized_use) if public_prices else None)
+            or company_legacy
+            or public_legacy
+        )
+    if selected_land_price is None:
+        selected_land_price = (
+            first_non_null_price(company_prices)
+            or company_legacy
+            or first_non_null_price(public_prices)
+            or public_legacy
+        )
 
     # Defaults for build price and location factor if not modeled per company
     build_price = 220.0
     loc_factor = 1.0
 
     return jsonify({
-        'landPrice': float(land_price) if land_price is not None else None,
+        'landPrice': float(selected_land_price) if selected_land_price is not None else None,
         'buildPrice': float(build_price),
         'locFactor': float(loc_factor),
     })
