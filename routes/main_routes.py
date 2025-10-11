@@ -47,8 +47,8 @@ def support():
 @main.route('/quick')
 def quick_page():
     """صفحة التقييم الفوري كوحدة مستقلة."""
-    # إعادة توجيه إلى الخطوة الأولى بنمط البطاقات
-    return redirect(url_for('main.quick_step_property'))
+    # إعادة توجيه مباشرة لصفحة الجدول/النتيجة
+    return redirect(url_for('main.quick_step_summary'))
 
 
 @main.route('/certified')
@@ -84,13 +84,11 @@ def quick_step_location():
 
 @main.route('/quick/summary')
 def quick_step_summary():
-    # عرض نتيجة تقديرية بسيطة وفق الاختيارات
-    prop_type = request.args.get('prop_type', 'land')
-    loc = request.args.get('loc', 'A')
-    base_values = {'land': 20000, 'house': 80000, 'apartment': 50000}
-    loc_factor = {'A': 1.3, 'B': 1.0, 'C': 0.8}
-    estimate = int(base_values.get(prop_type, 30000) * loc_factor.get(loc, 1))
-    return render_template('quick/summary.html', estimate=estimate, prop_type=prop_type, loc=loc)
+    # جعل القيم الافتراضية بسيطة، مع إمكانية تعديلها من الواجهة
+    prop_type = request.args.get('prop_type') or 'land'
+    # نحافظ على قيمة تقديرية ابتدائية ثابتة لإظهار أعلى البطاقة
+    estimate = 50000
+    return render_template('quick/summary.html', estimate=estimate, prop_type=prop_type, loc=None)
 
 
 # -------------------------------
