@@ -15,3 +15,21 @@
     {% endfor %}
   </div>
 {% endmacro %}
+
+{# Grid of square logo tiles #}
+{% macro logos_grid(items) %}
+  <div class="logos-grid">
+    {% for it in items %}
+      <a href="{{ it.href }}" class="logo-tile text-decoration-none">
+        <span class="logo-tile-inner">
+          {% if it.logo_src %}
+            <img src="{{ it.logo_src }}" alt="{{ it.title }}" loading="lazy">
+          {% else %}
+            <span class="logo-fallback">{{ (it.title or '?')[:1] | upper }}</span>
+          {% endif %}
+        </span>
+        <span class="visually-hidden">{{ it.title }}</span>
+      </a>
+    {% endfor %}
+  </div>
+{% endmacro %}

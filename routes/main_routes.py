@@ -127,10 +127,13 @@ def certified_step_bank():
     entity = request.args.get('entity', 'person')
     purpose = request.args.get('purpose', 'buy')
     banks = BankProfile.query.order_by(BankProfile.id.asc()).all()
-    options = [
-        {"title": (b.user.name if b.user else b.slug), "href": url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=b.slug), "icon_class": "bi bi-bank", "color_class": "tile-primary", "subtitle": (b.website or '')}
-        for b in banks
-    ]
+    options = []
+    for b in banks:
+        options.append({
+            "title": (b.user.name if b.user else b.slug),
+            "href": url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=b.slug),
+            "logo_src": (url_for('static', filename=b.logo_path) if b.logo_path else None),
+        })
     return render_template('certified_steps/step_bank.html', options=options, entity=entity, purpose=purpose)
 
 
