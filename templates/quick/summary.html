@@ -16,6 +16,205 @@
             <div class="text-muted small">هذه نتيجة تقديرية غير ملزمة</div>
           </div>
         </div>
+        <div id="dynamicCalc" data-prop-type="{{ prop_type }}" class="mt-3">
+          <h6 class="mb-3">حاسبة تلقائية حسب الموقع والمساحات</h6>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label">الولاية</label>
+              <select id="wilaya" class="form-select" aria-label="اختر الولاية"></select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">المنطقة</label>
+              <select id="region" class="form-select" aria-label="اختر المنطقة"></select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label">مساحة الأرض (م²)</label>
+              <input id="land_area" type="number" min="0" step="1" class="form-control" placeholder="مثال: 300">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">مساحة البناء (م²)</label>
+              <input id="build_area" type="number" min="0" step="1" class="form-control" placeholder="مثال: 200">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">عمر البناء (سنة)</label>
+              <input id="age" type="number" min="0" step="1" class="form-control" placeholder="مثال: 5">
+            </div>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>البند</th>
+                  <th>المعادلة</th>
+                  <th class="text-end">القيمة (ر.ع)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>قيمة الأرض</td>
+                  <td class="text-muted small" id="land_formula">—</td>
+                  <td class="text-end"><strong id="land_value">—</strong></td>
+                </tr>
+                <tr>
+                  <td>قيمة البناء</td>
+                  <td class="text-muted small" id="build_formula">—</td>
+                  <td class="text-end"><strong id="build_value">—</strong></td>
+                </tr>
+                <tr>
+                  <td>معامل الموقع</td>
+                  <td class="text-muted small">× <span id="loc_factor">—</span></td>
+                  <td></td>
+                </tr>
+                <tr class="table-light">
+                  <td><strong>الإجمالي التقديري</strong></td>
+                  <td></td>
+                  <td class="text-end"><strong id="total_value">—</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <script>
+          (function() {
+            const DATA = {
+              'مسقط': {
+                regions: {
+                  'السيب': { landPrice: 35, locFactor: 1.30, buildPrice: 240 },
+                  'بوشر': { landPrice: 38, locFactor: 1.35, buildPrice: 250 },
+                  'مطرح': { landPrice: 28, locFactor: 1.15, buildPrice: 230 }
+                }
+              },
+              'ظفار': {
+                regions: {
+                  'صلالة': { landPrice: 20, locFactor: 1.00, buildPrice: 220 },
+                  'طاقة': { landPrice: 14, locFactor: 0.90, buildPrice: 210 }
+                }
+              },
+              'الداخلية': {
+                regions: {
+                  'نزوى': { landPrice: 16, locFactor: 0.95, buildPrice: 210 },
+                  'بهلا': { landPrice: 12, locFactor: 0.85, buildPrice: 200 }
+                }
+              }
+            };
+
+            const el = (id) => document.getElementById(id);
+            const fmt = (n) => (isFinite(n) ? n.toLocaleString('en-US') : '—');
+
+            const propType = (document.getElementById('dynamicCalc')?.dataset?.propType || '').toLowerCase();
+
+            const wilayaSel = el('wilaya');
+            const regionSel = el('region');
+            const landAreaInp = el('land_area');
+            const buildAreaInp = el('build_area');
+            const ageInp = el('age');
+
+            const landFormula = el('land_formula');
+            const buildFormula = el('build_formula');
+            const locFactorEl = el('loc_factor');
+            const landValueEl = el('land_value');
+            const buildValueEl = el('build_value');
+            const totalValueEl = el('total_value');
+
+            const quickValueEl = document.querySelector('.quick-result .value');
+
+            function populateWilayas() {
+              wilayaSel.innerHTML = '';
+              Object.keys(DATA).forEach((w) => {
+                const opt = document.createElement('option');
+                opt.value = w; opt.textContent = w; wilayaSel.appendChild(opt);
+              });
+            }
+
+            function populateRegions() {
+              const w = wilayaSel.value;
+              regionSel.innerHTML = '';
+              const regions = (DATA[w] && DATA[w].regions) ? Object.keys(DATA[w].regions) : [];
+              regions.forEach((r) => {
+                const opt = document.createElement('option');
+                opt.value = r; opt.textContent = r; regionSel.appendChild(opt);
+              });
+            }
+
+            function recalc() {
+              const w = wilayaSel.value;
+              const r = regionSel.value;
+              const regionData = (DATA[w] && DATA[w].regions && DATA[w].regions[r]) ? DATA[w].regions[r] : null;
+
+              const landArea = Number(landAreaInp.value || 0);
+              const buildArea = Number(buildAreaInp.value || 0);
+              const ageYears = Math.max(0, Number(ageInp.value || 0));
+
+              if (!regionData) {
+                landFormula.textContent = '—';
+                buildFormula.textContent = '—';
+                locFactorEl.textContent = '—';
+                landValueEl.textContent = '—';
+                buildValueEl.textContent = '—';
+                totalValueEl.textContent = '—';
+                return;
+              }
+
+              const landPrice = Number(regionData.landPrice || 0);
+              const buildPrice = Number(regionData.buildPrice || 220);
+              const locFactor = Number(regionData.locFactor || 1.0);
+
+              // معدل استهلاك البناء: 2% سنويًا، حد أدنى 40%
+              const depreciationRate = 0.02;
+              const depreciationFactor = Math.max(0.40, 1 - ageYears * depreciationRate);
+
+              const landValue = landArea * landPrice;
+              const buildingValue = (propType === 'land') ? 0 : (buildArea * buildPrice * depreciationFactor);
+              const total = (landValue + buildingValue) * locFactor;
+
+              landFormula.textContent = `${fmt(landArea)} × ${fmt(landPrice)}`;
+              buildFormula.textContent = (propType === 'land')
+                ? '—'
+                : `${fmt(buildArea)} × ${fmt(buildPrice)} × ${depreciationFactor.toFixed(2)}`;
+              locFactorEl.textContent = locFactor.toFixed(2);
+
+              landValueEl.textContent = fmt(Math.round(landValue));
+              buildValueEl.textContent = (propType === 'land') ? '—' : fmt(Math.round(buildingValue));
+              totalValueEl.textContent = fmt(Math.round(total));
+
+              // تحديث القيمة العليا عند وجود مدخلات ذات معنى
+              const hasMeaningfulInput = (landArea > 0) || (buildArea > 0);
+              if (hasMeaningfulInput && quickValueEl) {
+                quickValueEl.textContent = `${fmt(Math.round(total))} ر.ع`;
+              }
+            }
+
+            function applyPropTypeState() {
+              const isLandOnly = (propType === 'land');
+              buildAreaInp.disabled = isLandOnly;
+              ageInp.disabled = isLandOnly;
+              if (isLandOnly) {
+                buildAreaInp.value = '';
+                ageInp.value = '';
+              }
+            }
+
+            // Init
+            populateWilayas();
+            populateRegions();
+            applyPropTypeState();
+            recalc();
+
+            // Events
+            wilayaSel.addEventListener('change', () => { populateRegions(); recalc(); });
+            regionSel.addEventListener('change', recalc);
+            landAreaInp.addEventListener('input', recalc);
+            buildAreaInp.addEventListener('input', recalc);
+            ageInp.addEventListener('input', recalc);
+          })();
+        </script>
+
         <div class="d-flex gap-2">
           <a class="btn btn-primary" href="{{ url_for('main.certified_step_entity') }}">الانتقال للتقييم المعتمد</a>
           <a class="btn btn-outline-secondary" href="{{ url_for('main.quick_step_property') }}">إعادة الاختيار</a>
