@@ -57,19 +57,13 @@
                         <hr class="my-4">
 
                         <div class="row text-center">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="border rounded p-3">
                                     <div class="text-muted">القسط الشهري</div>
                                     <div id="monthlyPayment" class="fs-4 fw-bold">—</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="border rounded p-3">
-                                    <div class="text-muted">إجمالي الفائدة</div>
-                                    <div id="totalInterest" class="fs-5 fw-bold">—</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="border rounded p-3">
                                     <div class="text-muted">إجمالي التكلفة</div>
                                     <div id="totalCost" class="fs-5 fw-bold">—</div>
@@ -160,10 +154,8 @@
 
       var result = computeMonthlyPayment(amountEl && amountEl.value, rateEl && rateEl.value, monthsEl && monthsEl.value);
       var monthlyEl = byId('monthlyPayment');
-      var interestEl = byId('totalInterest');
       var totalEl = byId('totalCost');
       if (monthlyEl) monthlyEl.textContent = formatCurrency(result.monthly);
-      if (interestEl) interestEl.textContent = formatCurrency(result.totalInterest);
       if (totalEl) totalEl.textContent = formatCurrency(result.totalCost);
     }
 
