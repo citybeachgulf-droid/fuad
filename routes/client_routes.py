@@ -221,7 +221,7 @@ def _required_docs_for_type(valuation_type: str):
     if valuation_type == "land":
         return [kroki, deed, common_ids]
     if valuation_type == "house":
-        return [kroki, deed, completion, maps, common_ids, contractor]
+        return [kroki, deed, maps, common_ids, contractor]
     # Default to minimal
     return [common_ids]
 
