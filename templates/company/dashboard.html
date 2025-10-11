@@ -9,6 +9,16 @@
   {% endif %}
 </div>
 
+<!-- ملخص حالات المعاملات -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="badge rounded-pill bg-secondary px-3 py-2">بانتظار: {{ status_counts.pending }}</span>
+  <a class="badge rounded-pill bg-warning text-dark px-3 py-2 text-decoration-none" href="{{ url_for('company.transactions_status', tab='missing_docs') }}">مستندات ناقصة: {{ status_counts.revision_requested }}</a>
+  <a class="badge rounded-pill bg-danger px-3 py-2 text-decoration-none" href="{{ url_for('company.transactions_status', tab='rejected') }}">مرفوضة: {{ status_counts.rejected }}</a>
+  <a class="badge rounded-pill bg-success px-3 py-2 text-decoration-none" href="{{ url_for('company.transactions_status', tab='completed') }}">تم التثمين: {{ status_counts.completed }}</a>
+  <div class="ms-auto small text-muted">اضغط لفتح القائمة التفصيلية</div>
+  
+</div>
+
 {% if pending_appointments and pending_appointments|length > 0 %}
   <div class="alert alert-info">
     <div class="d-flex align-items-start justify-content-between">
@@ -71,7 +81,19 @@
         <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
         <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
         <td>{{ r.client.name }}</td>
-        <td>{{ r.status }}</td>
+        <td>
+          {% if r.status == 'pending' %}
+            <span class="badge bg-info text-dark">بانتظار</span>
+          {% elif r.status == 'revision_requested' %}
+            <span class="badge bg-warning text-dark">مستندات ناقصة</span>
+          {% elif r.status == 'rejected' %}
+            <span class="badge bg-danger">مرفوض</span>
+          {% elif r.status == 'completed' %}
+            <span class="badge bg-success">تم التثمين</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ r.status }}</span>
+          {% endif %}
+        </td>
         <td>
           <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company.request_detail', request_id=r.id) }}">تفاصيل</a>
           <a class="btn btn-sm btn-primary" href="{{ url_for('company.submit_valuation', request_id=r.id) }}">Submit Valuation</a>
