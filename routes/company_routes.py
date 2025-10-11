@@ -24,6 +24,20 @@ def dashboard():
         .order_by(ValuationRequest.id.desc())
         .all()
     )
+    # إحصاءات سريعة لحالات معاملات الشركة
+    counts_rows = (
+        db.session.query(ValuationRequest.status, db.func.count(ValuationRequest.id))
+        .filter(ValuationRequest.company_id == current_user.id)
+        .group_by(ValuationRequest.status)
+        .all()
+    )
+    counts_map = {status or 'unknown': cnt for status, cnt in counts_rows}
+    status_counts = {
+        'pending': counts_map.get('pending', 0),
+        'revision_requested': counts_map.get('revision_requested', 0),
+        'rejected': counts_map.get('rejected', 0),
+        'completed': counts_map.get('completed', 0),
+    }
     # المواعيد المقترحة من العميل والتي ما زالت بانتظار موافقة الشركة
     pending_appts = (
         VisitAppointment.query
@@ -37,7 +51,13 @@ def dashboard():
         .all()
     )
     profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
-    return render_template('company/dashboard.html', requests=requests, profile=profile, pending_appointments=pending_appts)
+    return render_template(
+        'company/dashboard.html',
+        requests=requests,
+        profile=profile,
+        pending_appointments=pending_appts,
+        status_counts=status_counts,
+    )
 
 
 # صفحة تعرض معاملات الشركة حسب الحالة (مرفوضة / مستندات ناقصة / تم التثمين)
