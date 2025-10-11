@@ -4,6 +4,7 @@
 <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
   <a class="btn btn-success" href="{{ url_for('company.edit_profile') }}">تعديل الملف التعريفي للشركة</a>
   <a class="btn btn-outline-primary" href="{{ url_for('company.transactions_status', tab='rejected') }}">معاملات حسب الحالة</a>
+  <a class="btn btn-outline-success" href="{{ url_for('company.land_prices') }}">أسعار الأراضي</a>
   {% if profile and profile.logo_path %}
     <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" style="height:40px;" class="ms-2">
   {% endif %}
