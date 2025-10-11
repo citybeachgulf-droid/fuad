@@ -311,24 +311,26 @@
               resetBtn.href = companyId ? `${resetBaseUrl}?company_id=${encodeURIComponent(companyId)}` : resetBaseUrl;
             }
 
-            // Init
+            // Init (ensure pricing is fetched AFTER locations and company selection are ready)
             (async () => {
               await reloadLocations();
-            })();
-            initPropType();
-            applyPropTypeState();
-            // Restore selected company from server or localStorage
-            if (companySel) {
-              const serverSelected = "{{ selected_company_id or '' }}";
-              if (!serverSelected) {
-                const stored = localStorage.getItem(LS_KEY) || '';
-                if (stored && [...companySel.options].some(o => o.value === stored)) {
-                  companySel.value = stored;
+              initPropType();
+              applyPropTypeState();
+              // Restore selected company from server or localStorage before first pricing fetch
+              if (companySel) {
+                const serverSelected = "{{ selected_company_id or '' }}";
+                if (!serverSelected) {
+                  const stored = localStorage.getItem(LS_KEY) || '';
+                  if (stored && [...companySel.options].some(o => o.value === stored)) {
+                    companySel.value = stored;
+                  }
                 }
+                // Reload locations if company selection is set so wilaya/region match company
+                await reloadLocations();
               }
-            }
-            updateResetHref();
-            updatePricingFromAPI();
+              updateResetHref();
+              await updatePricingFromAPI();
+            })();
 
             // Events
             wilayaSel.addEventListener('change', () => { populateRegions(); updatePricingFromAPI(); });
