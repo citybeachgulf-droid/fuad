@@ -1,10 +1,19 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from models import db, User, ValuationRequest, BankProfile, BankOffer, BankLoanPolicy, CompanyApprovedBank, CompanyProfile
 from utils import calculate_max_loan
+from werkzeug.utils import secure_filename
+import os
+import time
 
 # تعريف Blueprint للبنك
 bank_bp = Blueprint('bank', __name__, template_folder='templates/bank')
+
+# --- Logo upload helpers ---
+ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+
+def _allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_LOGO_EXTENSIONS
 
 # --- Dashboard للبنك ---
 @bank_bp.route('/dashboard')
@@ -77,6 +86,7 @@ def dashboard():
         policies=policies,
         approved_companies=approved_companies,
         companies_to_add=companies_to_add,
+        bank_profile=bank_profile,
     )
 
 
@@ -151,6 +161,44 @@ def update_approved_company(cab_id: int):
     cab.limit_value = limit_value
     db.session.commit()
     flash('تم تحديث حد الشركة', 'success')
+    return redirect(url_for('bank.dashboard'))
+
+
+# --- تحديث شعار البنك ---
+@bank_bp.route('/profile/logo', methods=['POST'])
+@login_required
+def update_logo():
+    if current_user.role != 'bank':
+        return "غير مصرح لك بالوصول", 403
+
+    bank_profile = current_user.bank_profile
+    if bank_profile is None:
+        bank_profile = BankProfile(
+            user_id=current_user.id,
+            slug=f"bank-{current_user.id}"
+        )
+        db.session.add(bank_profile)
+        db.session.commit()
+
+    file = request.files.get('logo')
+    if not file or not file.filename:
+        flash('الرجاء اختيار ملف شعار', 'danger')
+        return redirect(url_for('bank.dashboard'))
+    if not _allowed_file(file.filename):
+        flash('صيغة الشعار غير مدعومة', 'danger')
+        return redirect(url_for('bank.dashboard'))
+
+    upload_folder = current_app.config.get('UPLOAD_FOLDER')
+    os.makedirs(upload_folder, exist_ok=True)
+    filename = f"bank_{current_user.id}_{int(time.time())}_" + secure_filename(file.filename)
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+
+    rel_path = os.path.relpath(file_path, os.path.join(current_app.root_path, 'static'))
+    bank_profile.logo_path = rel_path.replace('\\', '/')
+    db.session.commit()
+
+    flash('تم تحديث شعار البنك', 'success')
     return redirect(url_for('bank.dashboard'))
 
 # --- تحديث حالة الطلب ---
