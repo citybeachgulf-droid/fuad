@@ -439,3 +439,43 @@ class Advertisement(db.Model):
         if end_dt and now_utc > end_dt:
             return False
         return True
+
+
+# ================================
+# أسعار الأراضي العامة (اختياري للنظام)
+# ================================
+class LandPrice(db.Model):
+    __tablename__ = 'land_prices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    wilaya = db.Column(db.String(100), nullable=False, index=True)
+    region = db.Column(db.String(150), nullable=False, index=True)
+    price_per_sqm = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('wilaya', 'region', name='uq_landprice_wilaya_region'),
+    )
+
+
+# ================================
+# أسعار الأراضي المعتمدة لكل شركة
+# ================================
+class CompanyLandPrice(db.Model):
+    __tablename__ = 'company_land_prices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_profile_id = db.Column(db.Integer, db.ForeignKey('company_profiles.id'), nullable=False, index=True)
+    wilaya = db.Column(db.String(100), nullable=False, index=True)
+    region = db.Column(db.String(150), nullable=False, index=True)
+    price_per_sqm = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    company_profile = db.relationship(
+        'CompanyProfile',
+        backref=db.backref('approved_land_prices', cascade='all, delete-orphan')
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('company_profile_id', 'wilaya', 'region', name='uq_company_landprice_company_loc'),
+    )

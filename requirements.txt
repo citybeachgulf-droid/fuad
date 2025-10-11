@@ -7,3 +7,4 @@ email-validator
 python-dotenv
 Authlib>=1.2
 twilio>=9.0
+openpyxl>=3.1

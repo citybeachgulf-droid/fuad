@@ -21,7 +21,15 @@
             {% if profile and profile.logo_path %}
               <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white" style="max-height:120px;">
             {% endif %}
-            <input type="file" class="form-control" name="logo" accept="image/*">
+            <input type="file" class="form-control mb-3" name="logo" accept="image/*">
+
+            <hr>
+            <h6 class="mb-2">أسعار الأراضي المعتمدة</h6>
+            <div class="input-group">
+              <input type="file" class="form-control" name="prices_file" form="companyLandPricesForm" accept=".xlsx,.csv" required>
+              <button class="btn btn-outline-primary" type="submit" form="companyLandPricesForm">رفع ملف الأسعار</button>
+            </div>
+            <div class="form-text">صيغة الملف: .xlsx أو .csv — الأعمدة: الولاية، المنطقة، سعر المتر</div>
           </div>
         </div>
       </div>
@@ -112,6 +120,7 @@
 
     </div>
   </form>
+  <form id="companyLandPricesForm" method="POST" action="{{ url_for('company.upload_company_land_prices') }}" enctype="multipart/form-data"></form>
 </div>
 
 <!-- سكريبت لإضافة وحذف الصفوف -->
