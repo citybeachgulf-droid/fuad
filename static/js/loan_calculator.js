@@ -58,10 +58,8 @@
     var rate = byId('interestRate')?.value;
     var result = computeMonthlyPayment(amount, rate, months);
     var monthlyEl = byId('monthlyPayment');
-    var interestEl = byId('totalInterest');
     var totalEl = byId('totalCost');
     if (monthlyEl) monthlyEl.textContent = formatCurrency(result.monthly);
-    if (interestEl) interestEl.textContent = formatCurrency(result.totalInterest);
     if (totalEl) totalEl.textContent = formatCurrency(result.totalCost);
   }
 
