@@ -37,7 +37,7 @@
         {{ ad.start_at.strftime('%Y-%m-%d %H:%M') if ad.start_at else '-' }} → {{ ad.end_at.strftime('%Y-%m-%d %H:%M') if ad.end_at else '-' }}
       </td>
       <td>
-        <img src="{{ url_for('static', filename=ad.image_path) }}" alt="ad" style="height:48px" class="rounded border" />
+        <img src="{{ ad.image_path | static_or_external }}" alt="ad" style="height:48px" class="rounded border" />
       </td>
       <td class="small">
         {% if ad.target_url %}<a href="{{ ad.target_url }}" target="_blank" rel="noopener">فتح</a>{% else %}-{% endif %}

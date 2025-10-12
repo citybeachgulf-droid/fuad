@@ -5,7 +5,7 @@ from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, Requ
 from werkzeug.utils import secure_filename
 import os
 import time
-from utils import calculate_max_loan, format_phone_e164
+from utils import calculate_max_loan, format_phone_e164, store_file_and_get_url
 from datetime import datetime
 
 client_bp = Blueprint('client', __name__, template_folder='../templates/client', static_folder='../static')
@@ -295,7 +295,7 @@ def upload_docs(request_id: int):
                 flash(f'يرجى رفع مستند: {dict((k,l) for k,l,_ in required_docs)[key]}', 'danger')
                 return render_template('client/upload_docs.html', request_obj=vr, required_docs=required_docs, max_bytes=current_app.config.get('MAX_CONTENT_LENGTH', 5*1024*1024))
 
-        # Save files
+        # Save files (to Backblaze B2 if configured, otherwise local fallback)
         static_root = os.path.join(current_app.root_path, 'static')
         requests_root = os.path.join(static_root, 'uploads', 'requests', f'req_{vr.id}')
         os.makedirs(requests_root, exist_ok=True)
@@ -312,14 +312,19 @@ def upload_docs(request_id: int):
                 safe_name = secure_filename(fs.filename)
                 ts = int(time.time())
                 filename = f"{key}_{ts}_{safe_name}"
-                abs_path = os.path.join(requests_root, filename)
-                fs.save(abs_path)
+                # object key in B2 bucket
+                object_key = f"uploads/requests/req_{vr.id}/{filename}"
+                stored = store_file_and_get_url(
+                    fs,
+                    key=object_key,
+                    local_abs_dir=requests_root,
+                    filename=filename,
+                )
 
-                rel_path = os.path.relpath(abs_path, static_root).replace('\\', '/')
                 rd = RequestDocument(
                     valuation_request_id=vr.id,
                     doc_type=key,
-                    file_path=rel_path,
+                    file_path=stored,
                     original_filename=safe_name,
                 )
                 db.session.add(rd)

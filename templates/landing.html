@@ -13,10 +13,10 @@
                         <div class="card border-0 shadow-sm overflow-hidden">
                             {% if ad.target_url %}
                             <a href="{{ ad.target_url }}" target="_blank" rel="noopener" class="d-block">
-                                <img src="{{ url_for('static', filename=ad.image_path) }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
+                                <img src="{{ ad.image_path | static_or_external }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
                             </a>
                             {% else %}
-                            <img src="{{ url_for('static', filename=ad.image_path) }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
+                            <img src="{{ ad.image_path | static_or_external }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
                             {% endif %}
                         </div>
                     </div>
@@ -69,7 +69,7 @@
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
                     <div class="card h-100">
                         {% if item.image_path %}
-                        <img src="{{ url_for('static', filename=item.image_path) }}" class="card-img-top" alt="خبر" />
+                        <img src="{{ item.image_path | static_or_external }}" class="card-img-top" alt="خبر" />
                         {% endif %}
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">{{ item.title }}</h5>

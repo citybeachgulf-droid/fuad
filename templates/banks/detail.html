@@ -11,7 +11,7 @@
             <div class="col-lg-4">
                 <div class="card shadow-sm border-0 animate__animated animate__fadeInLeft">
                     {% if bank.logo_path %}
-                    <img src="{{ url_for('static', filename=bank.logo_path) }}" class="card-img-top p-3" alt="{{ bank.user.name }}">
+                    <img src="{{ bank.logo_path | static_or_external }}" class="card-img-top p-3" alt="{{ bank.user.name }}">
                     {% endif %}
                     <div class="card-body text-center">
                         <h1 class="h4">{{ bank.user.name }}</h1>

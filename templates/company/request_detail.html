@@ -31,7 +31,7 @@
   {% for d in request_obj.documents %}
   <li>
     <strong>{{ d.doc_type | doc_label_ar }}</strong> -
-    <a href="{{ url_for('static', filename=d.file_path) }}" target="_blank">عرض</a>
+    <a href="{{ d.file_path | static_or_external }}" target="_blank">عرض</a>
     {% if d.original_filename %}<small class="text-muted">({{ d.original_filename }})</small>{% endif %}
   </li>
   {% endfor %}

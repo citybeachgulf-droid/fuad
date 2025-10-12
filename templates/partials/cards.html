@@ -23,7 +23,7 @@
       <a href="{{ it.href }}" class="logo-tile text-decoration-none">
         <span class="logo-tile-inner">
           {% if it.logo_src %}
-            <img src="{{ it.logo_src }}" alt="{{ it.title }}" loading="lazy">
+            <img src="{{ it.logo_src | static_or_external }}" alt="{{ it.title }}" loading="lazy">
           {% else %}
             <span class="logo-fallback">{{ (it.title or '?')[:1] | upper }}</span>
           {% endif %}

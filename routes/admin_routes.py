@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 import os
 import time
 from werkzeug.utils import secure_filename
+from utils import store_file_and_get_url
 
 admin_bp = Blueprint('admin', __name__, template_folder='../templates/admin', static_folder='../static')
 # --- Logo upload helpers (admin) ---
@@ -428,18 +429,21 @@ def news_new():
         if file and file.filename:
             filename = secure_filename(file.filename)
             upload_dir = _ensure_news_upload_dir(current_app)
-            save_path = os.path.join(upload_dir, filename)
-            # تجنب التعارض: أعد التسمية إذا كان الملف موجوداً
+            # ensure unique name if exists (for local fallback)
             base, ext = os.path.splitext(filename)
             counter = 1
-            while os.path.exists(save_path):
-                filename = f"{base}_{counter}{ext}"
-                save_path = os.path.join(upload_dir, filename)
+            unique_filename = filename
+            while os.path.exists(os.path.join(upload_dir, unique_filename)):
+                unique_filename = f"{base}_{counter}{ext}"
                 counter += 1
-            file.save(save_path)
-            # المسار النسبي داخل static
-            # نفترض أن مجلد news داخل static/uploads/news
-            image_path_rel = f"uploads/news/{filename}"
+            object_key = f"uploads/news/{unique_filename}"
+            stored = store_file_and_get_url(
+                file,
+                key=object_key,
+                local_abs_dir=upload_dir,
+                filename=unique_filename,
+            )
+            image_path_rel = stored
 
         news = News(title=title, body=body, image_path=image_path_rel)
         db.session.add(news)
@@ -503,15 +507,20 @@ def ads_new():
         if file and file.filename:
             filename = secure_filename(file.filename)
             upload_dir = _ensure_ads_upload_dir(current_app)
-            save_path = os.path.join(upload_dir, filename)
             base, ext = os.path.splitext(filename)
             counter = 1
-            while os.path.exists(save_path):
-                filename = f"{base}_{counter}{ext}"
-                save_path = os.path.join(upload_dir, filename)
+            unique_filename = filename
+            while os.path.exists(os.path.join(upload_dir, unique_filename)):
+                unique_filename = f"{base}_{counter}{ext}"
                 counter += 1
-            file.save(save_path)
-            image_path_rel = f"uploads/ads/{filename}"
+            object_key = f"uploads/ads/{unique_filename}"
+            stored = store_file_and_get_url(
+                file,
+                key=object_key,
+                local_abs_dir=upload_dir,
+                filename=unique_filename,
+            )
+            image_path_rel = stored
 
         try:
             sort_order = int(sort_order_raw)

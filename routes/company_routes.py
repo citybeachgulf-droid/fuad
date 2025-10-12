@@ -4,6 +4,7 @@ from sqlalchemy import or_
 from flask_login import login_required, current_user
 from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog, CompanyLandPrice
 from werkzeug.utils import secure_filename
+from utils import store_file_and_get_url
 import os
 import time
 
@@ -514,11 +515,15 @@ def edit_profile():
             upload_folder = current_app.config.get('UPLOAD_FOLDER')
             os.makedirs(upload_folder, exist_ok=True)
             filename = f"company_{current_user.id}_{int(time.time())}_" + secure_filename(file.filename)
-            file_path = os.path.join(upload_folder, filename)
-            file.save(file_path)
-            # حفظ المسار النسبي ضمن مجلد static لعرضه
-            rel_path = os.path.relpath(file_path, os.path.join(current_app.root_path, 'static'))
-            profile.logo_path = rel_path.replace('\\', '/')
+            # B2 object key under uploads/logos
+            object_key = f"uploads/logos/{filename}"
+            stored = store_file_and_get_url(
+                file,
+                key=object_key,
+                local_abs_dir=upload_folder,
+                filename=filename,
+            )
+            profile.logo_path = stored.replace('\\', '/') if stored else None
 
         profile.services = services
         profile.about = about
