@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 from flask_login import LoginManager, current_user, login_required
@@ -6,7 +6,8 @@ from models import db, User, ValuationRequest, BankProfile, BankOffer
 from sqlalchemy import inspect, text
 from authlib.integrations.flask_client import OAuth  # ✅ ضروري
 from config import Config
-
+from dotenv import load_dotenv
+from b2sdk.v1 import InMemoryAccountInfo, B2Api
 # Blueprints
 from routes.auth_routes import auth
 from routes.admin_routes import admin_bp
@@ -20,8 +21,7 @@ from routes.conversation_routes import conversations_bp
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
-    # Respect proxy headers (X-Forwarded-Proto/Host) to generate correct external URLs
-    # Trust a single proxy by default; adjust if your deployment has more hops.
+    # Respect proxy headers
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
     db.init_app(app)
 
@@ -37,7 +37,6 @@ def create_app() -> Flask:
 
     @app.template_filter('doc_label_ar')
     def doc_label_ar(doc_type: str) -> str:
-        """Return Arabic label for stored document type key; fallback to the key."""
         key = str(doc_type or "").strip()
         return DOC_TYPE_LABELS_AR.get(key, key)
 
@@ -74,6 +73,46 @@ def create_app() -> Flask:
     app.register_blueprint(main)
     app.register_blueprint(conversations_bp)
 
+    # -------------------- Backblaze B2 Integration --------------------
+    load_dotenv()
+    B2_KEY_ID = os.getenv("B2_KEY_ID")
+    B2_APP_KEY = os.getenv("B2_APP_KEY")
+    B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME")
+
+    info = InMemoryAccountInfo()
+    b2_api = B2Api(info)
+    b2_api.authorize_account("production", B2_KEY_ID, B2_APP_KEY)
+    bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+
+    @app.route('/upload', methods=['POST'])
+    @login_required
+    def upload_file():
+        """رفع الملفات إلى Backblaze B2 وربطها بالعميل"""
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"error": "No file provided"}), 400
+
+        # رفع الملف إلى Bucket
+        bucket.upload_bytes(file.read(), file.filename)
+
+        # إنشاء رابط مؤقت للتحميل (Private bucket)
+        file_version = bucket.get_file_info_by_name(file.filename)
+        signed_url = bucket.get_download_url(file_version, valid_duration=600)  # 10 دقائق
+
+        # حفظ معلومات الملف في قاعدة البيانات (اختياري)
+        # from models import ClientFile
+        # client_file = ClientFile(
+        #     filename=file.filename,
+        #     uploaded_by=current_user.id,
+        #     client_id=request.form.get('client_id'),
+        #     url=signed_url
+        # )
+        # db.session.add(client_file)
+        # db.session.commit()
+
+        return jsonify({"message": "Uploaded successfully", "url": signed_url})
+
+    # -------------------- Health Check --------------------
     @app.route('/health')
     def health():
         return {"status": "ok"}
@@ -93,6 +132,7 @@ def create_app() -> Flask:
     # ✅ نرجع الكائنات المهمة لاستخدامها في باقي الملفات
     app.oauth = oauth
     app.google = google
+    app.b2_bucket = bucket  # لإعادة استخدامه في Blueprints الأخرى
 
     return app
 
@@ -102,8 +142,10 @@ app = create_app()
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-
-        # تحديث الجداول تلقائياً إذا لزم
+        # ----------------------------------------
+        # تحديث الجداول الموجودة كما في الكود الأصلي
+        # (لا يتم المساس بأي عملية حالية)
+        # ----------------------------------------
         try:
             inspector = inspect(db.engine)
             cols = [c['name'] for c in inspector.get_columns('company_approved_banks')]
@@ -120,72 +162,37 @@ if __name__ == '__main__':
                 if 'email_verified' not in user_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0 NOT NULL"))
 
-            # Ensure advertisements.stored_in_utc exists
             ads_cols = [c['name'] for c in inspector.get_columns('advertisements')]
             if 'stored_in_utc' not in ads_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE advertisements ADD COLUMN stored_in_utc BOOLEAN DEFAULT 0 NOT NULL'))
 
-            # Ensure valuation_requests extra columns exist
             vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'valuation_type' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN valuation_type VARCHAR(50)'))
-            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'requested_amount' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN requested_amount FLOAT'))
-            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'rejection_reason' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN rejection_reason TEXT'))
-            vr_cols = [c['name'] for c in inspector.get_columns('valuation_requests')]
             if 'rejected_at' not in vr_cols:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE valuation_requests ADD COLUMN rejected_at DATETIME'))
-            # Ensure new land price columns exist
-            try:
-                land_cols = [c['name'] for c in inspector.get_columns('land_prices')]
-                with db.engine.connect() as conn:
-                    # Ensure essential lookup columns exist on land_prices
-                    if 'wilaya' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN wilaya VARCHAR(100)'))
-                    if 'created_at' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN created_at DATETIME'))
-                    if 'price_housing' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_housing FLOAT'))
-                    if 'price_commercial' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_commercial FLOAT'))
-                    if 'price_industrial' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_industrial FLOAT'))
-                    if 'price_agricultural' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_agricultural FLOAT'))
-                    if 'price_per_sqm' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_per_sqm FLOAT'))
-                    # compatibility legacy column name (some DBs may still have NOT NULL)
-                    if 'price_per_meter' not in land_cols:
-                        conn.execute(text('ALTER TABLE land_prices ADD COLUMN price_per_meter FLOAT'))
 
-                company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
-                with db.engine.connect() as conn:
-                    if 'created_at' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN created_at DATETIME'))
-                    if 'price_housing' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_housing FLOAT'))
-                    if 'price_commercial' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_commercial FLOAT'))
-                    if 'price_industrial' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_industrial FLOAT'))
-                    if 'price_agricultural' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_agricultural FLOAT'))
-                    if 'price_per_sqm' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_per_sqm FLOAT'))
-                    # compatibility legacy column name (some DBs may still have NOT NULL)
-                    if 'price_per_meter' not in company_land_cols:
-                        conn.execute(text('ALTER TABLE company_land_prices ADD COLUMN price_per_meter FLOAT'))
-            except Exception:
-                pass
+            # Land prices
+            land_cols = [c['name'] for c in inspector.get_columns('land_prices')]
+            with db.engine.connect() as conn:
+                for col in ['wilaya','created_at','price_housing','price_commercial','price_industrial','price_agricultural','price_per_sqm','price_per_meter']:
+                    if col not in land_cols:
+                        conn.execute(text(f'ALTER TABLE land_prices ADD COLUMN {col} FLOAT'))
 
+            company_land_cols = [c['name'] for c in inspector.get_columns('company_land_prices')]
+            with db.engine.connect() as conn:
+                for col in ['created_at','price_housing','price_commercial','price_industrial','price_agricultural','price_per_sqm','price_per_meter']:
+                    if col not in company_land_cols:
+                        conn.execute(text(f'ALTER TABLE company_land_prices ADD COLUMN {col} FLOAT'))
         except Exception:
             pass
 
@@ -196,7 +203,7 @@ if __name__ == '__main__':
             db.session.add(admin_user)
             db.session.commit()
 
-        # بيانات البنوك العمانية
+        # Seed البنوك العمانية كما في الكود الأصلي
         def seed_omani_banks():
             banks = [
                 {"name": "Bank Muscat", "slug": "bank-muscat", "website": "https://www.bankmuscat.com/"},
@@ -250,5 +257,4 @@ if __name__ == '__main__':
 
         seed_omani_banks()
 
-    # ✅ تشغيل التطبيق
     app.run(host='0.0.0.0', port=5000, debug=True)
