@@ -172,7 +172,8 @@ def certified_step_bank():
         options.append({
             "title": (b.user.name if b.user else b.slug),
             "href": url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=b.slug),
-            "logo_src": (url_for('static', filename=b.logo_path) if b.logo_path else None),
+            # return b.logo_path directly; template will pass through static_or_external
+            "logo_src": (b.logo_path if b.logo_path else None),
         })
     return render_template('certified_steps/step_bank.html', options=options, entity=entity, purpose=purpose)
 
@@ -257,7 +258,7 @@ def certified_companies():
                 companies.append({
                     'id': user.id,
                     'name': user.name,
-                    'logo_path': f"/static/{profile.logo_path}" if profile.logo_path else None,
+                    'logo_path': profile.logo_path if profile.logo_path else None,
                     'limit_value': limit_val,
                 })
 
@@ -331,7 +332,7 @@ def api_list_banks():
         {
             'slug': b.slug,
             'name': b.user.name if b.user else b.slug,
-            'logo_path': (f"/static/{b.logo_path}" if b.logo_path else None)
+            'logo_path': (b.logo_path if b.logo_path else None)
         } for b in banks
     ])
 
@@ -375,7 +376,7 @@ def api_certified_companies():
             results.append({
                 'id': user.id,
                 'name': user.name,
-                'logo_path': f"/static/{profile.logo_path}" if profile.logo_path else None,
+                'logo_path': profile.logo_path if profile.logo_path else None,
                 'limit_value': float(limit_value),
             })
 
@@ -460,7 +461,7 @@ def api_companies():
         {
             'id': c.id,
             'name': c.name,
-            'logo_path': (f"/static/{c.company_profile.logo_path}" if getattr(c, 'company_profile', None) and c.company_profile.logo_path else None),
+            'logo_path': (c.company_profile.logo_path if getattr(c, 'company_profile', None) and c.company_profile.logo_path else None),
         } for c in companies
     ])
 

@@ -6,7 +6,7 @@
   <a class="btn btn-outline-primary" href="{{ url_for('company.transactions_status', tab='rejected') }}">معاملات حسب الحالة</a>
   <a class="btn btn-outline-success" href="{{ url_for('company.land_prices') }}">أسعار الأراضي</a>
   {% if profile and profile.logo_path %}
-    <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" style="height:40px;" class="ms-2">
+    <img src="{{ profile.logo_path | static_or_external }}" alt="Logo" style="height:40px;" class="ms-2">
   {% endif %}
 </div>
 

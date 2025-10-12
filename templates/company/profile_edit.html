@@ -19,7 +19,7 @@
           <div class="card-body text-center">
             <h5 class="card-title mb-3">الشعار</h5>
             {% if profile and profile.logo_path %}
-              <img src="{{ url_for('static', filename=profile.logo_path) }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white" style="max-height:120px;">
+              <img src="{{ profile.logo_path | static_or_external }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white" style="max-height:120px;">
             {% endif %}
             <input type="file" class="form-control mb-3" name="logo" accept="image/*">
 

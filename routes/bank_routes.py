@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import db, User, ValuationRequest, BankProfile, BankOffer, BankLoanPolicy, CompanyApprovedBank, CompanyProfile
 from utils import calculate_max_loan
 from werkzeug.utils import secure_filename
+from utils import store_file_and_get_url
 import os
 import time
 
@@ -191,11 +192,14 @@ def update_logo():
     upload_folder = current_app.config.get('UPLOAD_FOLDER')
     os.makedirs(upload_folder, exist_ok=True)
     filename = f"bank_{current_user.id}_{int(time.time())}_" + secure_filename(file.filename)
-    file_path = os.path.join(upload_folder, filename)
-    file.save(file_path)
-
-    rel_path = os.path.relpath(file_path, os.path.join(current_app.root_path, 'static'))
-    bank_profile.logo_path = rel_path.replace('\\', '/')
+    object_key = f"uploads/logos/{filename}"
+    stored = store_file_and_get_url(
+        file,
+        key=object_key,
+        local_abs_dir=upload_folder,
+        filename=filename,
+    )
+    bank_profile.logo_path = stored.replace('\\', '/') if stored else None
     db.session.commit()
 
     flash('تم تحديث شعار البنك', 'success')

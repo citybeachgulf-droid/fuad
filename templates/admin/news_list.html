@@ -12,7 +12,7 @@
     <div class="col-md-4 mb-3">
       <div class="card h-100">
         {% if item.image_path %}
-          <img src="{{ url_for('static', filename=item.image_path) }}" class="card-img-top" alt="خبر">
+          <img src="{{ item.image_path | static_or_external }}" class="card-img-top" alt="خبر">
         {% endif %}
         <div class="card-body">
           <h5 class="card-title">{{ item.title }}</h5>

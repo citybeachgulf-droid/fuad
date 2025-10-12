@@ -41,6 +41,21 @@ def create_app() -> Flask:
         key = str(doc_type or "").strip()
         return DOC_TYPE_LABELS_AR.get(key, key)
 
+    @app.template_filter('static_or_external')
+    def static_or_external(path: str) -> str:
+        """Return a fully-qualified URL for either an external URL or a static asset.
+
+        - If the provided path is an absolute URL (http/https), return as-is.
+        - Otherwise, treat it as a path relative to the Flask 'static' folder.
+        """
+        try:
+            p = (path or '').strip()
+            if p.lower().startswith('http://') or p.lower().startswith('https://'):
+                return p
+            return url_for('static', filename=p)
+        except Exception:
+            return '#'
+
     # إعداد OAuth
     oauth = OAuth(app)
     google = oauth.register(

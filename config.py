@@ -35,3 +35,12 @@ class Config:
     TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
     TWILIO_FROM_NUMBER = os.environ.get('TWILIO_FROM_NUMBER')
     OTP_TTL_SECONDS = int(os.environ.get('OTP_TTL_SECONDS', '300'))
+
+    # Backblaze B2 (S3-compatible) settings
+    # Provide these to enable uploading assets to Backblaze instead of local storage.
+    B2_S3_ENDPOINT = os.environ.get('B2_S3_ENDPOINT')  # e.g., https://s3.us-west-002.backblazeb2.com
+    B2_S3_ACCESS_KEY_ID = os.environ.get('B2_S3_ACCESS_KEY_ID')
+    B2_S3_SECRET_ACCESS_KEY = os.environ.get('B2_S3_SECRET_ACCESS_KEY')
+    B2_S3_BUCKET = os.environ.get('B2_S3_BUCKET')
+    # Public base for serving objects (recommended), e.g., https://f002.backblazeb2.com/file/<bucket> or a CDN/custom domain
+    B2_PUBLIC_URL_BASE = os.environ.get('B2_PUBLIC_URL_BASE')
