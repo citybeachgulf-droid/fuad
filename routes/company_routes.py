@@ -1,5 +1,5 @@
 """Blueprint for valuation company portal routes and templates."""
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from sqlalchemy import or_
 from flask_login import login_required, current_user
 from models import db, ValuationRequest, CompanyProfile, CompanyContact, VisitAppointment, Conversation, Message, ActivityLog, CompanyLandPrice
@@ -127,6 +127,81 @@ def request_detail(request_id: int):
     # احضار المواعيد المرتبطة بأحدث ترتيب
     appts = VisitAppointment.query.filter_by(valuation_request_id=req.id).order_by(VisitAppointment.created_at.desc()).all()
     return render_template('company/request_detail.html', request_obj=req, appointments=appts)
+
+
+@company_bp.route('/requests/<int:request_id>/upload_report', methods=['POST'])
+@login_required
+def upload_final_report(request_id: int):
+    """Upload final report (PDF/image) after client acceptance and send to client via conversation."""
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    req = ValuationRequest.query.get_or_404(request_id)
+    if req.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Only allow after client has accepted the valuation
+    if (req.status or '').lower() not in { 'approved' }:
+        flash('يمكن رفع التقرير بعد موافقة العميل على التقييم.', 'warning')
+        return redirect(url_for('company.request_detail', request_id=req.id))
+
+    file = request.files.get('final_report')
+    if not file or not file.filename:
+        flash('يرجى اختيار ملف التقرير النهائي', 'danger')
+        return redirect(url_for('company.request_detail', request_id=req.id) + '#final-report')
+
+    # Accept only PDF/images similar to client docs
+    allowed_exts = { 'pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif' }
+    ext = (os.path.splitext(file.filename)[1].lower().lstrip('.') or '')
+    if ext not in allowed_exts:
+        flash('نوع الملف غير مدعوم. المسموح: PDF أو صور', 'danger')
+        return redirect(url_for('company.request_detail', request_id=req.id) + '#final-report')
+
+    # Store under static/uploads/reports/req_<id>/
+    static_root = os.path.join(current_app.root_path, 'static')
+    reports_root = os.path.join(static_root, 'uploads', 'reports', f'req_{req.id}')
+    os.makedirs(reports_root, exist_ok=True)
+
+    safe_name = secure_filename(file.filename)
+    ts = int(time.time())
+    filename = f"final_report_{ts}_{safe_name}"
+    object_key = f"uploads/reports/req_{req.id}/{filename}"
+    stored = store_file_and_get_url(
+        file,
+        key=object_key,
+        local_abs_dir=reports_root,
+        filename=filename,
+    )
+
+    if not stored:
+        flash('تعذّر حفظ التقرير. حاول مرة أخرى.', 'danger')
+        return redirect(url_for('company.request_detail', request_id=req.id) + '#final-report')
+
+    # Persist as RequestDocument of type 'final_report'
+    from models import RequestDocument
+    doc = RequestDocument(
+        valuation_request_id=req.id,
+        doc_type='final_report',
+        file_path=stored,
+        original_filename=safe_name,
+    )
+    db.session.add(doc)
+
+    # Notify client via conversation
+    conv = Conversation.query.filter_by(client_id=req.client_id, company_id=current_user.id).first()
+    if not conv:
+        conv = Conversation(client_id=req.client_id, company_id=current_user.id, status='open')
+        db.session.add(conv)
+        db.session.flush()
+        db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+
+    report_url = stored if (stored.lower().startswith('http://') or stored.lower().startswith('https://')) else url_for('static', filename=stored, _external=True)
+    msg_content = f"تم رفع التقرير النهائي لطلب التثمين #{req.id}.\nيمكنك الاطلاع على التقرير هنا: {report_url}"
+    db.session.add(Message(conversation_id=conv.id, sender_id=current_user.id, content=msg_content))
+    db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+    db.session.commit()
+    flash('تم رفع التقرير النهائي وإرساله للعميل', 'success')
+    return redirect(url_for('company.request_detail', request_id=req.id) + '#final-report')
 
 
 @company_bp.route('/requests/<int:request_id>/reject', methods=['POST'])

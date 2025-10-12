@@ -41,6 +41,7 @@ def create_app() -> Flask:
         "completion_certificate": "شهادة إتمام البناء",
         "maps": "خرائط",
         "contractor_agreement": "اتفاقية المقاول",
+        "final_report": "التقرير النهائي",
     }
 
     @app.template_filter('doc_label_ar')

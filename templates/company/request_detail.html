@@ -44,12 +44,16 @@
   {% if request_obj.status != 'rejected' %}
   <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">رفض المعاملة</button>
   {% endif %}
+  {% if (request_obj.status or '').lower() == 'approved' %}
+  <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#finalReportModal">رفع التقرير النهائي وإرساله</button>
+  {% endif %}
   {% if request_obj.status == 'rejected' and request_obj.company_id == current_user.id %}
   <form method="post" action="{{ url_for('company.remove_request', request_id=request_obj.id) }}" class="d-inline" onsubmit="return confirm('حذف هذه المعاملة من حساب الشركة؟');">
     <button type="submit" class="btn btn-outline-danger">حذف من حساب الشركة</button>
   </form>
   {% endif %}
 </div>
+{# documents list already shown above; avoid duplication #}
 <hr>
 <div id="missing-docs" class="mt-3">
   <h5>طلب مستندات ناقصة</h5>
@@ -89,6 +93,31 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
           <button type="submit" class="btn btn-danger">تأكيد الرفض</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Final Report Modal -->
+<div class="modal fade" id="finalReportModal" tabindex="-1" aria-labelledby="finalReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('company.upload_final_report', request_id=request_obj.id) }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="finalReportModalLabel">رفع التقرير النهائي #{{ request_obj.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">اختر ملف التقرير (PDF أو صورة)</label>
+            <input type="file" name="final_report" class="form-control" accept=".pdf,image/*" required>
+            <div class="form-text">سيتم إرسال رابط التقرير للعميل ضمن المحادثة.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-success">رفع وإرسال</button>
         </div>
       </form>
     </div>

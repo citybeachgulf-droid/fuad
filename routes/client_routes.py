@@ -1,7 +1,7 @@
 """Blueprint for client portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment, Conversation, Message
+from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment, Conversation, Message, ActivityLog
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -380,6 +380,43 @@ def propose_appointment(request_id: int):
         return redirect(url_for('client.dashboard'))
 
     return render_template('client/appointment_propose.html', request_obj=vr)
+
+
+# -------------------------------
+# Client accepts the company's valuation
+# -------------------------------
+@client_bp.route('/requests/<int:request_id>/accept', methods=['POST'])
+@login_required
+def accept_valuation(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Only allow acceptance after company submitted valuation
+    if (vr.status or '').lower() != 'completed':
+        flash('لا يمكن قبول التقييم قبل اكتماله من الشركة', 'warning')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    vr.status = 'approved'
+
+    # Notify company via conversation
+    if vr.company_id:
+        conv = Conversation.query.filter_by(client_id=current_user.id, company_id=vr.company_id).first()
+        if not conv:
+            conv = Conversation(client_id=current_user.id, company_id=vr.company_id, status='open')
+            db.session.add(conv)
+            db.session.flush()
+            db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+        msg = Message(conversation_id=conv.id, sender_id=current_user.id, content=f"قام العميل بقبول التقييم لطلب التثمين #{vr.id}.")
+        db.session.add(msg)
+        db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+    db.session.commit()
+    flash('تم قبول التقييم وسيتم إشعار الشركة.', 'success')
+    return redirect(url_for('client.request_detail', request_id=vr.id))
 
 
 # -------------------------------

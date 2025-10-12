@@ -87,6 +87,19 @@
     </div>
   </div>
 
+  <!-- Acceptance CTA: shown if company completed valuation but client not yet accepted -->
+  {% if (request_obj.status or '').lower() == 'completed' %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold mb-3"><i class="bi bi-check2-circle me-2 text-success"></i> قبول التقييم</h5>
+      <form method="POST" action="{{ url_for('client.accept_valuation', request_id=request_obj.id) }}">
+        <button type="submit" class="btn btn-success">أوافق على نتيجة التقييم</button>
+      </form>
+      <p class="text-muted small mt-2">بعد القبول سيتم إخطار الشركة لرفع التقرير النهائي وإرساله لك.</p>
+    </div>
+  </div>
+  {% endif %}
+
   {% if request_obj.documents %}
   <!-- Documents Section -->
   <div class="card border-0 shadow-sm rounded-4 mb-4">

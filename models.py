@@ -256,7 +256,7 @@ class RequestDocument(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     valuation_request_id = db.Column(db.Integer, db.ForeignKey('valuation_requests.id'), nullable=False, index=True)
-    doc_type = db.Column(db.String(100), nullable=False)  # مثل: kroki, deed, completion_certificate, maps, ids, contractor_agreement
+    doc_type = db.Column(db.String(100), nullable=False)  # مثل: kroki, deed, completion_certificate, maps, ids, contractor_agreement, final_report
     file_path = db.Column(db.String(255), nullable=False)  # مسار داخل static/uploads
     original_filename = db.Column(db.String(255), nullable=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
