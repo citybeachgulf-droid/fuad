@@ -1,53 +1,69 @@
 {% extends 'layout.html' %}
 {% block content %}
-<h2 class="mb-3">طلب تثمين جديد</h2>
 
-<div class="mb-4">
-  <div class="progress" style="height: 8px;">
-    <div class="progress-bar" role="progressbar" style="width: 50%"></div>
+<div class="container py-5" dir="rtl">
+  <h3 class="mb-4 fw-bold text-center">طلب تثمين جديد</h3>
+
+  <!-- Progress -->
+  <div class="mb-4">
+    <div class="progress rounded-pill" style="height: 10px;">
+      <div class="progress-bar bg-primary" role="progressbar" style="width: 50%"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-1">
+      <small class="text-muted">الخطوة 1/2: نوع التثمين</small>
+      <small class="text-muted">اختر النوع للمتابعة تلقائيًا</small>
+    </div>
+    <hr>
   </div>
-  <small class="text-muted">الخطوة 1/2: نوع التثمين</small>
-  <div class="text-muted">اختر النوع للمتابعة تلقائيًا</div>
-  <hr>
+
+  <!-- Valuation Type Tiles -->
+  <form method="POST" id="typeForm">
+    <div class="row g-3 mb-4">
+
+      <div class="col-12 col-md-4">
+        <label class="card tile-select border rounded-4 p-3 d-flex flex-column align-items-center text-center cursor-pointer shadow-sm">
+          <input type="radio" name="valuation_type" value="property" class="d-none" required>
+          <div class="tile-icon bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:60px; height:60px;">
+            <i class="bi bi-house fs-3"></i>
+          </div>
+          <h6 class="fw-bold mb-1">شراء منزل</h6>
+          <small class="text-muted">تقييم لغرض الشراء</small>
+        </label>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="card tile-select border rounded-4 p-3 d-flex flex-column align-items-center text-center cursor-pointer shadow-sm">
+          <input type="radio" name="valuation_type" value="land" class="d-none" required>
+          <div class="tile-icon bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:60px; height:60px;">
+            <i class="bi bi-geo fs-3"></i>
+          </div>
+          <h6 class="fw-bold mb-1">شراء أرض</h6>
+          <small class="text-muted">قطعة أرض بدون بناء</small>
+        </label>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="card tile-select border rounded-4 p-3 d-flex flex-column align-items-center text-center cursor-pointer shadow-sm">
+          <input type="radio" name="valuation_type" value="house" class="d-none" required>
+          <div class="tile-icon bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:60px; height:60px;">
+            <i class="bi bi-tools fs-3"></i>
+          </div>
+          <h6 class="fw-bold mb-1">بناء منزل</h6>
+          <small class="text-muted">تقييم لغرض البناء</small>
+        </label>
+      </div>
+
+    </div>
+
+    <input type="hidden" name="company_id" value="{{ preselected_company_id or '' }}">
+
+    <div class="d-flex justify-content-end gap-2">
+      <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary rounded-3 px-4">إلغاء</a>
+      <button class="btn btn-primary rounded-3 px-4" type="submit">متابعة</button>
+    </div>
+  </form>
 </div>
 
-<form method="POST" id="typeForm">
-  <div class="mb-3">
-    <label class="form-label d-block">نوع التثمين</label>
-    <div class="tile-grid">
-      <label class="tile-select tile-success">
-        <input type="radio" name="valuation_type" value="property" required>
-        <span class="tile-icon bg-white text-success"><i class="bi bi-house"></i></span>
-        <div>
-          <p class="tile-label m-0">شراء منزل</p>
-          <p class="tile-desc m-0">تقييم لغرض الشراء</p>
-        </div>
-      </label>
-      <label class="tile-select tile-primary">
-        <input type="radio" name="valuation_type" value="land" required>
-        <span class="tile-icon bg-white text-primary"><i class="bi bi-geo"></i></span>
-        <div>
-          <p class="tile-label m-0">شراء أرض</p>
-          <p class="tile-desc m-0">قطعة أرض بدون بناء</p>
-        </div>
-      </label>
-      <label class="tile-select tile-warning">
-        <input type="radio" name="valuation_type" value="house" required>
-        <span class="tile-icon bg-white text-warning"><i class="bi bi-tools"></i></span>
-        <div>
-          <p class="tile-label m-0">بناء منزل</p>
-          <p class="tile-desc m-0">تقييم لغرض البناء</p>
-        </div>
-      </label>
-    </div>
-  </div>
-  <input type="hidden" name="company_id" value="{{ preselected_company_id or '' }}">
-  <div class="d-flex gap-2">
-    <button class="btn btn-primary" type="submit">متابعة</button>
-    <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">إلغاء</a>
-  </div>
-  
-</form>
 {% endblock %}
 
 {% block scripts %}
@@ -55,12 +71,20 @@
 <script>
 (function(){
   const form = document.getElementById('typeForm');
-  document.querySelectorAll('input[name="valuation_type"]').forEach(function(r){
-    r.addEventListener('change', function(){
+  document.querySelectorAll('input[name="valuation_type"]').forEach(function(radio){
+    radio.addEventListener('change', function(){
       form.requestSubmit();
+    });
+  });
+
+  // إضافة تأثير اختيار البطاقات
+  const tiles = document.querySelectorAll('.tile-select');
+  tiles.forEach(tile => {
+    tile.addEventListener('click', () => {
+      tiles.forEach(t => t.classList.remove('border-primary', 'shadow-lg'));
+      tile.classList.add('border-primary', 'shadow-lg');
     });
   });
 })();
 </script>
 {% endblock %}
-
