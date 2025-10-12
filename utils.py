@@ -153,10 +153,12 @@ def _build_b2_public_url(app, key: str) -> Optional[str]:
 
 
 def store_file_and_get_url(file_storage, *, key: str, local_abs_dir: str, filename: str) -> str:
-    """Try uploading the given FileStorage to Backblaze B2 (S3 API). On success,
-    returns a public URL. If B2 is not configured or upload fails, saves locally
-    under the provided absolute directory and returns the relative path within
-    the Flask static directory (e.g., 'uploads/...').
+    """Try uploading the given FileStorage to Backblaze B2.
+
+    Preferred order:
+    1) Backblaze B2 via S3-compatible API (boto3) if configured in app.config
+    2) Backblaze B2 via native SDK (if `app.b2_bucket` is available)
+    3) Local filesystem fallback under the Flask static directory
 
     Args:
         file_storage: Werkzeug FileStorage
@@ -188,6 +190,46 @@ def store_file_and_get_url(file_storage, *, key: str, local_abs_dir: str, filena
         except Exception:
             # Fallback to local save on any error
             pass
+
+    # Attempt Backblaze native SDK using bucket attached to the Flask app
+    b2_bucket = getattr(app, 'b2_bucket', None)
+    if b2_bucket is not None:
+        try:
+            # Read bytes for upload; reset stream after to allow fallback if needed
+            content_type = getattr(file_storage, 'mimetype', None) or 'application/octet-stream'
+            try:
+                pos_before = file_storage.stream.tell()
+            except Exception:
+                pos_before = None
+
+            data_bytes = file_storage.read()
+            # upload_bytes(data, file_name, content_type=...)
+            # b2sdk is optional; we only call if bucket exists
+            b2_bucket.upload_bytes(data_bytes, key, content_type=content_type)
+
+            # Reset stream pointer for any later usage
+            try:
+                if pos_before is not None:
+                    file_storage.stream.seek(pos_before)
+            except Exception:
+                pass
+
+            # Build public URL from configured base or account download URL
+            public_base = app.config.get('B2_PUBLIC_URL_BASE')
+            if not public_base:
+                download_base = getattr(app, 'b2_download_url_base', None)
+                if download_base:
+                    public_base = f"{str(download_base).rstrip('/')}/file/{b2_bucket.name}"
+            if public_base:
+                return f"{public_base.rstrip('/')}/{key.lstrip('/')}"
+        except Exception:
+            # If any issue occurs, fall through to local save
+            try:
+                # Reset stream for local save path
+                if hasattr(file_storage, 'stream'):
+                    file_storage.stream.seek(0)
+            except Exception:
+                pass
 
     # Local fallback
     try:

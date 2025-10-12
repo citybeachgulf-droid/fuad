@@ -7,7 +7,15 @@ from sqlalchemy import inspect, text
 from authlib.integrations.flask_client import OAuth  # ✅ ضروري
 from config import Config
 from dotenv import load_dotenv
-from b2sdk.v1 import InMemoryAccountInfo, B2Api
+
+# Optional Backblaze B2 native SDK (we'll fallback gracefully if unavailable)
+try:  # pragma: no cover - optional dependency
+    from b2sdk.v1 import InMemoryAccountInfo, B2Api  # type: ignore
+    _HAS_B2SDK = True
+except Exception:  # pragma: no cover
+    InMemoryAccountInfo = None  # type: ignore
+    B2Api = None  # type: ignore
+    _HAS_B2SDK = False
 # Blueprints
 from routes.auth_routes import auth
 from routes.admin_routes import admin_bp
@@ -94,38 +102,62 @@ def create_app() -> Flask:
     B2_APP_KEY = os.getenv("B2_APP_KEY")
     B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME")
 
-    info = InMemoryAccountInfo()
-    b2_api = B2Api(info)
-    b2_api.authorize_account("production", B2_KEY_ID, B2_APP_KEY)
-    bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+    # Map classic env vars to S3-compatible settings if not set
+    if B2_KEY_ID and B2_APP_KEY and B2_BUCKET_NAME:
+        app.config.setdefault('B2_S3_ACCESS_KEY_ID', app.config.get('B2_S3_ACCESS_KEY_ID') or B2_KEY_ID)
+        app.config.setdefault('B2_S3_SECRET_ACCESS_KEY', app.config.get('B2_S3_SECRET_ACCESS_KEY') or B2_APP_KEY)
+        app.config.setdefault('B2_S3_BUCKET', app.config.get('B2_S3_BUCKET') or B2_BUCKET_NAME)
+        # Default to US-West endpoint if not provided; SDK path still works if wrong
+        app.config.setdefault('B2_S3_ENDPOINT', app.config.get('B2_S3_ENDPOINT') or 'https://s3.us-west-002.backblazeb2.com')
+
+    # Initialize native B2 SDK if available and credentials provided
+    bucket = None
+    if _HAS_B2SDK and B2_KEY_ID and B2_APP_KEY and B2_BUCKET_NAME:
+        try:
+            info = InMemoryAccountInfo()  # type: ignore
+            b2_api = B2Api(info)  # type: ignore
+            b2_api.authorize_account("production", B2_KEY_ID, B2_APP_KEY)
+            bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+            # Derive download base URL for building public links when needed
+            download_base = None
+            try:
+                # Try common attribute locations across b2sdk versions
+                download_base = getattr(getattr(b2_api, 'session', None), 'download_url', None)
+                if not download_base and hasattr(info, 'get_download_url'):
+                    download_base = info.get_download_url()  # type: ignore[attr-defined]
+            except Exception:
+                download_base = None
+            if download_base:
+                # e.g., https://f002.backblazeb2.com
+                app.b2_download_url_base = str(download_base)
+                # If a public base isn't configured, set a reasonable default including /file/<bucket>
+                app.config.setdefault('B2_PUBLIC_URL_BASE', f"{str(download_base).rstrip('/')}/file/{B2_BUCKET_NAME}")
+        except Exception:
+            bucket = None
+
+    # Expose bucket on app for utils fallback
+    app.b2_bucket = bucket  # may be None if not configured
 
     @app.route('/upload', methods=['POST'])
     @login_required
     def upload_file():
-        """رفع الملفات إلى Backblaze B2 وربطها بالعميل"""
+        """رفع الملفات إلى التخزين (Backblaze B2 إذا مُتاح)"""
         file = request.files.get("file")
-        if not file:
+        if not file or not file.filename:
             return jsonify({"error": "No file provided"}), 400
-
-        # رفع الملف إلى Bucket
-        bucket.upload_bytes(file.read(), file.filename)
-
-        # إنشاء رابط مؤقت للتحميل (Private bucket)
-        file_version = bucket.get_file_info_by_name(file.filename)
-        signed_url = bucket.get_download_url(file_version, valid_duration=600)  # 10 دقائق
-
-        # حفظ معلومات الملف في قاعدة البيانات (اختياري)
-        # from models import ClientFile
-        # client_file = ClientFile(
-        #     filename=file.filename,
-        #     uploaded_by=current_user.id,
-        #     client_id=request.form.get('client_id'),
-        #     url=signed_url
-        # )
-        # db.session.add(client_file)
-        # db.session.commit()
-
-        return jsonify({"message": "Uploaded successfully", "url": signed_url})
+        # Use the shared storage helper to unify logic
+        from utils import store_file_and_get_url
+        # Save under uploads/misc
+        safe_name = file.filename
+        uploads_root = os.path.join(app.root_path, 'static', 'uploads', 'misc')
+        object_key = f"uploads/misc/{safe_name}"
+        url_or_path = store_file_and_get_url(
+            file,
+            key=object_key,
+            local_abs_dir=uploads_root,
+            filename=safe_name,
+        )
+        return jsonify({"message": "Uploaded successfully", "path": url_or_path})
 
     # -------------------- Health Check --------------------
     @app.route('/health')
