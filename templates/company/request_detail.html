@@ -44,6 +44,11 @@
   {% if request_obj.status != 'rejected' %}
   <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">رفض المعاملة</button>
   {% endif %}
+  {% if request_obj.status == 'rejected' and request_obj.company_id == current_user.id %}
+  <form method="post" action="{{ url_for('company.remove_request', request_id=request_obj.id) }}" class="d-inline" onsubmit="return confirm('حذف هذه المعاملة من حساب الشركة؟');">
+    <button type="submit" class="btn btn-outline-danger">حذف من حساب الشركة</button>
+  </form>
+  {% endif %}
 </div>
 <hr>
 <div id="missing-docs" class="mt-3">

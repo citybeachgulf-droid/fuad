@@ -148,6 +148,9 @@ def reject_request(request_id: int):
     req.status = 'rejected'
     req.rejection_reason = reason
     req.rejected_at = datetime.utcnow()
+    # After rejection, remove appointments and unassign from this company
+    VisitAppointment.query.filter_by(valuation_request_id=req.id).delete()
+    req.company_id = None
 
     # إرسال رسالة إلى العميل عبر نظام المحادثة
     conv = Conversation.query.filter_by(client_id=req.client_id, company_id=current_user.id).first()
@@ -216,6 +219,27 @@ def accept_appointment(appointment_id: int):
     flash('تمت الموافقة على الموعد. يمكنك تأكيده كموعد نهائي لاحقاً.', 'success')
     return redirect(url_for('company.request_detail', request_id=vr.id))
 
+
+@company_bp.route('/requests/<int:request_id>/remove', methods=['POST'])
+@login_required
+def remove_request(request_id: int):
+    if current_user.role != 'company':
+        return "غير مصرح لك بالوصول", 403
+    req = ValuationRequest.query.get_or_404(request_id)
+    if req.company_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Unassign the request from this company and clear related appointments
+    VisitAppointment.query.filter_by(valuation_request_id=req.id).delete()
+    req.company_id = None
+    try:
+        db.session.commit()
+        flash('تم حذف المعاملة من حساب الشركة', 'info')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر حذف المعاملة من حساب الشركة', 'danger')
+
+    return redirect(url_for('company.transactions_status', tab='rejected'))
 
 @company_bp.route('/appointments/<int:appointment_id>/reject', methods=['POST'])
 @login_required

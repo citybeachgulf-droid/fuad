@@ -58,6 +58,11 @@
           </td>
           <td>
             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('company.request_detail', request_id=r.id) }}">تفاصيل</a>
+            {% if active_tab == 'rejected' %}
+            <form method="post" action="{{ url_for('company.remove_request', request_id=r.id) }}" class="d-inline" onsubmit="return confirm('حذف هذه المعاملة من حساب الشركة؟');">
+              <button type="submit" class="btn btn-sm btn-outline-danger ms-1">حذف</button>
+            </form>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
