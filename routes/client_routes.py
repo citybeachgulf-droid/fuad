@@ -1,7 +1,7 @@
 """Blueprint for client portal routes and templates."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment, Conversation, Message
+from models import db, User, ValuationRequest, BankProfile, BankLoanPolicy, RequestDocument, VisitAppointment, Conversation, Message, ActivityLog
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -202,6 +202,87 @@ def transfer_request(request_id: int):
     flash('تم تحويل المعاملة إلى الشركة الجديدة', 'success')
     return redirect(url_for('client.request_detail', request_id=vr.id))
 
+
+# -------------------------------
+# Client decision on submitted valuation (accept / decline)
+# -------------------------------
+@client_bp.route('/requests/<int:request_id>/accept_valuation', methods=['POST'])
+@login_required
+def accept_valuation(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Allow acceptance only if company has submitted a valuation
+    if (vr.status or '').lower() != 'completed':
+        flash('لا يمكن قبول التثمين قبل إكماله من الشركة', 'warning')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    vr.status = 'approved'
+    try:
+        # Notify company via conversation (optional but helpful)
+        if vr.company_id:
+            conv = Conversation.query.filter_by(client_id=vr.client_id, company_id=vr.company_id).first()
+            if not conv:
+                conv = Conversation(client_id=vr.client_id, company_id=vr.company_id, status='open')
+                db.session.add(conv)
+                db.session.flush()
+                db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+            value_text = (str(vr.value) if vr.value is not None else '-')
+            content = f"قبِل العميل التثمين الخاص بالطلب #{vr.id}. القيمة: {value_text}"
+            db.session.add(Message(conversation_id=conv.id, sender_id=current_user.id, content=content))
+            db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+        db.session.commit()
+        flash('تم قبول التثمين. يمكنك الآن تحديد موعد الزيارة.', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر تنفيذ العملية. حاول مرة أخرى.', 'danger')
+
+    return redirect(url_for('client.request_detail', request_id=vr.id))
+
+
+@client_bp.route('/requests/<int:request_id>/decline_valuation', methods=['POST'])
+@login_required
+def decline_valuation(request_id: int):
+    if current_user.role != 'client':
+        return "غير مصرح لك بالوصول", 403
+
+    vr = ValuationRequest.query.get_or_404(request_id)
+    if vr.client_id != current_user.id:
+        return "غير مصرح لك بالوصول", 403
+
+    # Allow decline only if company has submitted a valuation
+    if (vr.status or '').lower() != 'completed':
+        flash('لا يمكن رفض التثمين قبل إكماله من الشركة', 'warning')
+        return redirect(url_for('client.request_detail', request_id=vr.id))
+
+    # Reopen the request with the same company for potential revisions
+    vr.status = 'pending'
+    try:
+        if vr.company_id:
+            conv = Conversation.query.filter_by(client_id=vr.client_id, company_id=vr.company_id).first()
+            if not conv:
+                conv = Conversation(client_id=vr.client_id, company_id=vr.company_id, status='open')
+                db.session.add(conv)
+                db.session.flush()
+                db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='conversation_created'))
+            value_text = (str(vr.value) if vr.value is not None else '-')
+            content = f"رفض العميل التثمين الخاص بالطلب #{vr.id}. القيمة المقترحة: {value_text}"
+            db.session.add(Message(conversation_id=conv.id, sender_id=current_user.id, content=content))
+            db.session.add(ActivityLog(conversation_id=conv.id, actor_id=current_user.id, action='message_sent'))
+
+        db.session.commit()
+        flash('تم رفض التثمين وإعادة المعاملة للمراجعة.', 'info')
+    except Exception:
+        db.session.rollback()
+        flash('تعذّر تنفيذ العملية. حاول مرة أخرى.', 'danger')
+
+    return redirect(url_for('client.request_detail', request_id=vr.id))
+
 @client_bp.route('/submit', methods=['GET', 'POST'])
 @login_required
 def submit_request():
@@ -349,9 +430,9 @@ def propose_appointment(request_id: int):
     if vr.client_id != current_user.id:
         return "غير مصرح لك بالوصول", 403
 
-    # Allow proposing only if company has submitted valuation (completed)
-    if (vr.status or '').lower() != 'completed':
-        flash('يمكن تحديد موعد الزيارة بعد اكتمال التثمين من الشركة', 'warning')
+    # Allow proposing only after client accepts the submitted valuation
+    if (vr.status or '').lower() != 'approved':
+        flash('يمكن تحديد موعد الزيارة بعد قبول التثمين من الشركة', 'warning')
         return redirect(url_for('client.dashboard'))
 
     if request.method == 'POST':

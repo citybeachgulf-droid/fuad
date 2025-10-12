@@ -12,6 +12,25 @@
     <p class="text-muted mb-0">رقم المعاملة: <strong>#{{ request_obj.id }}</strong></p>
   </div>
 
+  {% if (request_obj.status or '').lower() == 'completed' %}
+  <!-- Top alert: company submitted valuation, ask client to accept/decline -->
+  <div class="alert alert-info d-flex justify-content-between align-items-center rounded-3">
+    <div>
+      <i class="bi bi-bell-fill me-2"></i>
+      <strong>تم إرسال التثمين من الشركة.</strong>
+      <span class="ms-2">القيمة المقدّرة: <strong>{{ request_obj.value if request_obj.value is not none else '-' }}</strong></span>
+    </div>
+    <div class="d-flex gap-2">
+      <form method="POST" action="{{ url_for('client.accept_valuation', request_id=request_obj.id) }}">
+        <button type="submit" class="btn btn-success"><i class="bi bi-check2"></i> قبول</button>
+      </form>
+      <form method="POST" action="{{ url_for('client.decline_valuation', request_id=request_obj.id) }}">
+        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x"></i> رفض</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Main Card -->
   <div class="card shadow-sm border-0 rounded-4 mb-4">
     <div class="card-body">

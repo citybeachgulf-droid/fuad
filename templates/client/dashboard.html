@@ -1,73 +1,53 @@
 {% extends 'layout.html' %}
 {% block content %}
-
-<div class="container py-5" dir="rtl">
-
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold">لوحة العميل</h3>
-    <a class="btn btn-success rounded-3 px-4" href="{{ url_for('client.submit_request') }}">
-      <i class="bi bi-plus-circle me-1"></i> طلب تثمين جديد
-    </a>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table align-middle table-hover" style="background-color: #f9f9f9;">
-      <thead style="background-color: #e9ecef;">
-        <tr>
-          <th>#</th>
-          <th>العنوان</th>
-          <th>نوع التثمين</th>
-          <th>الشركة</th>
-          <th>الحالة</th>
-          <th>إجراء</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in requests %}
-        <tr style="background-color: #ffffff;">
-          <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}" class="text-decoration-none text-dark">{{ r.id }}</a></td>
-          <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}" class="text-decoration-none text-dark">{{ r.title }}</a></td>
-          <td>
-            {% if r.valuation_type == 'land' %}أرض
-            {% elif r.valuation_type == 'property' %}عقار
-            {% elif r.valuation_type == 'house' %}بناء منزل
-            {% else %}-{% endif %}
-          </td>
-          <td>{{ r.company.name if r.company else '-' }}</td>
-          <td>
-            {% if r.status == 'approved' %}
-              <span class="badge bg-success text-light">مقبول</span>
-            {% elif r.status == 'pending' %}
-              <span class="badge bg-warning text-dark">قيد المراجعة</span>
-            {% elif r.status == 'rejected' %}
-              <span class="badge bg-danger text-light">مرفوض</span>
-            {% else %}
-              <span class="badge bg-secondary text-light">{{ r.status }}</span>
-            {% endif %}
-            {% if (r.status or '').lower() == 'revision_requested' %}
-              <div class="small text-warning mt-1">مستندات ناقصة مطلوبة</div>
-            {% endif %}
-            {% if r.status == 'rejected' and r.rejection_reason %}
-              <div class="small text-danger mt-1">سبب الرفض: {{ r.rejection_reason }}</div>
-            {% endif %}
-          </td>
-          <td class="d-flex flex-wrap gap-2">
-            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.request_detail', request_id=r.id) }}">
-              <i class="bi bi-eye me-1"></i> تفاصيل
-            </a>
-            {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}
-            {% if (r.status or '').lower() == 'completed' and not has_final %}
-              <a class="btn btn-sm btn-primary" href="{{ url_for('client.propose_appointment', request_id=r.id) }}">
-                <i class="bi bi-calendar-check me-1"></i> تحديد موعد زيارة
-              </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>لوحة العميل</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
   </div>
 
 </div>
 
+<table class="table mt-3">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>العنوان</th>
+      <th>نوع التثمين</th>
+      <th>الشركة</th>
+      <th>الحالة</th>
+      <th>إجراء</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in requests %}
+      <tr>
+        <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
+        <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
+        <td>
+          {% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
+        </td>
+        <td>{{ r.company.name if r.company else '-' }}</td>
+        <td>
+          {{ r.status }}
+          {% if (r.status or '').lower() == 'revision_requested' %}
+            <div class="small text-warning">مستندات ناقصة مطلوبة</div>
+          {% endif %}
+          {% if r.status == 'rejected' and r.rejection_reason %}
+            <div class="small text-danger">سبب الرفض: {{ r.rejection_reason }}</div>
+          {% endif %}
+        </td>
+        <td class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.request_detail', request_id=r.id) }}">تفاصيل</a>
+          {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}
+          {% if (r.status or '').lower() == 'completed' and not has_final %}
+            <a class="btn btn-sm btn-outline-info" href="{{ url_for('client.request_detail', request_id=r.id) }}">اعتماد التثمين</a>
+          {% elif (r.status or '').lower() == 'approved' and not has_final %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('client.propose_appointment', request_id=r.id) }}">تحديد موعد زيارة</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
