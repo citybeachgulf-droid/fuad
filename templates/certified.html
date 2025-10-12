@@ -1,170 +1,230 @@
 {% extends 'base.html' %}
 {% block title %}تقييم معتمد - ثمِّن{% endblock %}
-{% block head %}{% endblock %}
 {% block content %}
-<section class="py-4">
+<section class="py-5 bg-light">
   <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h3 m-0">تقييم معتمد</h1>
-      <a href="{{ url_for('main.landing') }}" class="btn btn-link">عودة للصفحة الرئيسية</a>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3">التقييم المعتمد</h1>
+      <a href="{{ url_for('main.landing') }}" class="btn btn-outline-secondary">العودة للصفحة الرئيسية</a>
     </div>
 
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <!-- Person vs Company tiles -->
-        <div class="tile-grid mb-3">
-          <label class="tile-select tile-primary" id="optPerson">
-            <input type="radio" name="entityType" value="person">
-            <span class="tile-icon bg-white text-primary"><i class="bi bi-person-fill"></i></span>
-            <div>
-              <p class="tile-label">فرد</p>
-              <p class="tile-desc">خيارات التمويل للأفراد</p>
-            </div>
-          </label>
-          <label class="tile-select tile-success" id="optCompany">
-            <input type="radio" name="entityType" value="company">
-            <span class="tile-icon bg-white text-success"><i class="bi bi-buildings"></i></span>
-            <div>
-              <p class="tile-label">شركة</p>
-              <p class="tile-desc">خدمات التمويل للشركات</p>
-            </div>
-          </label>
-        </div>
-
-        <!-- Person choices -->
-        <div id="personChoices" class="mb-3" hidden>
-          <div class="tile-grid">
-            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="buy"><span class="tile-icon bg-white text-warning"><i class="bi bi-bag-plus"></i></span><div><p class="tile-label">شراء جديد</p><p class="tile-desc">تمويل شراء عقار</p></div></label>
-            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="release"><span class="tile-icon bg-white text-warning"><i class="bi bi-unlock"></i></span><div><p class="tile-label">فك رهن</p><p class="tile-desc">سداد ورفع الرهن</p></div></label>
-            <label class="tile-select tile-warning"><input type="radio" name="personPurpose" value="transfer"><span class="tile-icon bg-white text-warning"><i class="bi bi-arrow-left-right"></i></span><div><p class="tile-label">نقل مديونية</p><p class="tile-desc">تحويل التمويل لبنك آخر</p></div></label>
+    <!-- اختيار نوع الكيان -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card tile-select text-center" id="optPerson">
+          <input type="radio" name="entityType" value="person" hidden>
+          <div class="card-body">
+            <i class="bi bi-person-fill fs-1 text-primary mb-2"></i>
+            <h5>فرد</h5>
+            <p class="text-muted">خيارات التمويل للأفراد</p>
           </div>
         </div>
-
-        <!-- Company choices -->
-        <div id="companyChoices" class="mb-3" hidden>
-          <div class="tile-grid">
-            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="sell"><span class="tile-icon bg-white text-warning"><i class="bi bi-cash-coin"></i></span><div><p class="tile-label">بيع</p><p class="tile-desc">تقييم لغرض البيع</p></div></label>
-            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="buy"><span class="tile-icon bg-white text-warning"><i class="bi bi-bag"></i></span><div><p class="tile-label">شراء</p><p class="tile-desc">تمويل شراء أصول</p></div></label>
-            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="reports"><span class="tile-icon bg-white text-warning"><i class="bi bi-clipboard-data"></i></span><div><p class="tile-label">تقارير مالية</p><p class="tile-desc">تقارير محاسبية معتمدة</p></div></label>
-            <label class="tile-select tile-warning"><input type="radio" name="companyPurpose" value="refinance"><span class="tile-icon bg-white text-warning"><i class="bi bi-arrow-repeat"></i></span><div><p class="tile-label">إعادة تمويل</p><p class="tile-desc">تحسين شروط التمويل</p></div></label>
+      </div>
+      <div class="col-md-6">
+        <div class="card tile-select text-center" id="optCompany">
+          <input type="radio" name="entityType" value="company" hidden>
+          <div class="card-body">
+            <i class="bi bi-buildings fs-1 text-success mb-2"></i>
+            <h5>شركة</h5>
+            <p class="text-muted">خدمات التمويل للشركات</p>
           </div>
         </div>
-
-        <!-- Common: amount + bank -->
-        <div id="certifiedInputs" class="row g-3 align-items-end" hidden>
-          <div class="col-md-4">
-            <label class="form-label">مبلغ التمويل (ريال)</label>
-            <input type="number" class="form-control" id="financeAmount" placeholder="مثال: 50000">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">البنك</label>
-            <select class="form-select" id="bankSelect">
-              <option value="" selected disabled>اختر البنك</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <button class="btn btn-primary w-100" id="filterBtn"><i class="bi bi-funnel me-1"></i>فلترة الشركات المعتمدة</button>
-          </div>
-        </div>
-
-        <div id="results" class="mt-3" hidden>
-          <div class="results-card p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="m-0">النتائج</h6>
-              <span class="badge text-bg-secondary" id="resultsCount">0</span>
-            </div>
-            <div id="resultsList" class="vstack gap-2"></div>
-          </div>
-        </div>
-
-        <div class="text-muted small mt-2">قد يلزم تسجيل الدخول لإتمام الطلب.</div>
       </div>
     </div>
+
+    <!-- خيارات الفرد -->
+    <div id="personChoices" class="row g-3 mb-4" hidden>
+      <div class="col-md-4">
+        <div class="card tile-select text-center">
+          <input type="radio" name="personPurpose" value="buy" hidden>
+          <div class="card-body">
+            <i class="bi bi-bag-plus fs-2 text-warning mb-2"></i>
+            <h6>شراء جديد</h6>
+            <p class="text-muted small">تمويل شراء عقار</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card tile-select text-center">
+          <input type="radio" name="personPurpose" value="release" hidden>
+          <div class="card-body">
+            <i class="bi bi-unlock fs-2 text-warning mb-2"></i>
+            <h6>فك رهن</h6>
+            <p class="text-muted small">سداد ورفع الرهن</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card tile-select text-center">
+          <input type="radio" name="personPurpose" value="transfer" hidden>
+          <div class="card-body">
+            <i class="bi bi-arrow-left-right fs-2 text-warning mb-2"></i>
+            <h6>نقل مديونية</h6>
+            <p class="text-muted small">تحويل التمويل لبنك آخر</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- خيارات الشركة -->
+    <div id="companyChoices" class="row g-3 mb-4" hidden>
+      <div class="col-md-3">
+        <div class="card tile-select text-center">
+          <input type="radio" name="companyPurpose" value="sell" hidden>
+          <div class="card-body">
+            <i class="bi bi-cash-coin fs-2 text-warning mb-2"></i>
+            <h6>بيع</h6>
+            <p class="text-muted small">تقييم لغرض البيع</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card tile-select text-center">
+          <input type="radio" name="companyPurpose" value="buy" hidden>
+          <div class="card-body">
+            <i class="bi bi-bag fs-2 text-warning mb-2"></i>
+            <h6>شراء</h6>
+            <p class="text-muted small">تمويل شراء أصول</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card tile-select text-center">
+          <input type="radio" name="companyPurpose" value="reports" hidden>
+          <div class="card-body">
+            <i class="bi bi-clipboard-data fs-2 text-warning mb-2"></i>
+            <h6>تقارير مالية</h6>
+            <p class="text-muted small">تقارير محاسبية معتمدة</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card tile-select text-center">
+          <input type="radio" name="companyPurpose" value="refinance" hidden>
+          <div class="card-body">
+            <i class="bi bi-arrow-repeat fs-2 text-warning mb-2"></i>
+            <h6>إعادة تمويل</h6>
+            <p class="text-muted small">تحسين شروط التمويل</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مدخلات التمويل -->
+    <div id="certifiedInputs" class="row g-3 mb-4 align-items-end" hidden>
+      <div class="col-md-4">
+        <label class="form-label">مبلغ التمويل (ريال)</label>
+        <input type="number" class="form-control" id="financeAmount" placeholder="مثال: 50000">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">البنك</label>
+        <select class="form-select" id="bankSelect">
+          <option value="" selected disabled>اختر البنك</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100" id="filterBtn"><i class="bi bi-funnel me-1"></i>فلترة الشركات المعتمدة</button>
+      </div>
+    </div>
+
+    <!-- عرض النتائج -->
+    <div id="results" hidden>
+      <div class="card shadow-sm p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6>النتائج</h6>
+          <span class="badge bg-secondary" id="resultsCount">0</span>
+        </div>
+        <div id="resultsList" class="vstack gap-2"></div>
+      </div>
+    </div>
+
+    <small class="text-muted mt-2 d-block">قد يلزم تسجيل الدخول لإتمام الطلب.</small>
   </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  (function(){
-    const optPerson = document.getElementById('optPerson');
-    const optCompany = document.getElementById('optCompany');
-    const personChoices = document.getElementById('personChoices');
-    const companyChoices = document.getElementById('companyChoices');
-    const inputsRow = document.getElementById('certifiedInputs');
-    const bankSelect = document.getElementById('bankSelect');
-    const amount = document.getElementById('financeAmount');
-    const filterBtn = document.getElementById('filterBtn');
-    const results = document.getElementById('results');
-    const resultsList = document.getElementById('resultsList');
-    const resultsCount = document.getElementById('resultsCount');
+(function(){
+  const optPerson = document.getElementById('optPerson');
+  const optCompany = document.getElementById('optCompany');
+  const personChoices = document.getElementById('personChoices');
+  const companyChoices = document.getElementById('companyChoices');
+  const inputsRow = document.getElementById('certifiedInputs');
+  const bankSelect = document.getElementById('bankSelect');
+  const amount = document.getElementById('financeAmount');
+  const filterBtn = document.getElementById('filterBtn');
+  const results = document.getElementById('results');
+  const resultsList = document.getElementById('resultsList');
+  const resultsCount = document.getElementById('resultsCount');
 
-    if (!optPerson || !optCompany) return;
+  function toggleActive(selected){
+    [optPerson,optCompany].forEach(el => el.classList.remove('active'));
+    selected.classList.add('active');
+  }
 
-    function toggleActive(labelEl) {
-      [optPerson, optCompany].forEach(el => el.classList.remove('active'));
-      labelEl.classList.add('active');
+  optPerson.addEventListener('click', ()=>{
+    toggleActive(optPerson);
+    personChoices.hidden=false;
+    companyChoices.hidden=true;
+    inputsRow.hidden=false;
+  });
+
+  optCompany.addEventListener('click', ()=>{
+    toggleActive(optCompany);
+    personChoices.hidden=true;
+    companyChoices.hidden=false;
+    inputsRow.hidden=false;
+  });
+
+  async function loadBanks(){
+    if(bankSelect.options.length>1) return;
+    try{
+      const res = await fetch('/api/banks');
+      const banks = await res.json();
+      banks.forEach(b=>{
+        const opt = document.createElement('option');
+        opt.value=b.slug;
+        opt.textContent=b.name;
+        bankSelect.appendChild(opt);
+      });
+    }catch{}
+  }
+  loadBanks();
+
+  function renderResults(items){
+    resultsList.innerHTML='';
+    resultsCount.textContent=items.length;
+    if(!items.length){
+      resultsList.innerHTML='<div class="text-muted">لا توجد شركات مطابقة.</div>';
+    }else{
+      items.forEach(it=>{
+        const row = document.createElement('div');
+        row.className='d-flex align-items-center justify-content-between p-2 border rounded';
+        row.innerHTML=`<div class="d-flex align-items-center gap-2"><img src="${it.logo_path||''}" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover"><strong>${it.name}</strong></div><span class="badge bg-success">حد: ${it.limit_value??'—'}</span>`;
+        resultsList.appendChild(row);
+      });
     }
+    results.hidden=false;
+  }
 
-    optPerson.addEventListener('click', () => {
-      toggleActive(optPerson);
-      personChoices.hidden = false;
-      companyChoices.hidden = true;
-      inputsRow.hidden = false;
-    });
-    optCompany.addEventListener('click', () => {
-      toggleActive(optCompany);
-      personChoices.hidden = true;
-      companyChoices.hidden = false;
-      inputsRow.hidden = false;
-    });
+  async function filterCompanies(){
+    const bankSlug = bankSelect.value;
+    const amt = parseFloat(amount.value||'0');
+    if(!bankSlug||!amt){results.hidden=true; return;}
+    try{
+      const url = new URL(window.location.origin+'/api/certified_companies');
+      url.searchParams.set('bank_slug',bankSlug);
+      url.searchParams.set('amount',String(amt));
+      const res = await fetch(url.toString());
+      const items = await res.json();
+      renderResults(Array.isArray(items)?items:[]);
+    }catch{renderResults([]);}
+  }
 
-    async function ensureBanksLoaded() {
-      if (bankSelect.options.length > 1) return;
-      try {
-        const res = await fetch('/api/banks');
-        const banks = await res.json();
-        banks.forEach((b) => {
-          const opt = document.createElement('option');
-          opt.value = b.slug;
-          opt.textContent = b.name;
-          bankSelect.appendChild(opt);
-        });
-      } catch (e) { /* ignore */ }
-    }
-    ensureBanksLoaded();
+  filterBtn.addEventListener('click',e=>{e.preventDefault();filterCompanies();});
 
-    function renderResults(items) {
-      resultsList.innerHTML = '';
-      resultsCount.textContent = items.length;
-      if (!items.length) {
-        resultsList.innerHTML = '<div class="text-muted">لا توجد شركات مطابقة للمعايير.</div>';
-      } else {
-        items.forEach((it) => {
-          const row = document.createElement('div');
-          row.className = 'd-flex align-items-center justify-content-between p-2 border rounded';
-          row.innerHTML = `<div class="d-flex align-items-center gap-2"><img src="${it.logo_path || ''}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px"> <strong>${it.name}</strong></div><span class="badge text-bg-success">حد: ${it.limit_value ?? '—'}</span>`;
-          resultsList.appendChild(row);
-        });
-      }
-      results.hidden = false;
-    }
-
-    async function filterCompanies() {
-      const bankSlug = bankSelect.value;
-      const amt = parseFloat(amount.value || '0');
-      if (!bankSlug || !amt) { results.hidden = true; return; }
-      try {
-        const url = new URL(window.location.origin + '/api/certified_companies');
-        url.searchParams.set('bank_slug', bankSlug);
-        url.searchParams.set('amount', String(amt));
-        const res = await fetch(url.toString());
-        const items = await res.json();
-        renderResults(Array.isArray(items) ? items : []);
-      } catch (e) { renderResults([]); }
-    }
-
-    filterBtn.addEventListener('click', (e) => { e.preventDefault(); filterCompanies(); });
-  })();
+})();
 </script>
 {% endblock %}

@@ -1,73 +1,100 @@
 {% extends 'layout.html' %}
+
 {% block content %}
-<h2>تفاصيل المعاملة #{{ request_obj.id }}</h2>
+<div class="container mt-4">
 
-<div class="card mb-3">
-  <div class="card-body">
-    <p><strong>العنوان:</strong> {{ request_obj.title or '-' }}</p>
-    <p><strong>الوصف:</strong> {{ request_obj.description or '-' }}</p>
-    <p><strong>النوع:</strong>
-      {% if request_obj.valuation_type == 'land' %}أرض{% elif request_obj.valuation_type == 'property' %}عقار{% elif request_obj.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
-    </p>
-    <p><strong>العميل:</strong> {{ request_obj.client.name if request_obj.client else '-' }}</p>
-    <p><strong>الحالة:</strong> {{ request_obj.status }}</p>
-    {% if request_obj.status == 'rejected' and request_obj.rejection_reason %}
-      <div class="alert alert-danger mt-2">
-        <div><strong>سبب الرفض:</strong></div>
-        <div>{{ request_obj.rejection_reason }}</div>
-        {% if request_obj.rejected_at %}
-          <div class="small text-muted mt-1">تاريخ الرفض: {{ request_obj.rejected_at }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-    <p><strong>القيمة المقدّرة:</strong> {{ request_obj.value if request_obj.value is not none else '-' }}</p>
-    <p><strong>قيمة التثمين المطلوبة (من البنك):</strong> {{ request_obj.requested_amount if request_obj.requested_amount is not none else '-' }}</p>
+  <!-- عنوان الصفحة -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">تفاصيل المعاملة #{{ request_obj.id }}</h2>
+    <a href="{{ url_for('company.dashboard') }}" class="btn btn-outline-secondary">عودة إلى لوحة التحكم</a>
   </div>
+
+  <!-- معلومات المعاملة -->
+  <div class="card mb-3 shadow-sm p-3">
+    <div class="row g-2">
+      <div class="col-md-6"><strong>العنوان:</strong> {{ request_obj.title or '-' }}</div>
+      <div class="col-md-6"><strong>النوع:</strong>
+        {% if request_obj.valuation_type == 'land' %}أرض{% elif request_obj.valuation_type == 'property' %}عقار{% elif request_obj.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
+      </div>
+      <div class="col-md-6"><strong>العميل:</strong> {{ request_obj.client.name if request_obj.client else '-' }}</div>
+      <div class="col-md-6"><strong>الحالة:</strong> {{ request_obj.status }}</div>
+      <div class="col-md-6"><strong>القيمة المقدّرة:</strong> {{ request_obj.value if request_obj.value is not none else '-' }}</div>
+      <div class="col-md-6"><strong>قيمة التثمين المطلوبة:</strong> {{ request_obj.requested_amount if request_obj.requested_amount is not none else '-' }}</div>
+    </div>
+
+    {% if request_obj.status == 'rejected' and request_obj.rejection_reason %}
+    <div class="alert alert-danger mt-3">
+      <div><strong>سبب الرفض:</strong></div>
+      <div>{{ request_obj.rejection_reason }}</div>
+      {% if request_obj.rejected_at %}
+        <div class="small text-muted mt-1">تاريخ الرفض: {{ request_obj.rejected_at }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- المستندات -->
+  {% if request_obj.documents %}
+  <h4 class="mb-2">المستندات</h4>
+  <ul class="list-group mb-3">
+    {% for d in request_obj.documents %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>
+        <span class="badge bg-secondary me-2">{{ d.doc_type | doc_label_ar }}</span>
+        {{ d.original_filename or 'ملف' }}
+      </span>
+      <a href="{{ d.file_path | static_or_external }}" target="_blank" class="btn btn-sm btn-outline-primary">عرض</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <!-- أزرار العمليات -->
+  <div class="mb-3 d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="{{ url_for('company.submit_valuation', request_id=request_obj.id) }}">
+      <i class="bi bi-currency-dollar me-1"></i> إرسال القيمة
+    </a>
+    {% if request_obj.status != 'rejected' %}
+    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+      <i class="bi bi-x-circle me-1"></i> رفض المعاملة
+    </button>
+    {% endif %}
+    <form method="post" action="{{ url_for('company.mark_missing_documents', request_id=request_obj.id) }}" class="d-inline">
+      <button type="submit" class="btn btn-outline-warning">
+        <i class="bi bi-file-earmark-text me-1"></i> طلب مستندات ناقصة
+      </button>
+    </form>
+    {% if request_obj.status == 'rejected' and request_obj.company_id == current_user.id %}
+    <form method="post" action="{{ url_for('company.remove_request', request_id=request_obj.id) }}" class="d-inline" onsubmit="return confirm('حذف هذه المعاملة من حساب الشركة؟');">
+      <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-trash me-1"></i> حذف من الحساب
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- طلب مستندات ناقصة -->
+  <div class="card border-warning mb-3">
+    <div class="card-body">
+      <h5 class="card-title text-warning"><i class="bi bi-exclamation-triangle me-1"></i> طلب مستندات ناقصة</h5>
+      <form method="post" class="row g-2" action="{{ url_for('company.mark_missing_documents', request_id=request_obj.id) }}">
+        <div class="col-md-8">
+          <input type="text" class="form-control" name="notes" placeholder="اكتب الملاحظات للعميل (المستندات المطلوبة)" required>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-warning w-100">إرسال ملاحظات</button>
+        </div>
+      </form>
+      {% if request_obj.status == 'revision_requested' %}
+      <small class="text-warning d-block mt-2">تم طلب مستندات إضافية لهذا الطلب.</small>
+      {% endif %}
+      <small class="text-muted d-block mt-1">سيتم إرسال الملاحظات للعميل عبر نظام المحادثات وتحديث حالة الطلب.</small>
+      <small class="text-muted d-block">رقم الطلب: #{{ request_obj.id }}</small>
+    </div>
+  </div>
+
 </div>
 
-{% if request_obj.documents %}
-<h4>المستندات</h4>
-<ul>
-  {% for d in request_obj.documents %}
-  <li>
-    <strong>{{ d.doc_type | doc_label_ar }}</strong> -
-    <a href="{{ d.file_path | static_or_external }}" target="_blank">عرض</a>
-    {% if d.original_filename %}<small class="text-muted">({{ d.original_filename }})</small>{% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-<div class="mt-3">
-  <a class="btn btn-secondary" href="{{ url_for('company.dashboard') }}">عودة إلى لوحة التحكم</a>
-  <a class="btn btn-primary" href="{{ url_for('company.submit_valuation', request_id=request_obj.id) }}">إرسال القيمة</a>
-  {% if request_obj.status != 'rejected' %}
-  <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">رفض المعاملة</button>
-  {% endif %}
-  {% if request_obj.status == 'rejected' and request_obj.company_id == current_user.id %}
-  <form method="post" action="{{ url_for('company.remove_request', request_id=request_obj.id) }}" class="d-inline" onsubmit="return confirm('حذف هذه المعاملة من حساب الشركة؟');">
-    <button type="submit" class="btn btn-outline-danger">حذف من حساب الشركة</button>
-  </form>
-  {% endif %}
-</div>
-<hr>
-<div id="missing-docs" class="mt-3">
-  <h5>طلب مستندات ناقصة</h5>
-  <form method="post" action="{{ url_for('company.mark_missing_documents', request_id=request_obj.id) }}" class="row g-2">
-    <div class="col-12 col-md-8">
-      <input type="text" name="notes" class="form-control" placeholder="اكتب الملاحظات للعميل (المستندات المطلوبة)" required>
-    </div>
-    <div class="col-12 col-md-4">
-      <button type="submit" class="btn btn-outline-warning w-100">مستندات ناقصة — إرسال ملاحظات</button>
-    </div>
-  </form>
-  {% if request_obj.status == 'revision_requested' %}
-    <div class="form-text mt-2 text-warning">تم طلب مستندات إضافية لهذا الطلب.</div>
-  {% endif %}
-  <small class="text-muted d-block">سيتم إرسال الملاحظات للعميل عبر نظام المحادثات وتحديث حالة الطلب.</small>
-  <small class="text-muted d-block">رقم الطلب: #{{ request_obj.id }}</small>
-  
-</div>
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -94,4 +121,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

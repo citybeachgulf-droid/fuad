@@ -1,382 +1,251 @@
 {% extends 'base.html' %}
 {% block title %}تقييم فوري - النتيجة{% endblock %}
 {% block content %}
-<section class="py-4">
+<section class="py-5 bg-light">
   <div class="container">
-    <div class="card shadow-sm">
+
+    <!-- بطاقة النتيجة السريعة -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body text-center">
+        <h4 class="fw-bold">القيمة التقديرية</h4>
+        <div class="display-5 text-primary my-3" id="quickEstimate">{{ "{:,}".format(estimate) }} ر.ع</div>
+        <small class="text-muted">هذه نتيجة تقديرية غير ملزمة</small>
+      </div>
+    </div>
+
+    <!-- حاسبة ديناميكية -->
+    <div class="card shadow-sm mb-4">
       <div class="card-body">
-        <h5 class="mb-3">تقدير القيمة</h5>
-        <p class="mb-2 text-muted">يمكنك تعديل المدخلات بالأسفل لرؤية الحسابات مباشرة</p>
-        <div class="quick-result mb-3">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div>
-              <div class="muted small">قيمة التثمين التقديرية</div>
-              <div class="value">{{ "{:,}".format(estimate) }} ر.ع</div>
-            </div>
-            <div class="text-muted small">هذه نتيجة تقديرية غير ملزمة</div>
-          </div>
-        </div>
-        <div id="dynamicCalc" data-prop-type="{{ prop_type or 'land' }}" class="mt-3">
-          <h6 class="mb-3">حاسبة تلقائية حسب الموقع والمساحات</h6>
+        <h5 class="mb-4">حاسبة التثمين التلقائية</h5>
 
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label">نوع العقار</label>
-              <select id="prop_type" class="form-select" aria-label="اختر نوع العقار">
-                <option value="land">أرض فقط</option>
-                <option value="house">منزل/فيلا</option>
-                <option value="apartment">شقة</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">الشركة المعتمدة</label>
-              <select id="company_id" class="form-select" aria-label="اختر الشركة">
-                <option value="">— بدون شركة —</option>
-                {% for c in (companies or []) %}
-                <option value="{{ c.id }}" {% if selected_company_id and selected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label">نوع العقار</label>
+            <select id="prop_type" class="form-select">
+              <option value="land">أرض</option>
+              <option value="house">منزل / فيلا</option>
+              <option value="apartment">شقة</option>
+            </select>
           </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label">الولاية</label>
-              <select id="wilaya" class="form-select" aria-label="اختر الولاية"></select>
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">المنطقة</label>
-              <select id="region" class="form-select" aria-label="اختر المنطقة"></select>
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">استعمال الأرض</label>
-              <select id="land_use" class="form-select" aria-label="اختر الاستعمال">
-                <option value="سكني" selected>سكني</option>
-                <option value="تجاري">تجاري</option>
-                <option value="صناعي">صناعي</option>
-                <option value="زراعي">زراعي</option>
-              </select>
-            </div>
+          <div class="col-md-4">
+            <label class="form-label">الشركة المعتمدة</label>
+            <select id="company_id" class="form-select">
+              <option value="">— بدون شركة —</option>
+              {% for c in (companies or []) %}
+              <option value="{{ c.id }}" {% if selected_company_id and selected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+              {% endfor %}
+            </select>
           </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label">مساحة الأرض (م²)</label>
-              <input id="land_area" type="number" min="0" step="1" class="form-control" placeholder="مثال: 300">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">مساحة البناء (م²)</label>
-              <input id="build_area" type="number" min="0" step="1" class="form-control" placeholder="مثال: 200">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">عمر البناء (سنة)</label>
-              <input id="age" type="number" min="0" step="1" class="form-control" placeholder="مثال: 5">
-            </div>
-          </div>
-
-          <div class="table-responsive mb-3">
-            <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>البند</th>
-                  <th>المعادلة</th>
-                  <th class="text-end">القيمة (ر.ع)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>قيمة الأرض</td>
-                  <td class="text-muted small" id="land_formula">—</td>
-                  <td class="text-end"><strong id="land_value">—</strong></td>
-                </tr>
-                <tr>
-                  <td>قيمة البناء</td>
-                  <td class="text-muted small" id="build_formula">—</td>
-                  <td class="text-end"><strong id="build_value">—</strong></td>
-                </tr>
-                <tr>
-                  <td>معامل الموقع</td>
-                  <td class="text-muted small">× <span id="loc_factor">—</span></td>
-                  <td></td>
-                </tr>
-                <tr class="table-light">
-                  <td><strong>الإجمالي التقديري</strong></td>
-                  <td></td>
-                  <td class="text-end"><strong id="total_value">—</strong></td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="col-md-4">
+            <label class="form-label">الولاية</label>
+            <select id="wilaya" class="form-select"></select>
           </div>
         </div>
 
-        <script>
-          (function() {
-            // Locations and pricing will be fetched dynamically via API
-            let LOCATIONS = []; // [{ wilaya, regions: [] }]
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label">المنطقة</label>
+            <select id="region" class="form-select"></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">استعمال الأرض</label>
+            <select id="land_use" class="form-select">
+              <option value="سكني" selected>سكني</option>
+              <option value="تجاري">تجاري</option>
+              <option value="صناعي">صناعي</option>
+              <option value="زراعي">زراعي</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">مساحة الأرض (م²)</label>
+            <input id="land_area" type="number" min="0" class="form-control" placeholder="مثال: 300">
+          </div>
+        </div>
 
-            const el = (id) => document.getElementById(id);
-            const fmt = (n) => (isFinite(n) ? n.toLocaleString('en-US') : '—');
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label">مساحة البناء (م²)</label>
+            <input id="build_area" type="number" min="0" class="form-control" placeholder="مثال: 200">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">عمر البناء (سنة)</label>
+            <input id="age" type="number" min="0" class="form-control" placeholder="مثال: 5">
+          </div>
+        </div>
 
-            let propType = (document.getElementById('dynamicCalc')?.dataset?.propType || 'land').toLowerCase();
+        <!-- بطاقات النتائج التفصيلية -->
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title text-muted">قيمة الأرض</h6>
+                <div class="h5 text-success" id="land_value">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title text-muted">قيمة البناء</h6>
+                <div class="h5 text-warning" id="build_value">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title text-muted">معامل الموقع</h6>
+                <div class="h5 text-info" id="loc_factor">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title text-muted">الإجمالي التقديري</h6>
+                <div class="h4 text-primary fw-bold" id="total_value">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            const wilayaSel = el('wilaya');
-            const regionSel = el('region');
-            const landUseSel = el('land_use');
-            const landAreaInp = el('land_area');
-            const buildAreaInp = el('build_area');
-            const ageInp = el('age');
-            const propTypeSel = el('prop_type');
-
-            const landFormula = el('land_formula');
-            const buildFormula = el('build_formula');
-            const locFactorEl = el('loc_factor');
-            const landValueEl = el('land_value');
-            const buildValueEl = el('build_value');
-            const totalValueEl = el('total_value');
-
-            const quickValueEl = document.querySelector('.quick-result .value');
-            const companySel = el('company_id');
-            const resetBtn = document.getElementById('resetBtn');
-            const resetBaseUrl = "{{ url_for('main.quick_step_summary') }}";
-
-            let currentPricing = null; // { w, r, companyId, landUse, landPrice, buildPrice, locFactor }
-            let lastFetchKey = null;
-            const LS_KEY = 'quick_selected_company_id';
-
-            function populateWilayas() {
-              wilayaSel.innerHTML = '';
-              LOCATIONS.forEach((item) => {
-                const opt = document.createElement('option');
-                opt.value = item.wilaya; opt.textContent = item.wilaya; wilayaSel.appendChild(opt);
-              });
-            }
-
-            function populateRegions() {
-              const w = wilayaSel.value;
-              regionSel.innerHTML = '';
-              const entry = LOCATIONS.find((x) => x.wilaya === w);
-              const regions = entry ? entry.regions : [];
-              regions.forEach((r) => {
-                const opt = document.createElement('option');
-                opt.value = r; opt.textContent = r; regionSel.appendChild(opt);
-              });
-            }
-
-            function recalc() {
-              const w = wilayaSel.value;
-              const r = regionSel.value;
-
-              // Treat empty inputs as NaN so UI shows '—' instead of 0
-              const landAreaStr = (landAreaInp.value || '').toString().trim();
-              const buildAreaStr = (buildAreaInp.value || '').toString().trim();
-              const ageStr = (ageInp.value || '').toString().trim();
-
-              const landArea = landAreaStr === '' ? NaN : Number(landAreaStr);
-              const buildArea = buildAreaStr === '' ? NaN : Number(buildAreaStr);
-              const ageYears = Math.max(0, (ageStr === '' ? 0 : Number(ageStr)));
-
-              const hasLandArea = isFinite(landArea) && landArea > 0;
-              const hasBuildArea = isFinite(buildArea) && buildArea > 0;
-
-              if (!w || !r) {
-                landFormula.textContent = '—';
-                buildFormula.textContent = '—';
-                locFactorEl.textContent = '—';
-                landValueEl.textContent = '—';
-                buildValueEl.textContent = '—';
-                totalValueEl.textContent = '—';
-                return;
-              }
-
-              const selectedCompanyId = companySel ? (companySel.value || null) : null;
-              const currentLandUse = landUseSel ? (landUseSel.value || null) : null;
-              const useApiPricing = (
-                currentPricing &&
-                currentPricing.w === w &&
-                currentPricing.r === r &&
-                (currentPricing.companyId || null) === selectedCompanyId &&
-                (currentPricing.landUse || null) === currentLandUse
-              );
-
-              // Use NaN when land price is unavailable to avoid showing 0
-              const landPriceRaw = (
-                useApiPricing && currentPricing && currentPricing.landPrice != null
-              ) ? currentPricing.landPrice : null;
-              const landPrice = (landPriceRaw === null || landPriceRaw === undefined)
-                ? NaN
-                : Number(landPriceRaw);
-              const buildPrice = Number(
-                (useApiPricing && currentPricing && currentPricing.buildPrice != null)
-                  ? currentPricing.buildPrice
-                  : 220
-              );
-              const locFactor = Number(
-                (useApiPricing && currentPricing && currentPricing.locFactor != null)
-                  ? currentPricing.locFactor
-                  : 1.0
-              );
-
-              // معدل استهلاك البناء: 2% سنويًا، حد أدنى 40%
-              const depreciationRate = 0.02;
-              const depreciationFactor = Math.max(0.40, 1 - ageYears * depreciationRate);
-
-              const landValue = (isFinite(landPrice) && hasLandArea) ? (landArea * landPrice) : NaN;
-              const buildingValue = (propType === 'land')
-                ? 0
-                : (hasBuildArea ? (buildArea * buildPrice * depreciationFactor) : NaN);
-              const totalBase = (
-                (isFinite(landValue) ? landValue : 0) +
-                (isFinite(buildingValue) ? buildingValue : 0)
-              );
-              const total = (totalBase > 0) ? (totalBase * locFactor) : NaN;
-
-              landFormula.textContent = (hasLandArea && isFinite(landPrice))
-                ? `${fmt(landArea)} × ${fmt(landPrice)}`
-                : '—';
-              buildFormula.textContent = (propType === 'land')
-                ? '—'
-                : (hasBuildArea
-                  ? `${fmt(buildArea)} × ${fmt(buildPrice)} × ${depreciationFactor.toFixed(2)}`
-                  : '—');
-              locFactorEl.textContent = locFactor.toFixed(2);
-
-              landValueEl.textContent = fmt(Math.round(landValue));
-              buildValueEl.textContent = (propType === 'land') ? '—' : fmt(Math.round(buildingValue));
-              totalValueEl.textContent = fmt(Math.round(total));
-
-              // تحديث القيمة العليا عند وجود مدخلات ذات معنى
-              const hasMeaningfulInput = (landArea > 0) || (buildArea > 0);
-              if (hasMeaningfulInput && quickValueEl) {
-                quickValueEl.textContent = `${fmt(Math.round(total))} ر.ع`;
-              }
-            }
-
-            function applyPropTypeState() {
-              const isLandOnly = (propType === 'land');
-              buildAreaInp.disabled = isLandOnly;
-              ageInp.disabled = isLandOnly;
-              if (isLandOnly) {
-                buildAreaInp.value = '';
-                ageInp.value = '';
-              }
-            }
-
-            function initPropType() {
-              if (propTypeSel) {
-                propTypeSel.value = propType;
-                propTypeSel.addEventListener('change', () => {
-                  propType = (propTypeSel.value || 'land').toLowerCase();
-                  const container = document.getElementById('dynamicCalc');
-                  if (container) {
-                    container.dataset.propType = propType;
-                  }
-                  applyPropTypeState();
-                  recalc();
-                });
-              }
-            }
-
-            async function updatePricingFromAPI() {
-              const w = wilayaSel.value;
-              const r = regionSel.value;
-              const companyId = companySel ? (companySel.value || null) : null;
-              const landUse = landUseSel ? (landUseSel.value || null) : null;
-              if (!w || !r) {
-                currentPricing = null;
-                recalc();
-                return;
-              }
-              const key = `${w}::${r}::${companyId || ''}::${landUse || ''}`;
-              lastFetchKey = key;
-              try {
-                const params = new URLSearchParams({ wilaya: w, region: r });
-                if (companyId) params.append('company_id', companyId);
-                if (landUse) params.append('use', landUse);
-                const res = await fetch(`/api/company_region_price?${params.toString()}`);
-                if (res.ok) {
-                  const data = await res.json();
-                  if (lastFetchKey !== key) return; // stale
-                  currentPricing = {
-                    w, r, companyId, landUse,
-                    landPrice: (data && typeof data.landPrice !== 'undefined') ? data.landPrice : null,
-                    buildPrice: (data && typeof data.buildPrice !== 'undefined') ? data.buildPrice : null,
-                    locFactor: (data && typeof data.locFactor !== 'undefined') ? data.locFactor : null,
-                  };
-                } else {
-                  currentPricing = null;
-                }
-              } catch (e) {
-                currentPricing = null;
-              }
-              recalc();
-            }
-
-            async function reloadLocations() {
-              const companyId = companySel ? (companySel.value || '') : '';
-              const params = new URLSearchParams();
-              if (companyId) params.append('company_id', companyId);
-              try {
-                const res = await fetch(`/api/land_locations${params.toString() ? ('?' + params.toString()) : ''}`);
-                if (!res.ok) throw new Error('Failed to load locations');
-                const data = await res.json();
-                LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
-              } catch (e) {
-                LOCATIONS = [];
-              }
-              populateWilayas();
-              populateRegions();
-            }
-
-            function updateResetHref() {
-              if (!resetBtn) return;
-              const companyId = companySel ? (companySel.value || '') : '';
-              resetBtn.href = companyId ? `${resetBaseUrl}?company_id=${encodeURIComponent(companyId)}` : resetBaseUrl;
-            }
-
-            // Init (ensure pricing is fetched AFTER locations and company selection are ready)
-            (async () => {
-              await reloadLocations();
-              initPropType();
-              applyPropTypeState();
-              // Restore selected company from server or localStorage before first pricing fetch
-              if (companySel) {
-                const serverSelected = "{{ selected_company_id or '' }}";
-                if (!serverSelected) {
-                  const stored = localStorage.getItem(LS_KEY) || '';
-                  if (stored && [...companySel.options].some(o => o.value === stored)) {
-                    companySel.value = stored;
-                  }
-                }
-                // Reload locations if company selection is set so wilaya/region match company
-                await reloadLocations();
-              }
-              updateResetHref();
-              await updatePricingFromAPI();
-            })();
-
-            // Events
-            wilayaSel.addEventListener('change', () => { populateRegions(); updatePricingFromAPI(); });
-            regionSel.addEventListener('change', updatePricingFromAPI);
-            if (landUseSel) { landUseSel.addEventListener('change', updatePricingFromAPI); }
-            landAreaInp.addEventListener('input', recalc);
-            buildAreaInp.addEventListener('input', recalc);
-            ageInp.addEventListener('input', recalc);
-            if (companySel) {
-              companySel.addEventListener('change', () => {
-                localStorage.setItem(LS_KEY, companySel.value || '');
-                updateResetHref();
-                (async () => { await reloadLocations(); updatePricingFromAPI(); })();
-              });
-            }
-          })();
-        </script>
-
-        <div class="d-flex gap-2">
-          <a class="btn btn-primary" href="{{ url_for('main.certified_step_entity') }}">الانتقال للتقييم المعتمد</a>
+        <!-- أزرار التنقل -->
+        <div class="mt-4 d-flex gap-2">
+          <a class="btn btn-primary" href="{{ url_for('main.certified_step_entity') }}">التقييم المعتمد</a>
           <a id="resetBtn" class="btn btn-outline-secondary" href="{{ url_for('main.quick_step_summary', company_id=selected_company_id) }}">إعادة التهيئة</a>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- سكريبت للحساب الديناميكي -->
+<script>
+(function() {
+  // عناصر DOM
+  const el = (id) => document.getElementById(id);
+  const fmt = (n) => (isFinite(n) ? n.toLocaleString('en-US') : '—');
+
+  let LOCATIONS = [];
+  let propType = el('prop_type').value || 'land';
+  const wilayaSel = el('wilaya');
+  const regionSel = el('region');
+  const landUseSel = el('land_use');
+  const landAreaInp = el('land_area');
+  const buildAreaInp = el('build_area');
+  const ageInp = el('age');
+  const companySel = el('company_id');
+
+  const landValueEl = el('land_value');
+  const buildValueEl = el('build_value');
+  const locFactorEl = el('loc_factor');
+  const totalValueEl = el('total_value');
+  const quickValueEl = el('quickEstimate');
+
+  let currentPricing = null;
+
+  // تحميل الولايات والمناطق
+  async function reloadLocations() {
+    const companyId = companySel.value || '';
+    const params = new URLSearchParams();
+    if(companyId) params.append('company_id', companyId);
+    try {
+      const res = await fetch(`/api/land_locations?${params.toString()}`);
+      const data = await res.json();
+      LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
+      populateWilayas();
+      populateRegions();
+    } catch (e) {
+      LOCATIONS = [];
+    }
+  }
+
+  function populateWilayas() {
+    wilayaSel.innerHTML = '';
+    LOCATIONS.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.wilaya; opt.textContent = item.wilaya;
+      wilayaSel.appendChild(opt);
+    });
+  }
+
+  function populateRegions() {
+    const w = wilayaSel.value;
+    regionSel.innerHTML = '';
+    const entry = LOCATIONS.find(x => x.wilaya === w);
+    const regions = entry ? entry.regions : [];
+    regions.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      regionSel.appendChild(opt);
+    });
+  }
+
+  async function updatePricing() {
+    const w = wilayaSel.value;
+    const r = regionSel.value;
+    const companyId = companySel.value || null;
+    const landUse = landUseSel.value || null;
+    if(!w || !r) return;
+
+    try {
+      const params = new URLSearchParams({ wilaya: w, region: r });
+      if(companyId) params.append('company_id', companyId);
+      if(landUse) params.append('use', landUse);
+      const res = await fetch(`/api/company_region_price?${params.toString()}`);
+      const data = await res.json();
+      currentPricing = data;
+      recalc();
+    } catch(e) {
+      currentPricing = null;
+      recalc();
+    }
+  }
+
+  function recalc() {
+    const landArea = Number(landAreaInp.value) || 0;
+    const buildArea = Number(buildAreaInp.value) || 0;
+    const age = Number(ageInp.value) || 0;
+
+    const landPrice = currentPricing?.landPrice || NaN;
+    const buildPrice = currentPricing?.buildPrice || 220;
+    const locFactor = currentPricing?.locFactor || 1.0;
+
+    const depreciation = Math.max(0.40, 1 - age * 0.02);
+
+    const landVal = landArea * landPrice;
+    const buildVal = propType==='land' ? 0 : buildArea * buildPrice * depreciation;
+    const total = (landVal + buildVal) * locFactor;
+
+    landValueEl.textContent = fmt(landVal);
+    buildValueEl.textContent = propType==='land' ? '—' : fmt(buildVal);
+    locFactorEl.textContent = locFactor.toFixed(2);
+    totalValueEl.textContent = fmt(total);
+    quickValueEl.textContent = fmt(total) + ' ر.ع';
+  }
+
+  // أحداث
+  wilayaSel.addEventListener('change', () => { populateRegions(); updatePricing(); });
+  regionSel.addEventListener('change', updatePricing);
+  landUseSel.addEventListener('change', updatePricing);
+  landAreaInp.addEventListener('input', recalc);
+  buildAreaInp.addEventListener('input', recalc);
+  ageInp.addEventListener('input', recalc);
+  companySel.addEventListener('change', async () => { await reloadLocations(); updatePricing(); });
+
+  el('prop_type').addEventListener('change', () => {
+    propType = el('prop_type').value;
+    if(propType==='land') {
+      buildAreaInp.value=''; ageInp.value='';
+      buildAreaInp.disabled=true; ageInp.disabled=true;
+    } else {
+      buildAreaInp.disabled=false; ageInp.disabled=false;
+    }
+    recalc();
+  });
+
+  // Init
+  (async () => { await reloadLocations(); updatePricing(); })();
+})();
+</script>
 {% endblock %}

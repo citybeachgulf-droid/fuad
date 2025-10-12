@@ -1,12 +1,15 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="container py-3">
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <h2 class="m-0">أسعار الأراضي</h2>
+<div class="container py-4" dir="rtl">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <h2 class="m-0 fw-bold">أسعار الأراضي</h2>
     <a href="{{ url_for('company.dashboard') }}" class="btn btn-outline-secondary ms-auto">رجوع</a>
   </div>
 
-  <div class="card mb-3">
+  <!-- Search -->
+  <div class="card mb-3 shadow-sm">
     <div class="card-body">
       <form class="row g-2 align-items-end" method="get" action="{{ url_for('company.land_prices') }}">
         <div class="col-12 col-md-4">
@@ -20,9 +23,10 @@
     </div>
   </div>
 
-  <div class="card mb-4">
+  <!-- Add New Record -->
+  <div class="card mb-4 shadow-sm">
     <div class="card-body">
-      <h5 class="card-title">إضافة سجل جديد</h5>
+      <h5 class="card-title mb-3">إضافة سجل جديد</h5>
       <form class="row g-2" method="post" action="{{ url_for('company.create_land_price') }}">
         <div class="col-12 col-md-2">
           <input class="form-control" name="wilaya" placeholder="الولاية" required>
@@ -53,12 +57,13 @@
     </div>
   </div>
 
+  <!-- Land Prices Table -->
   {% if items|length == 0 %}
     <div class="alert alert-light">لا توجد سجلات.</div>
   {% else %}
   <div class="table-responsive">
-    <table class="table align-middle">
-      <thead>
+    <table class="table align-middle table-hover" style="background-color: #f9f9f9;">
+      <thead style="background-color: #e9ecef;">
         <tr>
           <th>الولاية</th>
           <th>المنطقة</th>
@@ -72,26 +77,27 @@
       </thead>
       <tbody>
       {% for it in items %}
-        <tr>
-            <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}" form="form-{{ it.id }}"></td>
-            <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}" form="form-{{ it.id }}"></td>
-            <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}" form="form-{{ it.id }}"></td>
-            <td><input class="form-control form-control-sm" name="price_commercial" value="{{ it.price_commercial if it.price_commercial is not none else '' }}" form="form-{{ it.id }}"></td>
-            <td><input class="form-control form-control-sm" name="price_industrial" value="{{ it.price_industrial if it.price_industrial is not none else '' }}" form="form-{{ it.id }}"></td>
-            <td><input class="form-control form-control-sm" name="price_agricultural" value="{{ it.price_agricultural if it.price_agricultural is not none else '' }}" form="form-{{ it.id }}"></td>
-            <td><input class="form-control form-control-sm" name="price_per_sqm" value="{{ it.price_per_sqm if it.price_per_sqm is not none else '' }}" form="form-{{ it.id }}"></td>
-            <td class="text-nowrap">
-              <form id="form-{{ it.id }}" method="post" action="{{ url_for('company.edit_land_price', item_id=it.id, q=q) }}"></form>
-              <button class="btn btn-sm btn-primary" type="submit" form="form-{{ it.id }}">حفظ</button>
-              <form method="post" class="d-inline" action="{{ url_for('company.delete_land_price', item_id=it.id) }}" onsubmit="return confirm('تأكيد حذف السجل؟');">
-                <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
-              </form>
-            </td>
+        <tr style="background-color: #ffffff;">
+          <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}" form="form-{{ it.id }}"></td>
+          <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}" form="form-{{ it.id }}"></td>
+          <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}" form="form-{{ it.id }}"></td>
+          <td><input class="form-control form-control-sm" name="price_commercial" value="{{ it.price_commercial if it.price_commercial is not none else '' }}" form="form-{{ it.id }}"></td>
+          <td><input class="form-control form-control-sm" name="price_industrial" value="{{ it.price_industrial if it.price_industrial is not none else '' }}" form="form-{{ it.id }}"></td>
+          <td><input class="form-control form-control-sm" name="price_agricultural" value="{{ it.price_agricultural if it.price_agricultural is not none else '' }}" form="form-{{ it.id }}"></td>
+          <td><input class="form-control form-control-sm" name="price_per_sqm" value="{{ it.price_per_sqm if it.price_per_sqm is not none else '' }}" form="form-{{ it.id }}"></td>
+          <td class="text-nowrap">
+            <form id="form-{{ it.id }}" method="post" action="{{ url_for('company.edit_land_price', item_id=it.id, q=q) }}"></form>
+            <button class="btn btn-sm btn-primary" type="submit" form="form-{{ it.id }}">حفظ</button>
+            <form method="post" class="d-inline" action="{{ url_for('company.delete_land_price', item_id=it.id) }}" onsubmit="return confirm('تأكيد حذف السجل؟');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
+            </form>
+          </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}
