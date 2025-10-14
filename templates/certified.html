@@ -202,7 +202,7 @@
       items.forEach(it=>{
         const row = document.createElement('div');
         row.className='d-flex align-items-center justify-content-between p-2 border rounded';
-        row.innerHTML=`<div class="d-flex align-items-center gap-2"><img src="${it.logo_path||''}" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover"><strong>${it.name}</strong></div><span class="badge bg-success">حد: ${it.limit_value??'—'}</span>`;
+        row.innerHTML=`<div class="d-flex align-items-center gap-2"><img src="${it.logo_path||''}" alt="" class="size-36 rounded-8 img-cover"><strong>${it.name}</strong></div><span class="badge bg-success">حد: ${it.limit_value??'—'}</span>`;
         resultsList.appendChild(row);
       });
     }

@@ -16,7 +16,7 @@
         <div class="card shadow-sm h-100 p-3">
           <h5 class="card-title mb-3 text-center">الشعار</h5>
           {% if profile and profile.logo_path %}
-            <img src="{{ profile.logo_path | static_or_external }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white d-block mx-auto" style="max-height:120px;">
+            <img src="{{ profile.logo_path | static_or_external }}" alt="Logo" class="img-fluid mb-3 rounded border p-2 bg-white d-block mx-auto maxh-120">
           {% endif %}
           <input type="file" class="form-control mb-3" name="logo" accept="image/*">
 

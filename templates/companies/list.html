@@ -12,7 +12,7 @@
     <div class="card h-100">
       <div class="card-body text-center">
         {% if c.company_profile and c.company_profile.logo_path %}
-          <img src="{{ c.company_profile.logo_path | static_or_external }}" alt="logo" style="height:150px;" class="mb-2">
+          <img src="{{ c.company_profile.logo_path | static_or_external }}" alt="logo" class="card-img-top--logo mb-2">
         {% endif %}
         <h5 class="card-title">{{ c.name }}</h5>
         <p class="card-text small">{{ (c.company_profile.services or '')[:120] }}{% if c.company_profile and c.company_profile.services and c.company_profile.services|length > 120 %}...{% endif %}</p>

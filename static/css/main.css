@@ -171,3 +171,79 @@ body {
   vertical-align: middle;
 }
 
+/* ----------------------------------------
+   Responsive sizing utilities (images/icons/boxes)
+   Ensures consistent sizes across mobile and web
+----------------------------------------- */
+
+/* Images that should fully fill a square/rect while covering */
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Images that should fit entirely without cropping */
+.img-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Fixed-size square wrappers (apply with a child img using .img-cover or .img-contain) */
+.size-32 { width: 32px; height: 32px; }
+.size-36 { width: 36px; height: 36px; }
+.size-40 { width: 40px; height: 40px; }
+.size-48 { width: 48px; height: 48px; }
+.size-56 { width: 56px; height: 56px; }
+.size-60 { width: 60px; height: 60px; }
+.size-80 { width: 80px; height: 80px; }
+.size-120 { width: 120px; height: 120px; }
+
+/* Rounded variants */
+.rounded-8 { border-radius: 8px; }
+.rounded-10 { border-radius: 10px; }
+.rounded-12 { border-radius: 12px; }
+.rounded-circle { border-radius: 9999px; }
+
+/* Icon sizing helpers for Bootstrap Icons and similar */
+.icon-16 { font-size: 16px; line-height: 1; }
+.icon-20 { font-size: 20px; line-height: 1; }
+.icon-24 { font-size: 24px; line-height: 1; }
+.icon-28 { font-size: 28px; line-height: 1; }
+.icon-32 { font-size: 32px; line-height: 1; }
+.icon-40 { font-size: 40px; line-height: 1; }
+
+/* Card image variants */
+.card-img-top--logo {
+  width: auto;
+  max-width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+
+/* Ads, carousels, and wide banners */
+.media-banner {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+/* Utility to clamp a max-height but keep responsiveness */
+.maxh-120 { max-height: 120px; }
+
+/* Tile icon container unification */
+.tile-icon-56 {
+  width: 56px;
+  height: 56px;
+}
+
+/* Ensure inline square containers for logos when needed */
+.logo-square {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.logo-square > img { width: 100%; height: 100%; object-fit: cover; }
+
