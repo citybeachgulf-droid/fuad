@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}تقييم معتمد - إدخال بيانات العقار{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 m-0">{{ purpose }}</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    </div>
+
+    <form class="card shadow-sm">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">البنك</label>
+            <input list="banksList" id="bankInput" class="form-control" placeholder="ابحث واكتب اسم البنك">
+            <datalist id="banksList"></datalist>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">الاستعمال</label>
+            <input list="useList" id="useInput" class="form-control" placeholder="سكني، تجاري، صناعي، زراعي">
+            <datalist id="useList">
+              <option value="سكني"></option>
+              <option value="تجاري"></option>
+              <option value="صناعي"></option>
+              <option value="زراعي"></option>
+            </datalist>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">الولاية</label>
+            <input list="wilayasList" id="wilayaInput" class="form-control" placeholder="اكتب لاختيار الولاية">
+            <datalist id="wilayasList"></datalist>
+          </div>
+        </div>
+
+        <div class="row g-3 align-items-end mt-1">
+          <div class="col-md-4">
+            <label class="form-label">الحي/القرية</label>
+            <input list="regionsList" id="regionInput" class="form-control" placeholder="اكتب لاختيار الحي/القرية">
+            <datalist id="regionsList"></datalist>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">مساحة الأرض (م²)</label>
+            <input id="landArea" type="number" min="0" class="form-control" placeholder="مثال: 300">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">مساحة البناء (م²)</label>
+            <input id="buildArea" type="number" min="0" class="form-control" placeholder="مثال: 200">
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>متابعة اختيار البنك</button>
+          <a id="skipBtn" class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const bankInput = document.getElementById('bankInput');
+  const banksList = document.getElementById('banksList');
+  const wilayaInput = document.getElementById('wilayaInput');
+  const wilayasList = document.getElementById('wilayasList');
+  const regionInput = document.getElementById('regionInput');
+  const regionsList = document.getElementById('regionsList');
+  const useInput = document.getElementById('useInput');
+  const landArea = document.getElementById('landArea');
+  const buildArea = document.getElementById('buildArea');
+  const continueBtn = document.getElementById('continueBtn');
+
+  let LOCATIONS = [];
+
+  // Load banks
+  (async function loadBanks(){
+    try{
+      const res = await fetch('/api/banks');
+      const banks = await res.json();
+      banksList.innerHTML = '';
+      banks.forEach(b=>{
+        const opt = document.createElement('option');
+        opt.value = b.name || b.slug;
+        opt.dataset.slug = b.slug;
+        banksList.appendChild(opt);
+      });
+    }catch{}
+  })();
+
+  function findBankSlugByName(name){
+    const opts = banksList.querySelectorAll('option');
+    for(const o of opts){ if((o.value||'').trim() === (name||'').trim()) return o.dataset.slug; }
+    return '';
+  }
+
+  async function loadLocations(){
+    try{
+      const res = await fetch('/api/land_locations');
+      const data = await res.json();
+      LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
+      wilayasList.innerHTML='';
+      LOCATIONS.forEach(item=>{
+        const opt = document.createElement('option');
+        opt.value = item.wilaya; wilayasList.appendChild(opt);
+      });
+    }catch{ LOCATIONS = []; }
+  }
+  loadLocations();
+
+  function updateRegionsDatalist(){
+    const w = (wilayaInput.value||'').trim();
+    regionsList.innerHTML='';
+    const entry = LOCATIONS.find(x=>x.wilaya === w);
+    (entry?entry.regions:[]).forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r; regionsList.appendChild(opt);
+    });
+  }
+
+  wilayaInput.addEventListener('input', updateRegionsDatalist);
+
+  continueBtn.addEventListener('click', function(){
+    const bankSlug = findBankSlugByName(bankInput.value||'');
+    const url = new URL(window.location.origin + '{{ url_for('main.certified_step_bank') }}');
+    url.searchParams.set('entity', '{{ entity }}');
+    url.searchParams.set('purpose', '{{ purpose }}');
+    if(bankSlug) url.searchParams.set('bank', bankSlug);
+    // We could also carry forward the user's inputs via query if needed
+    window.location.href = url.toString();
+  });
+})();
+</script>
+{% endblock %}
