@@ -75,7 +75,7 @@
         {% endif %}
 
         <div class="d-flex gap-2 mt-4">
-          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>متابعة اختيار البنك</button>
+          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>احصل على عرض التثمين</button>
           <a id="skipBtn" class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
         </div>
       </div>
@@ -150,11 +150,22 @@
 
   continueBtn.addEventListener('click', function(){
     const bankSlug = findBankSlugByName(bankInput.value||'');
-    const url = new URL(window.location.origin + '{{ url_for('main.certified_step_bank') }}');
+    const url = new URL(window.location.origin + '{{ url_for('main.certified_offers') }}');
     url.searchParams.set('entity', '{{ entity }}');
     url.searchParams.set('purpose', '{{ purpose }}');
     if(bankSlug) url.searchParams.set('bank', bankSlug);
-    // We could also carry forward the user's inputs via query if needed
+    const useVal = (useInput.value||'').trim();
+    const wilayaVal = (wilayaInput.value||'').trim();
+    const regionVal = (regionInput.value||'').trim();
+    const landAreaVal = (landArea && landArea.value) ? String(landArea.value) : '';
+    const buildAreaVal = (buildArea && buildArea.value) ? String(buildArea.value) : '';
+    const buildAgeVal = (buildAge && buildAge.value) ? String(buildAge.value) : '';
+    if(useVal) url.searchParams.set('use', useVal);
+    if(wilayaVal) url.searchParams.set('wilaya', wilayaVal);
+    if(regionVal) url.searchParams.set('region', regionVal);
+    if(landAreaVal) url.searchParams.set('land_area', landAreaVal);
+    if(buildAreaVal) url.searchParams.set('build_area', buildAreaVal);
+    if(buildAgeVal) url.searchParams.set('age', buildAgeVal);
     window.location.href = url.toString();
   });
 })();
