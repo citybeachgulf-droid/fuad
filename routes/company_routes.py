@@ -516,6 +516,17 @@ def edit_profile():
     if current_user.role != 'company':
         return "غير مصرح لك بالوصول", 403
 
+    # تأكد من وجود عمود رسوم التثمين بشكل كسول بدون ترحيل كامل
+    try:
+        from sqlalchemy import inspect as sa_inspect, text
+        inspector = sa_inspect(db.engine)
+        cols = [c['name'] for c in inspector.get_columns('company_profiles')]
+        if 'valuation_fee' not in cols:
+            with db.engine.begin() as conn:
+                conn.execute(text('ALTER TABLE company_profiles ADD COLUMN valuation_fee FLOAT'))
+    except Exception:
+        pass
+
     profile = CompanyProfile.query.filter_by(user_id=current_user.id).first()
     if not profile:
         profile = CompanyProfile(user_id=current_user.id)
@@ -529,6 +540,8 @@ def edit_profile():
         services = request.form.get('services') or None
         about = request.form.get('about') or None
         website = request.form.get('website') or None
+        # دعم إدخال رسوم التثمين مع تطبيع الأرقام العربية/النطاقات
+        valuation_fee = _parse_float_field(request.form.get('valuation_fee'))
 
         # معالجة رفع الشعار
         file = request.files.get('logo')
@@ -552,6 +565,12 @@ def edit_profile():
         profile.services = services
         profile.about = about
         profile.website = website
+        # قد تكون القيمة None إذا تركها المستخدم فارغة
+        try:
+            profile.valuation_fee = valuation_fee
+        except Exception:
+            # تجاهل أي أخطاء غير متوقعة لتجنب تعطيل الحفظ
+            pass
 
         # تمت إزالة إدارة البنوك من ملف الشركة — البنوك هي من تعتمد الشركات
 

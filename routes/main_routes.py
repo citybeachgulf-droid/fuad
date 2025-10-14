@@ -15,6 +15,20 @@ from models import (
 
 main = Blueprint('main', __name__)
 
+# Ensure DB has optional columns used in views without requiring a full migration
+def _ensure_company_fee_column():
+    try:
+        from sqlalchemy import inspect as sa_inspect, text
+        inspector = sa_inspect(db.engine)
+        cols = [c['name'] for c in inspector.get_columns('company_profiles')]
+        if 'valuation_fee' not in cols:
+            # Best-effort add; ignore if fails
+            with db.engine.begin() as conn:
+                conn.execute(text('ALTER TABLE company_profiles ADD COLUMN valuation_fee FLOAT'))
+    except Exception:
+        # Silently continue; UI will just show '—' if not available
+        pass
+
 @main.route('/')
 def landing():
     latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
@@ -351,6 +365,7 @@ def certified_offers():
       - use (Arabic category), wilaya, region
       - land_area, build_area, age
     """
+    _ensure_company_fee_column()
     entity = request.args.get('entity', 'person')
     purpose = request.args.get('purpose', 'تثمين عقار قائم')
     bank_slug = request.args.get('bank')
@@ -493,6 +508,7 @@ def certified_offers():
                 'logo_path': profile.logo_path if profile.logo_path else None,
                 'estimate': estimate,
                 'limit_value': effective_limit_val,
+                'valuation_fee': (float(profile.valuation_fee) if getattr(profile, 'valuation_fee', None) is not None else None),
             })
     else:
         base_q = db.session.query(CompanyProfile, User).join(User, CompanyProfile.user_id == User.id)
@@ -517,6 +533,7 @@ def certified_offers():
                 'logo_path': profile.logo_path if profile.logo_path else None,
                 'estimate': estimate,
                 'limit_value': effective_limit_val,
+                'valuation_fee': (float(profile.valuation_fee) if getattr(profile, 'valuation_fee', None) is not None else None),
             })
 
     # Sort: those with estimate first (desc), then by name
