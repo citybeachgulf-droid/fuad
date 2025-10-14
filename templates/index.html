@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}ثمِّن - الصفحة الرئيسية{% endblock %}
 
+{% block navbar_brand %}
+  <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="ثمِّن" class="brand-logo" loading="lazy" />
+  <span class="visually-hidden">ثمِّن</span>
+{% endblock %}
+
 {% block content %}
     <!-- Hero / CTA: قيم عقارك الآن -->
     <section id="cta" class="py-5">
