@@ -833,13 +833,17 @@ def api_company_region_price():
 
 @main.route('/api/land_locations', methods=['GET'])
 def api_land_locations():
-    """Return list of wilayas and their regions for quick valuation selectors.
+    """Return list of wilayas and their regions for location selectors.
 
-    If a company_id is provided and that company has uploaded land prices,
-    wilayas/regions are sourced from `CompanyLandPrice` for that company.
-    Otherwise, they fall back to the public `LandPrice` table.
+    Priority order for sourcing locations:
+    1) If `bank`/`bank_slug` is provided: union of `CompanyLandPrice` for all
+       companies approved by that bank.
+    2) Else if `company_id` is provided: locations from that company's
+       `CompanyLandPrice`.
+    3) Fallback: public `LandPrice` table.
 
     Query params:
+      - bank or bank_slug: str (optional)
       - company_id: int (optional)
 
     Response shape:
@@ -851,11 +855,37 @@ def api_land_locations():
       }
     """
     company_id = request.args.get('company_id', type=int)
+    bank_slug = (request.args.get('bank') or request.args.get('bank_slug') or '').strip() or None
 
     # Build mapping wilaya -> set(regions)
-    locations_map = {}
+    locations_map: dict[str, set] = {}
 
-    if company_id:
+    # 1) Bank-approved companies union
+    if bank_slug:
+        bank = BankProfile.query.filter_by(slug=bank_slug).first()
+        if bank:
+            # Get all company_profile_ids approved by this bank
+            approved_profile_ids = [
+                row[0]
+                for row in (
+                    db.session.query(CompanyApprovedBank.company_profile_id)
+                    .filter(CompanyApprovedBank.bank_user_id == bank.user_id)
+                    .all()
+                )
+            ]
+            if approved_profile_ids:
+                rows = (
+                    db.session.query(CompanyLandPrice.wilaya, CompanyLandPrice.region)
+                    .filter(CompanyLandPrice.company_profile_id.in_(approved_profile_ids))
+                    .all()
+                )
+                for w, r in rows:
+                    if not w or not r:
+                        continue
+                    locations_map.setdefault(w, set()).add(r)
+
+    # 2) Specific company locations
+    if not locations_map and company_id:
         company_profile = CompanyProfile.query.filter_by(user_id=company_id).first()
         if company_profile:
             rows = (
@@ -868,7 +898,7 @@ def api_land_locations():
                     continue
                 locations_map.setdefault(w, set()).add(r)
 
-    # Fallback to public land prices if no company-specific locations
+    # 3) Fallback to public land prices if no company-specific locations
     if not locations_map:
         rows = db.session.query(LandPrice.wilaya, LandPrice.region).all()
         for w, r in rows:
