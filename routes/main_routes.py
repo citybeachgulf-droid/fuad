@@ -148,7 +148,7 @@ def certified_step_purpose():
     entity = request.args.get('entity', 'person')
     if entity == 'person':
         options = [
-            {"title": "تثمين عقار قائم", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
+            {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_form', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
             {"title": "تثمين أرض", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
             {"title": "تثمين بناء عقار", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
         ]
@@ -208,6 +208,13 @@ def certified_step_amount():
         })
 
     return render_template('certified_steps/step_amount.html', options=options, entity=entity, purpose=purpose, bank=bank)
+
+
+@main.route('/certified/property_form')
+def certified_property_form():
+    entity = request.args.get('entity', 'person')
+    purpose = request.args.get('purpose') or 'تثمين عقار قائم'
+    return render_template('certified_steps/property_form.html', entity=entity, purpose=purpose)
 
 
 @main.route('/certified/summary')

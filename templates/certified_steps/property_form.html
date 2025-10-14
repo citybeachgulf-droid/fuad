@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}تقييم معتمد - تثمين عقار قائم{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 m-0">تثمين عقار قائم</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="bankInput" class="form-label">البنك</label>
+            <input id="bankInput" class="form-control" list="banksList" placeholder="اكتب اسم البنك" required>
+            <datalist id="banksList"></datalist>
+            <div class="form-text">اكتب للبحث عن البنك ثم اختر من القائمة.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="useInput" class="form-label">الاستعمال</label>
+            <input id="useInput" class="form-control" list="useList" placeholder="سكني / تجاري / صناعي / زراعي" required>
+            <datalist id="useList">
+              <option value="سكني" label="Housing"></option>
+              <option value="تجاري" label="Commercial"></option>
+              <option value="صناعي" label="Industrial"></option>
+              <option value="زراعي" label="Agricultural"></option>
+            </datalist>
+            <div class="form-text">يمكنك الكتابة للاقتراحات.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="wilayaInput" class="form-label">الولاية</label>
+            <input id="wilayaInput" class="form-control" list="wilayaList" placeholder="اكتب اسم الولاية" required>
+            <datalist id="wilayaList"></datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label for="regionInput" class="form-label">الحي/القرية</label>
+            <input id="regionInput" class="form-control" list="regionList" placeholder="اكتب اسم الحي/القرية" required>
+            <datalist id="regionList"></datalist>
+          </div>
+
+          <div class="col-md-4">
+            <label for="landArea" class="form-label">مساحة الأرض (م²)</label>
+            <input id="landArea" type="number" class="form-control" min="0" step="0.01" placeholder="مثال: 500">
+          </div>
+
+          <div class="col-md-4">
+            <label for="buildArea" class="form-label">مساحة البناء (م²)</label>
+            <input id="buildArea" type="number" class="form-control" min="0" step="0.01" placeholder="مثال: 300">
+          </div>
+
+          <div class="col-md-4">
+            <label for="buildingAge" class="form-label">عمر المبنى (سنة)</label>
+            <input id="buildingAge" type="number" class="form-control" min="0" step="1" placeholder="مثال: 5">
+          </div>
+        </div>
+
+        <div class="mt-3 text-muted small">املأ الحقول أعلاه. سيتم استخدام هذه البيانات لتحسين التثمين.</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const bankInput = document.getElementById('bankInput');
+  const banksList = document.getElementById('banksList');
+  const useInput = document.getElementById('useInput');
+  const wilayaInput = document.getElementById('wilayaInput');
+  const wilayaList = document.getElementById('wilayaList');
+  const regionInput = document.getElementById('regionInput');
+  const regionList = document.getElementById('regionList');
+
+  let LOCATIONS = [];
+
+  async function loadBanks(){
+    try{
+      const res = await fetch('/api/banks');
+      const banks = await res.json();
+      banksList.innerHTML = '';
+      banks.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.name || b.slug; // show name as the typed value
+        opt.setAttribute('data-slug', b.slug);
+        opt.setAttribute('label', b.name || b.slug);
+        banksList.appendChild(opt);
+      });
+    }catch{}
+  }
+
+  async function loadLocations(){
+    try{
+      const res = await fetch('/api/land_locations');
+      const data = await res.json();
+      LOCATIONS = (data && data.locations) ? data.locations : [];
+      // populate wilayas
+      const wilayas = LOCATIONS.map(x => x.wilaya);
+      wilayaList.innerHTML = '';
+      wilayas.sort().forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w;
+        wilayaList.appendChild(opt);
+      });
+      updateRegions();
+    }catch{}
+  }
+
+  function updateRegions(){
+    const w = wilayaInput.value;
+    const entry = LOCATIONS.find(x => x.wilaya === w);
+    const regions = entry ? (entry.regions||[]) : [];
+    regionList.innerHTML = '';
+    regions.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r;
+      regionList.appendChild(opt);
+    });
+  }
+
+  wilayaInput.addEventListener('input', updateRegions);
+
+  loadBanks();
+  loadLocations();
+})();
+</script>
+{% endblock %}
