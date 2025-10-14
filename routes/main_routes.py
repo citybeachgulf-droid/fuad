@@ -405,26 +405,66 @@ def certified_offers():
         total = (land_val + build_val) * loc_factor
         return float(total)
 
-    # Build companies list: if bank selected, use approved companies for that bank; else, all companies
+    # Build companies list with enforcement:
+    # - If a bank is selected: only approved companies for that bank
+    # - Exclude companies whose effective limit is below the estimated value
     companies = []
-    base_q = db.session.query(CompanyProfile, User).join(User, CompanyProfile.user_id == User.id)
     if bank:
-        # Filter by approved mapping
-        cab_q = (
-            db.session.query(CompanyApprovedBank.company_profile_id)
+        q = (
+            db.session.query(CompanyApprovedBank, CompanyProfile, User)
+            .join(CompanyProfile, CompanyApprovedBank.company_profile_id == CompanyProfile.id)
+            .join(User, CompanyProfile.user_id == User.id)
             .filter(CompanyApprovedBank.bank_user_id == bank.user_id)
         )
-        base_q = base_q.filter(CompanyProfile.id.in_(cab_q))
 
-    for profile, user in base_q.all():
-        estimate = compute_estimate(user.id)
-        companies.append({
-            'id': user.id,
-            'name': user.name,
-            'logo_path': profile.logo_path if profile.logo_path else None,
-            'estimate': estimate,
-            'limit_value': profile.limit_value,
-        })
+        for cab, profile, user in q.all():
+            estimate = compute_estimate(user.id)
+            # Effective limit: per-bank limit overrides company-wide limit when available
+            effective_limit = cab.limit_value if cab.limit_value is not None else profile.limit_value
+            try:
+                effective_limit_val = float(effective_limit) if effective_limit is not None else None
+            except Exception:
+                effective_limit_val = None
+
+            # Enforce: hide company if estimate exceeds its effective limit
+            if effective_limit_val is not None and estimate is not None:
+                try:
+                    if float(estimate) > effective_limit_val:
+                        continue
+                except Exception:
+                    pass
+
+            companies.append({
+                'id': user.id,
+                'name': user.name,
+                'logo_path': profile.logo_path if profile.logo_path else None,
+                'estimate': estimate,
+                'limit_value': effective_limit_val,
+            })
+    else:
+        base_q = db.session.query(CompanyProfile, User).join(User, CompanyProfile.user_id == User.id)
+        for profile, user in base_q.all():
+            estimate = compute_estimate(user.id)
+            effective_limit = profile.limit_value
+            try:
+                effective_limit_val = float(effective_limit) if effective_limit is not None else None
+            except Exception:
+                effective_limit_val = None
+
+            if effective_limit_val is not None and estimate is not None:
+                try:
+                    if float(estimate) > effective_limit_val:
+                        continue
+                except Exception:
+                    pass
+
+            companies.append({
+                'id': user.id,
+                'name': user.name,
+                'logo_path': profile.logo_path if profile.logo_path else None,
+                'estimate': estimate,
+                'limit_value': effective_limit_val,
+            })
 
     # Sort: those with estimate first (desc), then by name
     companies.sort(key=lambda x: (0 if x['estimate'] is None else -x['estimate'], x['name']))
