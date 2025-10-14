@@ -124,7 +124,10 @@
 
   async function loadLocations(){
     try{
-      const res = await fetch('/api/land_locations');
+      const bankSlug = findBankSlugByName(bankInput.value||'');
+      const params = new URLSearchParams();
+      if(bankSlug) params.append('bank', bankSlug);
+      const res = await fetch(`/api/land_locations?${params.toString()}`);
       const data = await res.json();
       LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
       wilayasList.innerHTML='';
@@ -132,6 +135,8 @@
         const opt = document.createElement('option');
         opt.value = item.wilaya; wilayasList.appendChild(opt);
       });
+      // After reloading wilayas, refresh regions list based on current wilaya input
+      updateRegionsDatalist();
     }catch{ LOCATIONS = []; }
   }
   loadLocations();
@@ -147,6 +152,8 @@
   }
 
   wilayaInput.addEventListener('input', updateRegionsDatalist);
+  // Reload locations when bank changes so that wilaya/region come from approved companies
+  bankInput.addEventListener('input', loadLocations);
 
   continueBtn.addEventListener('click', function(){
     const bankSlug = findBankSlugByName(bankInput.value||'');
