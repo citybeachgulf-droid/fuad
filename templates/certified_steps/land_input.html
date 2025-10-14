@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}تقييم معتمد - تثمين أرض{% endblock %}
+{% block content %}
+<section class="py-4">
+  <div class="container" dir="rtl">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 m-0">تثمين أرض</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">البنك</label>
+            <input list="banksList" id="bankInput" class="form-control" placeholder="اختر أو اكتب اسم البنك">
+            <datalist id="banksList">
+              {% for b in (banks or []) %}
+              <option value="{{ b.user.name if b.user else b.slug }}" data-slug="{{ b.slug }}"></option>
+              {% endfor %}
+            </datalist>
+            <div class="form-text">اختياري: يساعد على تهيئة السياسة وحدود المبلغ.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الاستعمال</label>
+            <input list="useList" id="useInput" class="form-control" placeholder="سكني / تجاري / صناعي / زراعي">
+            <datalist id="useList">
+              {% for u in (uses or []) %}
+              <option value="{{ u }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الولاية</label>
+            <input list="wilayaList" id="wilayaInput" class="form-control" placeholder="اختر الولاية">
+            <datalist id="wilayaList"></datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الحي / القرية</label>
+            <input list="regionList" id="regionInput" class="form-control" placeholder="اختر الحي أو القرية">
+            <datalist id="regionList"></datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">مساحة الأرض (م²)</label>
+            <input id="areaInput" type="number" min="0" class="form-control" placeholder="مثال: 600">
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row text-center g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="text-muted">سعر المتر (تقريبي)</div>
+              <div id="pricePerSqm" class="fs-5 fw-bold">—</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="text-muted">القيمة التقديرية</div>
+              <div id="estimatedValue" class="fs-4 fw-bold">—</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="text-muted">معامل الموقع</div>
+              <div id="locFactor" class="fs-5 fw-bold">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <a class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_purpose', entity=entity) }}">رجوع</a>
+          <a id="continueBtn" class="btn btn-primary" href="#">متابعة</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const bankInput = document.getElementById('bankInput');
+  const useInput = document.getElementById('useInput');
+  const wilayaInput = document.getElementById('wilayaInput');
+  const regionInput = document.getElementById('regionInput');
+  const areaInput = document.getElementById('areaInput');
+  const pricePerSqmEl = document.getElementById('pricePerSqm');
+  const estimatedValueEl = document.getElementById('estimatedValue');
+  const locFactorEl = document.getElementById('locFactor');
+
+  let LOCATIONS = [];
+  let currentPricing = null;
+
+  function fmt(n){ return (isFinite(n) ? Number(n).toLocaleString('ar-EG', { maximumFractionDigits: 2 }) : '—'); }
+
+  async function loadLocations(){
+    try{
+      const res = await fetch('/api/land_locations');
+      const data = await res.json();
+      LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
+      populateWilayas();
+      populateRegions();
+    }catch(e){ LOCATIONS = []; }
+  }
+
+  function populateWilayas(){
+    const list = document.getElementById('wilayaList');
+    list.innerHTML = '';
+    LOCATIONS.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.wilaya;
+      list.appendChild(opt);
+    });
+  }
+
+  function populateRegions(){
+    const list = document.getElementById('regionList');
+    list.innerHTML = '';
+    const w = wilayaInput.value;
+    const entry = LOCATIONS.find(x => x.wilaya === w);
+    (entry ? entry.regions : []).forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r;
+      list.appendChild(opt);
+    });
+  }
+
+  async function updatePricing(){
+    const w = wilayaInput.value || '';
+    const r = regionInput.value || '';
+    const use = (useInput.value || '').trim();
+    if(!w || !r){ currentPricing = null; recalc(); return; }
+    try{
+      const params = new URLSearchParams({ wilaya: w, region: r });
+      if(use) params.append('use', use);
+      const res = await fetch(`/api/company_region_price?${params.toString()}`);
+      const data = await res.json();
+      currentPricing = data;
+      recalc();
+    }catch(e){ currentPricing = null; recalc(); }
+  }
+
+  function recalc(){
+    const area = Number(areaInput.value) || 0;
+    const landPrice = currentPricing?.landPrice || NaN;
+    const locFactor = currentPricing?.locFactor || 1.0;
+    const value = area * landPrice * locFactor;
+    pricePerSqmEl.textContent = fmt(landPrice);
+    locFactorEl.textContent = isFinite(locFactor) ? Number(locFactor).toFixed(2) : '—';
+    estimatedValueEl.textContent = fmt(value) + ' ر.ع';
+  }
+
+  wilayaInput.addEventListener('input', () => { populateRegions(); updatePricing(); });
+  regionInput.addEventListener('input', updatePricing);
+  useInput.addEventListener('input', updatePricing);
+  areaInput.addEventListener('input', recalc);
+
+  (async () => { await loadLocations(); })();
+
+  // Navigation: try to use selected bank if recognized
+  function findSelectedBankSlug(){
+    const list = document.getElementById('banksList');
+    const val = (bankInput.value || '').trim();
+    if(!val) return null;
+    const opts = list ? list.querySelectorAll('option') : [];
+    for(const opt of opts){
+      if((opt.value || '').trim() === val){
+        const slug = opt.getAttribute('data-slug');
+        if(slug) return slug;
+      }
+    }
+    return null;
+  }
+
+  const stepBankUrl = "{{ url_for('main.certified_step_bank', entity=entity, purpose='تثمين أرض') }}";
+  const stepAmountUrlBase = "{{ url_for('main.certified_step_amount', entity=entity, purpose='تثمين أرض') }}";
+  document.getElementById('continueBtn').addEventListener('click', function(e){
+    e.preventDefault();
+    const slug = findSelectedBankSlug();
+    if(slug){
+      window.location.href = stepAmountUrlBase + (stepAmountUrlBase.includes('?') ? '&' : '?') + 'bank=' + encodeURIComponent(slug);
+    } else {
+      window.location.href = stepBankUrl;
+    }
+  });
+})();
+</script>
+{% endblock %}

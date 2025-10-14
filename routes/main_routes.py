@@ -149,7 +149,7 @@ def certified_step_purpose():
     if entity == 'person':
         options = [
             {"title": "تثمين عقار قائم", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
-            {"title": "تثمين أرض", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
+            {"title": "تثمين أرض", "href": url_for('main.certified_land_input', entity=entity), "icon_class": "bi bi-geo", "color_class": "tile-success"},
             {"title": "تثمين بناء عقار", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
         ]
     else:
@@ -272,6 +272,19 @@ def certified_companies():
         amount=amount,
         companies=companies,
     )
+
+
+# -------------------------------
+# Certified: Land valuation input screen (bank/use/wilaya/region/area)
+# -------------------------------
+@main.route('/certified/land')
+def certified_land_input():
+    entity = request.args.get('entity', 'person')
+    # List of banks to populate the bank datalist
+    banks = BankProfile.query.order_by(BankProfile.id.asc()).all()
+    # Uses in Arabic for the land use field
+    uses = ['سكني', 'تجاري', 'صناعي', 'زراعي']
+    return render_template('certified_steps/land_input.html', entity=entity, banks=banks, uses=uses)
 
 
 @main.route('/companies')
