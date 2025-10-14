@@ -1,4 +1,7 @@
 from flask import Blueprint, render_template, abort, request, jsonify, url_for, redirect
+from flask_login import login_user, current_user
+from utils import format_phone_e164
+import secrets
 from models import (
     db,
     User,
@@ -370,6 +373,29 @@ def certified_offers():
     purpose = request.args.get('purpose', 'تثمين عقار قائم')
     bank_slug = request.args.get('bank')
     bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
+
+    # Auto-create/login client by phone if provided (for existing property valuation flow)
+    phone_raw = request.args.get('phone')
+    if phone_raw:
+        normalized_phone = format_phone_e164(phone_raw)
+        if normalized_phone:
+            user = User.query.filter_by(phone=normalized_phone).first()
+            if not user:
+                pseudo_email = f"phone-{normalized_phone.replace('+','')}@users.local"
+                # Ensure email uniqueness
+                if User.query.filter_by(email=pseudo_email).first():
+                    pseudo_email = f"phone-{normalized_phone.replace('+','')}-{secrets.token_hex(4)}@users.local"
+                user = User(name=normalized_phone, email=pseudo_email, role='client', phone=normalized_phone)
+                user.set_password(secrets.token_urlsafe(16))
+                db.session.add(user)
+                db.session.commit()
+            # Log in the user if not already the current user
+            try:
+                if (not current_user.is_authenticated) or (getattr(current_user, 'id', None) != user.id):
+                    login_user(user)
+            except Exception:
+                # Ignore login errors silently to avoid breaking the offers page
+                pass
 
     use_raw = request.args.get('use')
     wilaya = (request.args.get('wilaya') or '').strip() or None
