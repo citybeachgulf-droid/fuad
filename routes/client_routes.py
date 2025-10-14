@@ -289,6 +289,34 @@ def submit_request():
     # Bring list of companies for selection
     companies = User.query.filter_by(role='company').all()
 
+    # Fast-path: allow GET with valuation_type + optional company_id to auto-create and go to docs
+    if request.method == 'GET':
+        valuation_type_q = (request.args.get('valuation_type') or '').strip()
+        if valuation_type_q:
+            # Sanitize valuation type
+            allowed_types = {'property', 'land', 'house'}
+            if valuation_type_q not in allowed_types:
+                flash('نوع التثمين غير صالح', 'danger')
+                return render_template('client/submit.html', companies=companies, preselected_company_id=request.args.get('company_id', type=int))
+
+            company_id_q = request.args.get('company_id', type=int)
+            company_id: int | None = None
+            if company_id_q is not None:
+                company_user = User.query.filter_by(id=company_id_q, role='company').first()
+                if company_user:
+                    company_id = company_user.id
+
+            vr = ValuationRequest(
+                title=None,
+                description=None,
+                valuation_type=valuation_type_q,
+                client_id=current_user.id,
+                company_id=company_id,
+            )
+            db.session.add(vr)
+            db.session.commit()
+            return redirect(url_for('client.upload_docs', request_id=vr.id))
+
     if request.method == 'POST':
         # Step 1: Only valuation type (guided)
         valuation_type = (request.form.get('valuation_type') or '').strip() or None
