@@ -51,6 +51,29 @@
           {% endif %}
         </div>
 
+        {% if purpose == 'تثمين عقار قائم' %}
+        <div class="row g-3 align-items-end mt-1">
+          <div class="col-md-4">
+            <label class="form-label">عمر المبنى (بالسنوات)</label>
+            <input id="buildAge" list="ageList" class="form-control" placeholder="مثال: 10">
+            <datalist id="ageList">
+              <option value="1"></option>
+              <option value="2"></option>
+              <option value="3"></option>
+              <option value="5"></option>
+              <option value="10"></option>
+              <option value="15"></option>
+              <option value="20"></option>
+              <option value="25"></option>
+              <option value="30"></option>
+              <option value="35"></option>
+              <option value="40"></option>
+              <option value="50"></option>
+            </datalist>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="d-flex gap-2 mt-4">
           <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>متابعة اختيار البنك</button>
           <a id="skipBtn" class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
@@ -73,6 +96,7 @@
   const useInput = document.getElementById('useInput');
   const landArea = document.getElementById('landArea');
   const buildArea = document.getElementById('buildArea');
+  const buildAge = document.getElementById('buildAge');
   const continueBtn = document.getElementById('continueBtn');
 
   let LOCATIONS = [];
