@@ -42,6 +42,8 @@ class CompanyProfile(db.Model):
     logo_path = db.Column(db.String(255), nullable=True)
     services = db.Column(db.Text, nullable=True)
     limit_value = db.Column(db.Float, nullable=True)
+    # رسوم التثمين الأساسية التي تتقاضاها الشركة (ريال عماني)
+    valuation_fee = db.Column(db.Float, nullable=True)
     about = db.Column(db.Text, nullable=True)
     website = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

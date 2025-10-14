@@ -64,6 +64,10 @@
               <div class="small text-muted">التقدير المبدئي</div>
               <div class="h5 m-0 text-primary">{% if c.estimate %}{{ '{:,}'.format(c.estimate|int) }} ر.ع{% else %}—{% endif %}</div>
             </div>
+            <div class="text-end">
+              <div class="small text-muted">رسوم التثمين</div>
+              <div class="h6 m-0">{% if c.valuation_fee %}{{ '{:,}'.format(c.valuation_fee|int) }} ر.ع{% else %}—{% endif %}</div>
+            </div>
             <a class="btn btn-primary" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}">اطلب من هذه الشركة</a>
           </div>
         </div>
