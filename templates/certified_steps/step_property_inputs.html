@@ -75,7 +75,7 @@
         {% endif %}
 
         <div class="d-flex gap-2 mt-4">
-          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>متابعة اختيار البنك</button>
+          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-lightning-charge me-1"></i>احصل على عروض التثمين</button>
           <a id="skipBtn" class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
         </div>
       </div>
@@ -150,11 +150,22 @@
 
   continueBtn.addEventListener('click', function(){
     const bankSlug = findBankSlugByName(bankInput.value||'');
-    const url = new URL(window.location.origin + '{{ url_for('main.certified_step_bank') }}');
+    const url = new URL(window.location.origin + '{{ url_for('main.certified_offers') }}');
     url.searchParams.set('entity', '{{ entity }}');
     url.searchParams.set('purpose', '{{ purpose }}');
     if(bankSlug) url.searchParams.set('bank', bankSlug);
-    // We could also carry forward the user's inputs via query if needed
+    const w = (wilayaInput.value||'').trim();
+    const r = (regionInput.value||'').trim();
+    const use = (useInput.value||'').trim();
+    const la = parseFloat(landArea.value||'0')||0;
+    const ba = parseFloat(buildArea?.value||'0')||0;
+    const age = parseFloat(buildAge?.value||'0')||0;
+    if(w) url.searchParams.set('wilaya', w);
+    if(r) url.searchParams.set('region', r);
+    if(use) url.searchParams.set('use', use);
+    if(la>0) url.searchParams.set('land_area', String(la));
+    if(ba>0) url.searchParams.set('build_area', String(ba));
+    if(age>0) url.searchParams.set('build_age', String(age));
     window.location.href = url.toString();
   });
 })();
