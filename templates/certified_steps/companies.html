@@ -36,7 +36,8 @@
                 </div>
                 <div class="mt-auto d-flex gap-2">
                   <a class="btn btn-outline-primary btn-sm flex-fill" href="{{ url_for('main.company_detail', company_id=c.id) }}">تفاصيل</a>
-                  <a class="btn btn-primary btn-sm flex-fill" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}">طلب تثمين</a>
+                  {% set vt = 'property' if purpose == 'تثمين عقار قائم' else ('land' if purpose == 'تثمين أرض' else ('house' if purpose == 'تثمين بناء عقار' else 'property')) %}
+                  <a class="btn btn-primary btn-sm flex-fill" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}&valuation_type={{ vt }}">طلب تثمين</a>
                 </div>
               </div>
             </div>
