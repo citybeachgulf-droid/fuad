@@ -51,8 +51,8 @@
           {% endif %}
         </div>
 
-        {% if purpose == 'تثمين عقار قائم' %}
         <div class="row g-3 align-items-end mt-1">
+          {% if purpose == 'تثمين عقار قائم' %}
           <div class="col-md-4">
             <label class="form-label">عمر المبنى (بالسنوات)</label>
             <input id="buildAge" list="ageList" class="form-control" placeholder="مثال: 10">
@@ -71,12 +71,12 @@
               <option value="50"></option>
             </datalist>
           </div>
+          {% endif %}
           <div class="col-md-4">
             <label class="form-label">رقم الهاتف</label>
             <input id="phoneInput" type="tel" inputmode="tel" class="form-control" dir="ltr" placeholder="مثال: 9xxxxxxx أو +9689xxxxxxx">
           </div>
         </div>
-        {% endif %}
 
         <div class="d-flex gap-2 mt-4">
           <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>احصل على عرض التثمين</button>
