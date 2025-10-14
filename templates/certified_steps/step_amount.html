@@ -58,7 +58,7 @@
         row.className = 'd-flex align-items-center justify-content-between p-2 border rounded';
         row.innerHTML = `
           <div class="d-flex align-items-center gap-2">
-            <img src="${it.logo_path || ''}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">
+            <img src="${it.logo_path || ''}" alt="" class="size-36 img-cover rounded-8">
             <strong>${it.name}</strong>
           </div>
           <span class="badge text-bg-success">حد: ${new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 0 }).format(Number(it.limit_value || 0))}</span>
