@@ -71,6 +71,10 @@
               <option value="50"></option>
             </datalist>
           </div>
+          <div class="col-md-4">
+            <label class="form-label">رقم الهاتف</label>
+            <input id="phoneInput" type="tel" inputmode="tel" class="form-control" dir="ltr" placeholder="مثال: 9xxxxxxx أو +9689xxxxxxx">
+          </div>
         </div>
         {% endif %}
 
@@ -97,6 +101,7 @@
   const landArea = document.getElementById('landArea');
   const buildArea = document.getElementById('buildArea');
   const buildAge = document.getElementById('buildAge');
+  const phoneInput = document.getElementById('phoneInput');
   const continueBtn = document.getElementById('continueBtn');
 
   let LOCATIONS = [];
@@ -167,12 +172,14 @@
     const landAreaVal = (landArea && landArea.value) ? String(landArea.value) : '';
     const buildAreaVal = (buildArea && buildArea.value) ? String(buildArea.value) : '';
     const buildAgeVal = (buildAge && buildAge.value) ? String(buildAge.value) : '';
+    const phoneVal = (phoneInput && phoneInput.value) ? String(phoneInput.value) : '';
     if(useVal) url.searchParams.set('use', useVal);
     if(wilayaVal) url.searchParams.set('wilaya', wilayaVal);
     if(regionVal) url.searchParams.set('region', regionVal);
     if(landAreaVal) url.searchParams.set('land_area', landAreaVal);
     if(buildAreaVal) url.searchParams.set('build_area', buildAreaVal);
     if(buildAgeVal) url.searchParams.set('age', buildAgeVal);
+    if(phoneVal) url.searchParams.set('phone', phoneVal);
     window.location.href = url.toString();
   });
 })();
