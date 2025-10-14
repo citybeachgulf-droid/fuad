@@ -46,7 +46,15 @@
 
           <div class="col-md-6">
             <label class="form-label">مساحة الأرض (م²)</label>
-            <input id="areaInput" type="number" min="0" class="form-control" placeholder="مثال: 600">
+            <input id="areaInput" list="areaList" type="number" step="1" min="0" class="form-control" placeholder="مثال: 600">
+            <datalist id="areaList">
+              <option value="200"></option>
+              <option value="300"></option>
+              <option value="400"></option>
+              <option value="600"></option>
+              <option value="800"></option>
+              <option value="1000"></option>
+            </datalist>
           </div>
         </div>
 
