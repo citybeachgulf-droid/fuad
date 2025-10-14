@@ -288,6 +288,162 @@ def certified_property_inputs():
     return render_template('certified_steps/step_property_inputs.html', entity=entity, purpose=purpose)
 
 
+@main.route('/certified/offers')
+def certified_offers():
+    """Display valuation offers from companies based on entered inputs.
+
+    Accepts query params from step_property_inputs:
+      - entity, purpose
+      - bank (slug, optional)
+      - use (Arabic category), wilaya, region
+      - land_area, build_area, age
+    """
+    entity = request.args.get('entity', 'person')
+    purpose = request.args.get('purpose', 'تثمين عقار قائم')
+    bank_slug = request.args.get('bank')
+    bank = BankProfile.query.filter_by(slug=bank_slug).first() if bank_slug else None
+
+    use_raw = request.args.get('use')
+    wilaya = (request.args.get('wilaya') or '').strip() or None
+    region = (request.args.get('region') or '').strip() or None
+
+    def as_float(val):
+        try:
+            return float(val) if val not in (None, '') else None
+        except Exception:
+            return None
+
+    land_area = as_float(request.args.get('land_area'))
+    build_area = as_float(request.args.get('build_area'))
+    age_years = as_float(request.args.get('age'))
+
+    # Normalize use to our API expected keys
+    def normalize_use(value: str):
+        v = (value or '').strip().lower()
+        if not v:
+            return None
+        mapping = {
+            'housing': {'housing', 'residential', 'سكن', 'سكني', 'سكنية'},
+            'commercial': {'commercial', 'تجاري', 'تجارية'},
+            'industrial': {'industrial', 'صناعي', 'صناعية'},
+            'agricultural': {'agricultural', 'agriculture', 'زراعي', 'زراعية'},
+        }
+        for key, vals in mapping.items():
+            if v in vals:
+                return key
+        return None
+
+    normalized_use = normalize_use(use_raw)
+
+    # Helper to compute a basic valuation estimate per company using public/company prices
+    def compute_estimate(company_id: int) -> float | None:
+        # Fetch location pricing from existing API helpers logic (inline replicated)
+        # Try company-specific row first
+        company_profile = CompanyProfile.query.filter_by(user_id=company_id).first()
+        clp = None
+        lp = None
+        if company_profile and wilaya and region:
+            clp = CompanyLandPrice.query.filter_by(
+                company_profile_id=company_profile.id,
+                wilaya=wilaya,
+                region=region,
+            ).first()
+        if wilaya and region:
+            lp = LandPrice.query.filter_by(wilaya=wilaya, region=region).first()
+
+        def prices_map_from(obj):
+            if not obj:
+                return {}
+            return {
+                'housing': getattr(obj, 'price_housing', None),
+                'commercial': getattr(obj, 'price_commercial', None),
+                'industrial': getattr(obj, 'price_industrial', None),
+                'agricultural': getattr(obj, 'price_agricultural', None),
+            }
+
+        def first_non_null_price(price_map: dict):
+            for k in ('housing', 'commercial', 'industrial', 'agricultural'):
+                if price_map.get(k) is not None:
+                    return price_map.get(k)
+            return None
+
+        company_prices = prices_map_from(clp)
+        public_prices = prices_map_from(lp)
+        company_legacy = (getattr(clp, 'price_per_sqm', None) if clp and getattr(clp, 'price_per_sqm', None) is not None else (getattr(clp, 'price_per_meter', None) if clp else None))
+        public_legacy = (getattr(lp, 'price_per_sqm', None) if lp and getattr(lp, 'price_per_sqm', None) is not None else (getattr(lp, 'price_per_meter', None) if lp else None))
+
+        land_price = None
+        if normalized_use:
+            land_price = (
+                (company_prices.get(normalized_use) if company_prices else None)
+                or (public_prices.get(normalized_use) if public_prices else None)
+                or company_legacy
+                or public_legacy
+            )
+        if land_price is None:
+            land_price = (
+                first_non_null_price(company_prices)
+                or company_legacy
+                or first_non_null_price(public_prices)
+                or public_legacy
+            )
+
+        if land_price is None:
+            return None
+
+        # Defaults
+        build_price = 220.0
+        loc_factor = 1.0
+
+        la = float(land_area or 0)
+        ba = float(build_area or 0)
+        age = float(age_years or 0)
+        depreciation = max(0.40, 1 - age * 0.02)
+
+        land_val = la * float(land_price)
+        build_val = 0.0 if purpose == 'تثمين أرض' else ba * build_price * depreciation
+        total = (land_val + build_val) * loc_factor
+        return float(total)
+
+    # Build companies list: if bank selected, use approved companies for that bank; else, all companies
+    companies = []
+    base_q = db.session.query(CompanyProfile, User).join(User, CompanyProfile.user_id == User.id)
+    if bank:
+        # Filter by approved mapping
+        cab_q = (
+            db.session.query(CompanyApprovedBank.company_profile_id)
+            .filter(CompanyApprovedBank.bank_user_id == bank.user_id)
+        )
+        base_q = base_q.filter(CompanyProfile.id.in_(cab_q))
+
+    for profile, user in base_q.all():
+        estimate = compute_estimate(user.id)
+        companies.append({
+            'id': user.id,
+            'name': user.name,
+            'logo_path': profile.logo_path if profile.logo_path else None,
+            'estimate': estimate,
+            'limit_value': profile.limit_value,
+        })
+
+    # Sort: those with estimate first (desc), then by name
+    companies.sort(key=lambda x: (0 if x['estimate'] is None else -x['estimate'], x['name']))
+
+    return render_template(
+        'certified_steps/offers.html',
+        entity=entity,
+        purpose=purpose,
+        bank=bank,
+        use=use_raw,
+        wilaya=wilaya,
+        region=region,
+        land_area=land_area,
+        build_area=build_area,
+        age=age_years,
+        companies=companies,
+    )
+
+
 @main.route('/companies')
 def companies_list():
     companies = User.query.filter_by(role='company').all()
