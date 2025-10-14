@@ -45,10 +45,8 @@
                 <p class="text-muted">اختر نوع الخدمة المناسبة لك</p>
             </div>
             {{ cards_grid([
-              { 'title': 'تقييم فوري', 'href': url_for('main.quick_page'), 'icon_class': 'bi bi-lightning-charge', 'color_class': 'tile-success', 'subtitle': 'نتيجة تقديرية سريعة' },
-              { 'title': 'تقييم معتمد', 'href': url_for('main.certified_page'), 'icon_class': 'bi bi-patch-check', 'color_class': 'tile-primary', 'subtitle': 'طلب تقرير معتمد' },
-              { 'title': 'البنوك المشاركة', 'href': url_for('main.banks_list'), 'icon_class': 'bi bi-bank', 'color_class': 'tile-warning', 'subtitle': 'تعرف على البنوك' },
-              { 'title': 'شركات التثمين', 'href': url_for('main.companies_list'), 'icon_class': 'bi bi-buildings', 'color_class': 'tile-danger', 'subtitle': 'شاهد الشركات' },
+              { 'title': 'أفراد', 'href': url_for('main.certified_step_purpose', entity='person'), 'icon_class': 'bi bi-person-fill', 'color_class': 'tile-primary', 'subtitle': 'خيارات التمويل للأفراد' },
+              { 'title': 'شركات', 'href': url_for('main.certified_step_purpose', entity='company'), 'icon_class': 'bi bi-buildings', 'color_class': 'tile-success', 'subtitle': 'خدمات التمويل للشركات' },
             ]) }}
         </div>
     </section>
