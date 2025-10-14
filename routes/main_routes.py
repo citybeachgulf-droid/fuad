@@ -148,9 +148,9 @@ def certified_step_purpose():
     entity = request.args.get('entity', 'person')
     if entity == 'person':
         options = [
-            {"title": "شراء جديد", "href": url_for('main.certified_step_bank', entity=entity, purpose='buy'), "icon_class": "bi bi-bag-plus", "color_class": "tile-warning"},
-            {"title": "فك رهن", "href": url_for('main.certified_step_bank', entity=entity, purpose='release'), "icon_class": "bi bi-unlock", "color_class": "tile-warning"},
-            {"title": "نقل مديونية", "href": url_for('main.certified_step_bank', entity=entity, purpose='transfer'), "icon_class": "bi bi-arrow-left-right", "color_class": "tile-warning"},
+            {"title": "تثمين عقار قائم", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
+            {"title": "تثمين أرض", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
+            {"title": "تثمين بناء عقار", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
         ]
     else:
         options = [
