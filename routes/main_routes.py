@@ -107,8 +107,10 @@ def quick_step_location():
 def quick_step_summary():
     # جعل القيم الافتراضية بسيطة، مع إمكانية تعديلها من الواجهة
     prop_type = request.args.get('prop_type') or 'land'
-    # نحافظ على قيمة تقديرية ابتدائية ثابتة لإظهار أعلى البطاقة
-    estimate = 50000
+    # حساب تقدير مبدئي تلقائي اعتمادًا على أسعار الأراضي (شركة > عام)
+    # افتراض مبدئي لمساحة الأرض لبدء الحساب مباشرةً (يمكن للمستخدم تعديلها)
+    DEFAULT_LAND_AREA = 300.0
+    estimate = None
     # قائمة الشركات لعرضها في التقييم الفوري
     companies = User.query.filter_by(role='company').order_by(User.name.asc()).all()
     # اختيار مُسبق عبر الاستعلام (اختياري) + التحقق من وجود الشركة
@@ -121,6 +123,56 @@ def quick_step_summary():
         exists = User.query.filter_by(id=selected_company_id, role='company').first()
         if not exists:
             selected_company_id = None
+
+    # استخرج سعر أرض مبدئي (سكني) من أسعار الشركة أولاً ثم العامة
+    def pick_first_price(obj):
+        if not obj:
+            return None
+        for attr in (
+            'price_housing',
+            'price_commercial',
+            'price_industrial',
+            'price_agricultural',
+            'price_per_sqm',
+            'price_per_meter',
+        ):  # دعم الحقل القديم
+            val = getattr(obj, attr, None)
+            if val is not None:
+                try:
+                    return float(val)
+                except Exception:
+                    continue
+        return None
+
+    land_price = None
+    if selected_company_id is not None:
+        company_profile = CompanyProfile.query.filter_by(user_id=selected_company_id).first()
+        if company_profile:
+            clp = (
+                CompanyLandPrice.query
+                .filter_by(company_profile_id=company_profile.id)
+                .order_by(CompanyLandPrice.wilaya.asc(), CompanyLandPrice.region.asc())
+                .first()
+            )
+            land_price = pick_first_price(clp)
+
+    if land_price is None:
+        lp = (
+            LandPrice.query
+            .order_by(LandPrice.wilaya.asc(), LandPrice.region.asc())
+            .first()
+        )
+        land_price = pick_first_price(lp)
+
+    if land_price is not None:
+        try:
+            estimate = float(DEFAULT_LAND_AREA) * float(land_price)
+        except Exception:
+            estimate = None
+
+    # fallback إذا لم تتوفر أي أسعار
+    if estimate is None:
+        estimate = 50000
     return render_template(
         'quick/summary.html',
         estimate=estimate,
@@ -128,6 +180,7 @@ def quick_step_summary():
         loc=None,
         companies=companies,
         selected_company_id=selected_company_id,
+        default_land_area=int(DEFAULT_LAND_AREA),
     )
 
 
