@@ -43,10 +43,12 @@
             <label class="form-label">مساحة الأرض (م²)</label>
             <input id="landArea" type="number" min="0" class="form-control" placeholder="مثال: 300">
           </div>
+          {% if purpose != 'تثمين أرض' %}
           <div class="col-md-4">
             <label class="form-label">مساحة البناء (م²)</label>
             <input id="buildArea" type="number" min="0" class="form-control" placeholder="مثال: 200">
           </div>
+          {% endif %}
         </div>
 
         <div class="d-flex gap-2 mt-4">

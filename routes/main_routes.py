@@ -149,7 +149,7 @@ def certified_step_purpose():
     if entity == 'person':
         options = [
             {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
-            {"title": "تثمين أرض", "href": url_for('main.certified_step_bank', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
+            {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
             {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
         ]
     else:
