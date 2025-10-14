@@ -585,6 +585,15 @@ def _ensure_ads_upload_dir(app):
     return ads_upload
 
 
+# --- صفحة إضافة سيارة (زر جلب بيانات من رابط) ---
+@admin_bp.route('/cars/new', methods=['GET'])
+@login_required
+def car_new():
+    if current_user.role != 'admin':
+        return "غير مصرح لك بالوصول", 403
+    return render_template('admin/car_form.html')
+
+
 # --- تحديث بيانات بنك (المدير فقط) ---
 @admin_bp.route('/banks/<int:bank_id>/update', methods=['POST'])
 @login_required

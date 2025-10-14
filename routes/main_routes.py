@@ -15,6 +15,156 @@ from models import (
 
 main = Blueprint('main', __name__)
 
+# --- Utilities for lightweight metadata/car-info extraction from external URLs ---
+import re
+import ssl
+from urllib.parse import urlparse, urljoin
+import urllib.request
+from html.parser import HTMLParser
+
+class _SimpleMetaParser(HTMLParser):
+    """Very small HTML parser to collect title, meta tags, and image candidates.
+
+    Avoids external dependencies. Suitable for best-effort extraction only.
+    """
+    def __init__(self, base_url: str):
+        super().__init__()
+        self.base_url = base_url or ''
+        self.title_text = None
+        self._in_title = False
+        self.meta_map = {}
+        self.images = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs_dict = {k.lower(): v for k, v in attrs}
+        if tag.lower() == 'meta':
+            prop = attrs_dict.get('property') or attrs_dict.get('name')
+            content = attrs_dict.get('content')
+            if prop and content:
+                key = prop.strip().lower()
+                self.meta_map[key] = content.strip()
+        elif tag.lower() == 'img':
+            src = attrs_dict.get('src')
+            if src:
+                try:
+                    self.images.append(urljoin(self.base_url, src))
+                except Exception:
+                    self.images.append(src)
+        elif tag.lower() == 'base':
+            href = attrs_dict.get('href')
+            if href:
+                try:
+                    self.base_url = urljoin(self.base_url, href)
+                except Exception:
+                    self.base_url = href
+        elif tag.lower() == 'title':
+            self._in_title = True
+
+    def handle_endtag(self, tag):
+        if tag.lower() == 'title':
+            self._in_title = False
+
+    def handle_data(self, data):
+        if self._in_title:
+
+            self.title_text = (self.title_text or '') + data
+
+def _decode_html(bytes_data: bytes) -> str:
+    """Best-effort decode for HTML bytes (UTF-8 -> cp1256 -> latin1)."""
+    for enc in ('utf-8', 'cp1256', 'windows-1256', 'latin1'):
+        try:
+            return bytes_data.decode(enc, errors='replace')
+        except Exception:
+            continue
+    return bytes_data.decode('utf-8', errors='replace')
+
+def _extract_car_info(html_text: str, base_url: str) -> dict:
+    parser = _SimpleMetaParser(base_url)
+    try:
+        parser.feed(html_text)
+    except Exception:
+        # Continue with whatever was parsed
+        pass
+
+    meta = parser.meta_map
+    title = meta.get('og:title') or (parser.title_text.strip() if parser.title_text else None)
+    description = meta.get('og:description') or meta.get('description')
+
+    # Collect image candidates, prefer og:image if present
+    images = []
+    seen = set()
+    if meta.get('og:image'):
+        images.append(urljoin(base_url, meta.get('og:image')))
+        seen.add(images[0])
+    for img in parser.images:
+        if not img:
+            continue
+        full = urljoin(base_url, img)
+        if full not in seen:
+            images.append(full)
+            seen.add(full)
+
+    haystack = ' '.join(filter(None, [title or '', description or ''])) + ' ' + html_text[:5000]
+    haystack_l = haystack.lower()
+
+    # Price extraction (OMR / Rial Omani)
+    price = None
+    currency = None
+    price_patterns = [
+        r'(\d[\d\s,\.]{0,12})\s*(?:omr|ر\.?ع|ريال(?:\s*عماني)?)',
+        r'(?:السعر|price)\s*[:\-]?\s*(\d[\d\s,\.]{0,12})\s*(?:omr|ر\.?ع|ريال(?:\s*عماني)?)',
+    ]
+    for pat in price_patterns:
+        m = re.search(pat, haystack_l, flags=re.IGNORECASE)
+        if m:
+            raw = m.group(1)
+            try:
+                price_num = float(re.sub(r'[\s,]', '', raw))
+                price = price_num
+                if 'omr' in m.group(0).lower() or 'ر' in m.group(0):
+                    currency = 'OMR'
+                break
+            except Exception:
+                continue
+
+    # Year extraction (reasonable range)
+    year = None
+    for m in re.finditer(r'(19\d{2}|20\d{2})', haystack):
+        y = int(m.group(1))
+        if 1980 <= y <= 2035:
+            year = y
+            break
+
+    # Mileage extraction
+    mileage_km = None
+    km_match = re.search(r'(\d[\d\s,\.]{0,9})\s*(?:km|كم|كيلومتر)\b', haystack_l)
+    if km_match:
+        try:
+            mileage_km = int(float(re.sub(r'[\s,]', '', km_match.group(1))))
+        except Exception:
+            mileage_km = None
+
+    # Naive make/model guess from title (first two tokens)
+    make = None
+    model = None
+    if title:
+        words = [w for w in re.split(r'[\s\-|–|—|\|]+', title) if w and not w.isdigit()]
+        if words:
+            make = words[0]
+            if len(words) > 1:
+                model = words[1]
+
+    return {
+        'title': title,
+        'description': description,
+        'images': images[:5],
+        'price': price,
+        'currency': currency,
+        'year': year,
+        'mileage_km': mileage_km,
+        'make': make,
+        'model': model,
+    }
 @main.route('/')
 def landing():
     latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
@@ -320,6 +470,57 @@ def calculator():
         .all()
     )
     return render_template('calculator.html', offers=offers)
+
+
+# -------------------------------
+# API: Extract car data from external listing URL
+# -------------------------------
+@main.route('/api/extract_car', methods=['POST'])
+def api_extract_car():
+    """Best-effort extraction of car listing info from a given URL.
+
+    Expected payload (JSON or form):
+      - url: str (required) the car listing URL
+
+    Returns JSON with fields if detected: title, description, images[], price, currency,
+    year, mileage_km, make, model.
+    """
+    payload = request.get_json(silent=True) or request.form
+    url = (payload.get('url') or '').strip()
+    if not url:
+        return jsonify({'error': 'url is required'}), 400
+
+    # Basic URL sanity check
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return jsonify({'error': 'unsupported URL scheme'}), 400
+    except Exception:
+        return jsonify({'error': 'invalid URL'}), 400
+
+    # Build opener with sane headers; ignore SSL verification only if necessary
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (compatible; CarFetcher/1.0; +https://example.com)'
+            }
+        )
+        # Some environments may require relaxed SSL to fetch public pages
+        ctx = ssl.create_default_context()
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=8)
+        except Exception:
+            # Retry with unverified context only if strict fails
+            unverified = ssl._create_unverified_context()
+            resp = urllib.request.urlopen(req, context=unverified, timeout=8)
+        raw = resp.read()
+        html_text = _decode_html(raw)
+    except Exception as e:
+        return jsonify({'error': 'fetch_failed', 'detail': str(e)}), 502
+
+    info = _extract_car_info(html_text, url)
+    return jsonify({'ok': True, 'data': info})
 
 
 # -------------------------------

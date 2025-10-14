@@ -1,0 +1,119 @@
+{% extends 'admin/layout_admin.html' %}
+{% block title %}إضافة سيارة{% endblock %}
+{% block content %}
+<h2 class="h4 mb-3">إضافة سيارة</h2>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-9">
+        <label class="form-label">رابط السيارة</label>
+        <input id="carUrl" type="url" class="form-control" placeholder="https://example.com/car-listing" autocomplete="off">
+      </div>
+      <div class="col-md-3 d-grid">
+        <button id="fetchBtn" class="btn btn-outline-primary"><i class="bi bi-link-45deg me-1"></i>جلب البيانات</button>
+      </div>
+    </div>
+    <div id="fetchAlert" class="alert d-none mt-3"></div>
+
+    <hr class="my-4">
+    <form id="carForm" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">الماركة</label>
+        <input name="make" class="form-control" placeholder="مثال: Toyota">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">الموديل</label>
+        <input name="model" class="form-control" placeholder="مثال: Camry">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">سنة الصنع</label>
+        <input name="year" type="number" class="form-control" placeholder="مثال: 2019">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">السعر (ر.ع)</label>
+        <input name="price" type="number" step="0.01" class="form-control" placeholder="مثال: 5500">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">العداد (كم)</label>
+        <input name="mileage_km" type="number" class="form-control" placeholder="مثال: 120000">
+      </div>
+      <div class="col-12">
+        <label class="form-label">العنوان</label>
+        <input name="title" class="form-control" placeholder="عنوان الإعلان">
+      </div>
+      <div class="col-12">
+        <label class="form-label">الوصف</label>
+        <textarea name="description" class="form-control" rows="4" placeholder="تفاصيل إضافية"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">صور (روابط)</label>
+        <textarea name="images" class="form-control" rows="3" placeholder="ضع روابط الصور كل سطر على حدة"></textarea>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">رجوع</a>
+        <button type="button" class="btn btn-success" disabled>حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  const urlInput = document.getElementById('carUrl');
+  const fetchBtn = document.getElementById('fetchBtn');
+  const alertEl = document.getElementById('fetchAlert');
+  const form = document.getElementById('carForm');
+
+  function showAlert(type, msg){
+    alertEl.className = 'alert alert-' + type;
+    alertEl.textContent = msg;
+    alertEl.classList.remove('d-none');
+  }
+
+  async function fetchCar(){
+    const url = (urlInput.value || '').trim();
+    if (!url){
+      showAlert('warning', 'يرجى إدخال رابط السيارة أولاً');
+      return;
+    }
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = '...جاري الجلب';
+    alertEl.className = 'alert d-none';
+    try {
+      const res = await fetch('/api/extract_car', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error){
+        showAlert('danger', data.error || 'تعذر جلب البيانات');
+        return;
+      }
+      const d = data.data || {};
+      form.elements['make'].value = d.make || '';
+      form.elements['model'].value = d.model || '';
+      form.elements['year'].value = d.year || '';
+      form.elements['price'].value = (d.currency === 'OMR' ? d.price : d.price) || '';
+      form.elements['mileage_km'].value = d.mileage_km || '';
+      form.elements['title'].value = d.title || '';
+      form.elements['description'].value = d.description || '';
+      form.elements['images'].value = (Array.isArray(d.images) ? d.images.join('\n') : '');
+      showAlert('success', 'تم جلب البيانات وتعبئة الحقول');
+    } catch (e) {
+      showAlert('danger', 'خطأ بالشبكة');
+    } finally {
+      fetchBtn.disabled = false;
+      fetchBtn.textContent = 'جلب البيانات';
+    }
+  }
+
+  fetchBtn && fetchBtn.addEventListener('click', fetchCar);
+})();
+</script>
+{% endblock %}
