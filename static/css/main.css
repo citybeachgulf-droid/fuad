@@ -96,6 +96,40 @@ body {
 .tile-select input[type="radio"], .tile-select input[type="checkbox"] { display: none; }
 .tile-select.active, .tile-select:has(input:checked) { border-color: rgba(31,111,235,.55); box-shadow: 0 0 0 6px rgba(31,111,235,.12); }
 
+/* Square variant for selectable tiles (used in CTA grid) */
+.tile-select.tile-square {
+  display: block;            /* override row layout */
+  padding: 0;                /* inner wrapper handles spacing */
+  position: relative;
+  aspect-ratio: 1 / 1;       /* 1:1 square */
+}
+.tile-select.tile-square .tile-square-inner {
+  position: absolute;
+  inset: 12px;               /* visual padding */
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.tile-select.tile-square .tile-icon {
+  width: 56px;
+  height: 56px;
+}
+@supports not (aspect-ratio: 1 / 1) {
+  .tile-select.tile-square::before {
+    content: "";
+    display: block;
+    padding-top: 100%;
+  }
+  .tile-select.tile-square .tile-square-inner {
+    position: absolute;
+    inset: 12px;
+  }
+}
+
 .tile-primary { background: linear-gradient(135deg, #e3f2ff, #f0f7ff); border-color: #bfdbfe; }
 .tile-success { background: linear-gradient(135deg, #e9fbf0, #f3fff8); border-color: #bbf7d0; }
 .tile-warning { background: linear-gradient(135deg, #fff7e6, #fffbf2); border-color: #fde68a; }

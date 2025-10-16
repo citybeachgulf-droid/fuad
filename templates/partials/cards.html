@@ -1,9 +1,11 @@
 {% macro card_link(title, href, icon_class='bi bi-grid', color_class='tile-primary', subtitle=None) %}
-  <a href="{{ href }}" class="tile-select {{ color_class }} text-decoration-none text-dark">
-    <span class="tile-icon bg-white"><i class="{{ icon_class }}"></i></span>
-    <span class="d-flex flex-column">
-      <span class="tile-label">{{ title }}</span>
-      {% if subtitle %}<span class="tile-desc">{{ subtitle }}</span>{% endif %}
+  <a href="{{ href }}" class="tile-select tile-square {{ color_class }} text-decoration-none text-dark" data-aos="zoom-in">
+    <span class="tile-square-inner">
+      <span class="tile-icon bg-white"><i class="{{ icon_class }}"></i></span>
+      <span class="d-flex flex-column align-items-center">
+        <span class="tile-label">{{ title }}</span>
+        {% if subtitle %}<span class="tile-desc">{{ subtitle }}</span>{% endif %}
+      </span>
     </span>
   </a>
 {% endmacro %}
