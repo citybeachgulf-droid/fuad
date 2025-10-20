@@ -1,8 +1,8 @@
 /* Hero section */
 .hero {
   height: 70vh;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: linear-gradient(135deg, var(--color-gray-blue), var(--color-cool-blue));
+  color: var(--color-white);
   text-align: center;
   padding: 2rem;
   display: flex;

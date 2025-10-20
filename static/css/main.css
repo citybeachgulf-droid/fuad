@@ -1,20 +1,48 @@
-/* Color palette: dark blue, gray, white */
+/* Global visual identity palette */
 :root {
-  --brand-dark: #0e2a47;
-  --brand-accent: #1f6feb;
+  /* Core palette */
+  --color-white: #ffffff;
+  --color-dark-blue-gray: #374568;
+  --color-mid-blue: #425172;
+  --color-navy-dark: #354366;
+  --color-navy-darker: #324063;
+  --color-gray-navy: #344265;
+  --color-gray-blue: #364467;
+  --color-cool-blue: #3e4d6e;
+
+  /* Legacy tokens mapped to new palette for backward compatibility */
+  --brand-dark: var(--color-navy-darker);
+  --brand-accent: var(--color-cool-blue);
+
+  /* Shared neutrals and states */
   --gray-100: #f8f9fb;
   --gray-200: #eef1f6;
   --gray-600: #6b7280;
   --success: #22c55e;
+
+  /* Helpful RGB vars for translucent effects */
+  --accent-rgb: 62, 77, 110;   /* color-cool-blue */
+  --primary-rgb: 62, 77, 110;
+
+  /* Bootstrap theme overrides */
+  --bs-primary: #3e4d6e;   /* color-cool-blue */
+  --bs-secondary: #425172; /* color-mid-blue */
+  --bs-dark: #324063;      /* color-navy-darker */
+  --bs-light: #f8f9fb;
+  --bs-link-color: #3e4d6e;
+  --bs-link-hover-color: #364467;
+  --bs-body-bg: #ffffff;
+  --bs-body-color: #212529;
 }
 
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: var(--gray-100);
+  color: #1f2937;
 }
 
 .hero-card {
-  background: linear-gradient(135deg, var(--brand-dark), #15395f);
+  background: linear-gradient(135deg, var(--color-navy-darker), var(--color-gray-blue));
   color: #fff;
   border: none;
   border-radius: 18px;
@@ -29,7 +57,7 @@ body {
 }
 .hero-cta-btn:hover, .hero-cta-btn:focus {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(31,111,235,0.35);
+  box-shadow: 0 12px 24px rgba(var(--accent-rgb), 0.35);
 }
 
 .card-hover:hover {
@@ -94,7 +122,7 @@ body {
 .tile-select { cursor: pointer; border-radius: 18px; padding: 18px; border: 2px solid transparent; display: flex; align-items: center; gap: 12px; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
 .tile-select:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.12); }
 .tile-select input[type="radio"], .tile-select input[type="checkbox"] { display: none; }
-.tile-select.active, .tile-select:has(input:checked) { border-color: rgba(31,111,235,.55); box-shadow: 0 0 0 6px rgba(31,111,235,.12); }
+.tile-select.active, .tile-select:has(input:checked) { border-color: rgba(var(--accent-rgb), .55); box-shadow: 0 0 0 6px rgba(var(--accent-rgb), .12); }
 
 /* Square variant for selectable tiles (used in CTA grid) */
 .tile-select.tile-square {
@@ -195,6 +223,50 @@ body {
   justify-content: center;
   font-weight: 800;
   color: var(--brand-dark);
+}
+
+/* Bootstrap component theming aligned to the palette */
+.btn-primary {
+  background-color: var(--color-cool-blue);
+  border-color: var(--color-cool-blue);
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--color-gray-blue);
+  border-color: var(--color-gray-blue);
+}
+.btn-outline-primary {
+  color: var(--color-cool-blue);
+  border-color: var(--color-cool-blue);
+}
+.btn-outline-primary:hover {
+  background-color: var(--color-cool-blue);
+  border-color: var(--color-cool-blue);
+  color: var(--color-white);
+}
+
+a { color: var(--bs-link-color); }
+a:hover { color: var(--bs-link-hover-color); }
+
+/* Navbar palette override */
+.navbar-dark.bg-dark {
+  background-color: var(--color-navy-darker) !important;
+}
+
+/* Brand gradient helpers */
+.btn-gradient {
+  background-image: linear-gradient(135deg, var(--color-gray-blue), var(--color-cool-blue));
+  color: var(--color-white);
+  border: none;
+}
+.btn-gradient:hover, .btn-gradient:focus {
+  background-image: linear-gradient(135deg, var(--color-cool-blue), var(--color-gray-blue));
+  color: var(--color-white);
+}
+
+/* Form focus aligned with brand */
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-cool-blue);
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
 /* Navbar brand small logo */
