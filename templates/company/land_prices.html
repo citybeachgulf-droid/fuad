@@ -62,8 +62,8 @@
     <div class="alert alert-light">لا توجد سجلات.</div>
   {% else %}
   <div class="table-responsive">
-    <table class="table align-middle table-hover" style="background-color: #f9f9f9;">
-      <thead style="background-color: #e9ecef;">
+    <table class="table align-middle table-hover bg-light">
+      <thead class="table-light">
         <tr>
           <th>الولاية</th>
           <th>المنطقة</th>
@@ -77,7 +77,7 @@
       </thead>
       <tbody>
       {% for it in items %}
-        <tr style="background-color: #ffffff;">
+        <tr class="bg-white">
           <td style="min-width:120px"><input class="form-control form-control-sm" name="wilaya" value="{{ it.wilaya }}" form="form-{{ it.id }}"></td>
           <td style="min-width:200px"><input class="form-control form-control-sm" name="region" value="{{ it.region }}" form="form-{{ it.id }}"></td>
           <td><input class="form-control form-control-sm" name="price_housing" value="{{ it.price_housing if it.price_housing is not none else '' }}" form="form-{{ it.id }}"></td>

@@ -86,8 +86,8 @@
 
   <!-- Requests Table -->
   <div class="table-responsive">
-    <table class="table table-hover align-middle" style="background-color: #f9f9f9;">
-      <thead style="background-color: #e9ecef;">
+    <table class="table table-hover align-middle bg-light">
+      <thead class="table-light">
         <tr>
           <th>ID</th>
           <th>العنوان</th>
@@ -99,7 +99,7 @@
       </thead>
       <tbody>
         {% for r in requests %}
-        <tr style="background-color: #ffffff;">
+        <tr class="bg-white">
           <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}" class="text-decoration-none text-dark">{{ r.id }}</a></td>
           <td><a href="{{ url_for('company.request_detail', request_id=r.id) }}" class="text-decoration-none text-dark">{{ r.title }}</a></td>
           <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
