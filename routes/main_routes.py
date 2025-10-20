@@ -14,6 +14,7 @@ from models import (
     Testimonial,
     LandPrice,
     CompanyLandPrice,
+    ValuationPurpose,
 )
 
 main = Blueprint('main', __name__)
@@ -216,19 +217,64 @@ def certified_step_entity():
 @main.route('/certified/step/purpose')
 def certified_step_purpose():
     entity = request.args.get('entity', 'person')
-    if entity == 'person':
-        options = [
-            {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
-            {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
-            {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
-        ]
+    # حاول جلب الخيارات ديناميكياً من الجدول إن وُجدت بيانات
+    options = []
+    try:
+        rows = (
+            ValuationPurpose.query
+            .filter_by(entity=entity, is_active=True)
+            .order_by(ValuationPurpose.sort_order.asc(), ValuationPurpose.id.asc())
+            .all()
+        )
+    except Exception:
+        rows = []
+
+    if rows:
+        for row in rows:
+            param_value = (row.param_value or row.display_name)
+            # تحديد الخطوة التالية بالمسار المناسب
+            if (row.next_action or '').strip().lower() == 'property_inputs':
+                href = url_for('main.certified_property_inputs', entity=entity, purpose=param_value)
+            elif (row.next_action or '').strip().lower() == 'offers':
+                href = url_for('main.certified_offers', entity=entity, purpose=param_value)
+            else:
+                # الافتراضي: اختيار البنك
+                href = url_for('main.certified_step_bank', entity=entity, purpose=param_value)
+
+            # محاذاة مسار الأيقونة ليكون صالحاً (داخلي أو خارجي)
+            icon_url = None
+            try:
+                ip = (row.icon_path or '').strip()
+                if ip:
+                    lower = ip.lower()
+                    if lower.startswith('http://') or lower.startswith('https://'):
+                        icon_url = ip
+                    else:
+                        icon_url = url_for('static', filename=ip)
+            except Exception:
+                icon_url = None
+
+            options.append({
+                "title": row.display_name,
+                "href": href,
+                # template يدعم icon_path اختيارياً
+                "icon_path": icon_url,
+            })
     else:
-        options = [
-            {"title": "بيع", "href": url_for('main.certified_step_bank', entity=entity, purpose='sell'), "icon_class": "bi bi-cash-coin", "color_class": "tile-warning"},
-            {"title": "شراء", "href": url_for('main.certified_step_bank', entity=entity, purpose='buy'), "icon_class": "bi bi-bag", "color_class": "tile-warning"},
-            {"title": "تقارير مالية", "href": url_for('main.certified_step_bank', entity=entity, purpose='reports'), "icon_class": "bi bi-clipboard-data", "color_class": "tile-warning"},
-            {"title": "إعادة تمويل", "href": url_for('main.certified_step_bank', entity=entity, purpose='refinance'), "icon_class": "bi bi-arrow-repeat", "color_class": "tile-warning"},
-        ]
+        # fallback القديم في حال عدم توفر بيانات في الجدول
+        if entity == 'person':
+            options = [
+                {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين عقار قائم'), "icon_class": "bi bi-house-check", "color_class": "tile-primary"},
+                {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين أرض'), "icon_class": "bi bi-geo", "color_class": "tile-success"},
+                {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity=entity, purpose='تثمين بناء عقار'), "icon_class": "bi bi-tools", "color_class": "tile-warning"},
+            ]
+        else:
+            options = [
+                {"title": "بيع", "href": url_for('main.certified_step_bank', entity=entity, purpose='sell'), "icon_class": "bi bi-cash-coin", "color_class": "tile-warning"},
+                {"title": "شراء", "href": url_for('main.certified_step_bank', entity=entity, purpose='buy'), "icon_class": "bi bi-bag", "color_class": "tile-warning"},
+                {"title": "تقارير مالية", "href": url_for('main.certified_step_bank', entity=entity, purpose='reports'), "icon_class": "bi bi-clipboard-data", "color_class": "tile-warning"},
+                {"title": "إعادة تمويل", "href": url_for('main.certified_step_bank', entity=entity, purpose='refinance'), "icon_class": "bi bi-arrow-repeat", "color_class": "tile-warning"},
+            ]
     return render_template('certified_steps/step_purpose.html', options=options, entity=entity)
 
 

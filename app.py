@@ -240,6 +240,29 @@ if __name__ == '__main__':
                 for col in ['created_at','price_housing','price_commercial','price_industrial','price_agricultural','price_per_sqm','price_per_meter']:
                     if col not in company_land_cols:
                         conn.execute(text(f'ALTER TABLE company_land_prices ADD COLUMN {col} FLOAT'))
+            # Seed default valuation purposes if table exists and empty
+            try:
+                # Check table existence
+                tables = [r[0] for r in inspector.get_table_names()]
+                if 'valuation_purposes' in tables:
+                    from models import ValuationPurpose
+                    if ValuationPurpose.query.count() == 0:
+                        defaults = [
+                            # Entity: person -> go to property inputs
+                            dict(entity='person', key='existing_property', display_name='تثمين عقار قائم', param_value='تثمين عقار قائم', next_action='property_inputs', icon_path='img/1.png', sort_order=1),
+                            dict(entity='person', key='land', display_name='تثمين أرض', param_value='تثمين أرض', next_action='property_inputs', icon_path='img/2.png', sort_order=2),
+                            dict(entity='person', key='build_property', display_name='تثمين بناء عقار', param_value='تثمين بناء عقار', next_action='property_inputs', icon_path='img/3.png', sort_order=3),
+                            # Entity: company -> go to bank selection
+                            dict(entity='company', key='sell', display_name='بيع', param_value='sell', next_action='bank', icon_path=None, sort_order=1),
+                            dict(entity='company', key='buy', display_name='شراء', param_value='buy', next_action='bank', icon_path=None, sort_order=2),
+                            dict(entity='company', key='reports', display_name='تقارير مالية', param_value='reports', next_action='bank', icon_path=None, sort_order=3),
+                            dict(entity='company', key='refinance', display_name='إعادة تمويل', param_value='refinance', next_action='bank', icon_path=None, sort_order=4),
+                        ]
+                        for d in defaults:
+                            db.session.add(ValuationPurpose(**d))
+                        db.session.commit()
+            except Exception:
+                pass
         except Exception:
             pass
 

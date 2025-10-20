@@ -7,6 +7,37 @@ import secrets
 db = SQLAlchemy()
 
 # ================================
+# أغراض/أهداف التقييم (Dynamic purposes)
+# ================================
+class ValuationPurpose(db.Model):
+    __tablename__ = 'valuation_purposes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # الكيان المستهدف: person أو company
+    entity = db.Column(db.String(20), nullable=False, index=True)
+    # مفتاح برمجي فريد ضمن نفس الكيان (slug)
+    key = db.Column(db.String(100), nullable=False)
+    # الاسم المعروض للمستخدم (قد يكون بالعربية)
+    display_name = db.Column(db.String(150), nullable=False)
+    # القيمة التي تُمرر عبر الاستعلام كـ purpose (افتراضي = display_name)
+    param_value = db.Column(db.String(150), nullable=True)
+    # الخطوة التالية: property_inputs أو bank أو offers
+    next_action = db.Column(db.String(50), nullable=False, default='bank')
+    # مسار الأيقونة داخل static (مثل: img/1.png) أو رابط خارجي كامل
+    icon_path = db.Column(db.String(255), nullable=True)
+    # ترتيب العرض
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    # تفعيل/تعطيل الغرض
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('entity', 'key', name='uq_val_purpose_entity_key'),
+    )
+
+    def __repr__(self):
+        return f"<ValuationPurpose {self.entity}:{self.key}>"
+
+# ================================
 # نموذج المستخدم
 # ================================
 class User(db.Model, UserMixin):
