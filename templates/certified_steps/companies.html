@@ -1,45 +1,221 @@
 {% extends 'base.html' %}
 {% block title %}تقييم معتمد - الشركات المعتمدة{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --white: #ffffff;
+  --blue-dark-gray: #374568;
+  --blue-mid: #425172;
+  --navy-dark: #354366;
+  --navy-darker: #324063;
+  --gray-navy: #344265;
+  --gray-blue: #364467;
+  --cool-blue: #3e4d6e;
+}
+
+/* ====== Reset ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--blue-dark-gray);
+  color: var(--white);
+}
+
+/* ====== Container ====== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ====== Header ====== */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 1.8rem;
+}
+
+.page-header a.back-btn {
+  text-decoration: none;
+  color: var(--cool-blue);
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.page-header a.back-btn:hover {
+  color: var(--white);
+}
+
+/* ====== Info Bar ====== */
+.info-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  color: #cfd4e0;
+  font-size: 0.95rem;
+}
+
+.info-bar div strong {
+  color: var(--white);
+}
+
+/* ====== Alerts ====== */
+.alert-warning {
+  background: #ff9800;
+  color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* ====== Companies Grid ====== */
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ====== Company Card ====== */
+.company-card {
+  background: var(--navy-dark);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.company-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+
+.company-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.company-header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.company-header strong {
+  flex-grow: 1;
+  font-size: 1.1rem;
+}
+
+.company-header .limit-badge {
+  background: #28a745;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--white);
+}
+
+/* ====== Card Buttons ====== */
+.card-buttons {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.card-buttons a {
+  text-decoration: none;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.card-buttons a.details-btn {
+  background: transparent;
+  border: 2px solid var(--cool-blue);
+  color: var(--cool-blue);
+}
+
+.card-buttons a.details-btn:hover {
+  background: var(--cool-blue);
+  color: var(--white);
+}
+
+.card-buttons a.request-btn {
+  background: linear-gradient(135deg, var(--cool-blue), var(--gray-blue));
+  color: var(--white);
+}
+
+.card-buttons a.request-btn:hover {
+  background: linear-gradient(135deg, var(--gray-blue), var(--cool-blue));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .info-bar {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="py-4">
+<section>
   <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h4 m-0">الشركات المعتمدة</h1>
-      <a href="{{ url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=bank.slug if bank else None) }}" class="btn btn-link">رجوع</a>
+    <div class="page-header">
+      <h1>الشركات المعتمدة</h1>
+      <a href="{{ url_for('main.certified_step_amount', entity=entity, purpose=purpose, bank=bank.slug if bank else None) }}" class="back-btn">رجوع</a>
     </div>
 
-    <div class="mb-3 text-muted">
-      <div class="d-flex flex-wrap gap-3">
-        <div><strong>الجهة:</strong> {{ 'فرد' if entity == 'person' else 'شركة' }}</div>
-        <div><strong>الغرض:</strong> {{ purpose }}</div>
-        <div><strong>البنك:</strong> {{ bank.user.name if bank and bank.user else (bank.slug if bank else '—') }}</div>
-        <div><strong>المبلغ:</strong> {% if amount is not none %}{{ '{:,}'.format(amount|int if amount is number else amount) }} ريال{% else %}—{% endif %}</div>
-      </div>
+    <div class="info-bar">
+      <div><strong>الجهة:</strong> {{ 'فرد' if entity == 'person' else 'شركة' }}</div>
+      <div><strong>الغرض:</strong> {{ purpose }}</div>
+      <div><strong>البنك:</strong> {{ bank.user.name if bank and bank.user else (bank.slug if bank else '—') }}</div>
+      <div><strong>المبلغ:</strong> {% if amount is not none %}{{ '{:,}'.format(amount|int if amount is number else amount) }} ريال{% else %}—{% endif %}</div>
     </div>
 
     {% if not companies or companies|length == 0 %}
-      <div class="alert alert-warning">لا توجد شركات مطابقة للمعايير المحددة.</div>
+      <div class="alert-warning">لا توجد شركات مطابقة للمعايير المحددة.</div>
     {% else %}
-      <div class="row g-3">
+      <div class="companies-grid">
         {% for c in companies %}
-          <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm">
-              <div class="card-body d-flex flex-column">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  {% if c.logo_path %}
-                    <img src="{{ c.logo_path }}" alt="logo" class="size-48 img-cover rounded-8">
-                  {% endif %}
-                  <div class="d-flex align-items-center justify-content-between w-100">
-                    <strong>{{ c.name }}</strong>
-                    <span class="badge text-bg-success">حد: {{ '%.0f'|format(c.limit_value or 0) }}</span>
-                  </div>
-                </div>
-                <div class="mt-auto d-flex gap-2">
-                  <a class="btn btn-outline-primary btn-sm flex-fill" href="{{ url_for('main.company_detail', company_id=c.id) }}">تفاصيل</a>
-                  {% set vt = 'property' if purpose == 'تثمين عقار قائم' else ('land' if purpose == 'تثمين أرض' else ('house' if purpose == 'تثمين بناء عقار' else 'property')) %}
-                  <a class="btn btn-primary btn-sm flex-fill" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}&valuation_type={{ vt }}">طلب تثمين</a>
-                </div>
-              </div>
+          <div class="company-card">
+            <div class="company-header">
+              {% if c.logo_path %}
+                <img src="{{ c.logo_path }}" alt="logo">
+              {% endif %}
+              <strong>{{ c.name }}</strong>
+              <span class="limit-badge">حد: {{ '%.0f'|format(c.limit_value or 0) }}</span>
+            </div>
+            <div class="card-buttons">
+              <a class="details-btn" href="{{ url_for('main.company_detail', company_id=c.id) }}">تفاصيل</a>
+              {% set vt = 'property' if purpose == 'تثمين عقار قائم' else ('land' if purpose == 'تثمين أرض' else ('house' if purpose == 'تثمين بناء عقار' else 'property')) %}
+              <a class="request-btn" href="{{ url_for('client.submit_request') }}?company_id={{ c.id }}&valuation_type={{ vt }}">طلب تثمين</a>
             </div>
           </div>
         {% endfor %}

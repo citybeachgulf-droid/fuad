@@ -1,14 +1,188 @@
 {% extends 'base.html' %}
-{% from 'partials/cards.html' import cards_grid %}
 {% block title %}تقييم معتمد - الغرض{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --white: #ffffff;
+  --blue-dark-gray: #374568;
+  --blue-mid: #425172;
+  --navy-dark: #354366;
+  --navy-darker: #324063;
+  --gray-navy: #344265;
+  --gray-blue: #364467;
+  --cool-blue: #3e4d6e;
+  --shadow-color: rgba(0,0,0,0.35);
+}
+
+body {
+  margin:0; padding:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, var(--white), var(--blue-mid));
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+.container { max-width: 1200px; margin:0 auto; padding:30px; }
+
+.page-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:50px;
+}
+
+.page-header h1 {
+  font-size:2.5rem; font-weight:bold; color: var(--blue-dark-gray);
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+}
+
+.page-header a.back-btn {
+  text-decoration:none; color: var(--cool-blue); font-weight:bold; font-size:1rem;
+  transition: color 0.3s ease;
+}
+
+.page-header a.back-btn:hover { color: var(--blue-dark-gray); }
+
+/* Cards Grid */
+.cards-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap:30px;
+  perspective:1200px;
+}
+
+/* Card */
+.card-option {
+  position: relative;
+  background: linear-gradient(145deg, var(--navy-dark), var(--gray-navy));
+  border-radius:25px;
+  padding:35px 20px;
+  text-align:center;
+  cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border:1px solid var(--gray-blue);
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease, box-shadow 0.5s ease, background 0.5s ease;
+  animation: fadeInUp 0.7s ease forwards;
+  opacity:0;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* Shine Effect */
+.card-option::before {
+  content:'';
+  position:absolute;
+  top:0; left:-75%;
+  width:50%; height:100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.0) 100%);
+  transform: skewX(-25deg);
+  transition: all 0.5s ease;
+}
+
+.card-option:hover::before {
+  left:150%;
+}
+
+/* Icon Circle */
+.card-option .icon-circle {
+  width:90px; height:90px; border-radius:50%;
+  background: var(--blue-mid);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:15px;
+  box-shadow:0 12px 30px var(--shadow-color);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.card-option .icon-circle img {
+  width:45px; height:45px; object-fit:contain;
+}
+
+/* Text */
+.card-option h3 { font-size:1.3rem; font-weight:700; color:var(--white); margin-bottom:5px; }
+.card-option p { font-size:0.95rem; color:#d1d4de; }
+
+/* Hover 3D + Glow */
+.card-option:hover {
+  transform: scale(1.08) rotateX(var(--tiltX,0deg)) rotateY(var(--tiltY,0deg));
+  box-shadow:0 30px 60px rgba(0,0,0,0.45);
+  background: linear-gradient(145deg, var(--cool-blue), var(--gray-blue));
+}
+
+.card-option:hover .icon-circle {
+  transform: scale(1.25) rotate(-5deg);
+  background: linear-gradient(145deg, var(--cool-blue), var(--gray-blue));
+}
+
+/* Fade In Animation */
+@keyframes fadeInUp {
+  0% { opacity:0; transform:translateY(30px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+
+/* Staggered */
+.card-option:nth-child(1){animation-delay:0.1s;}
+.card-option:nth-child(2){animation-delay:0.2s;}
+.card-option:nth-child(3){animation-delay:0.3s;}
+.card-option:nth-child(4){animation-delay:0.4s;}
+.card-option:nth-child(5){animation-delay:0.5s;}
+
+/* Responsive */
+@media(max-width:768px){
+  .page-header{flex-direction:column;align-items:flex-start;gap:15px;}
+  .card-option{padding:25px 15px;}
+  .card-option .icon-circle{width:70px;height:70px;}
+  .card-option .icon-circle img{width:35px;height:35px;}
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="py-4">
+<section>
   <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h4 m-0">اختر الغرض</h1>
-      <a href="{{ url_for('main.certified_step_entity') }}" class="btn btn-link">رجوع</a>
+    <div class="page-header">
+      <h1>اختر الغرض</h1>
+      <a href="{{ url_for('main.certified_step_entity') }}" class="back-btn">رجوع</a>
     </div>
-    {{ cards_grid(options) }}
+
+    <div class="cards-grid">
+      {% for option in options %}
+      <a href="{{ option.href }}" class="card-option" data-index="{{ loop.index0 }}">
+        {% if option.icon_path %}
+        <div class="icon-circle">
+          <img src="{{ option.icon_path }}" alt="{{ option.title }}">
+        </div>
+        {% endif %}
+        <h3>{{ option.title }}</h3>
+        {% if option.subtitle %}
+        <p>{{ option.subtitle }}</p>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const cards = document.querySelectorAll('.card-option');
+
+cards.forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left; 
+    const y = e.clientY - rect.top;
+    const centerX = rect.width/2;
+    const centerY = rect.height/2;
+    const tiltX = ((y - centerY)/centerY)*8;
+    const tiltY = ((x - centerX)/centerX)*8;
+    card.style.setProperty('--tiltX', tiltX+'deg');
+    card.style.setProperty('--tiltY', tiltY+'deg');
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.setProperty('--tiltX','0deg');
+    card.style.setProperty('--tiltY','0deg');
+  });
+});
+</script>
 {% endblock %}

@@ -1,187 +1,178 @@
 {% extends 'base.html' %}
 {% block title %}تقييم معتمد - إدخال بيانات العقار{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --white: #ffffff;
+  --blue-dark-gray: #374568;
+  --blue-mid: #425172;
+  --navy-dark: #354366;
+  --navy-darker: #324063;
+  --gray-navy: #344265;
+  --gray-blue: #364467;
+  --cool-blue: #3e4d6e;
+  --primary-gradient: linear-gradient(135deg, #3e4d6e, #425172);
+  --btn-hover-gradient: linear-gradient(135deg, #425172, #3e4d6e);
+}
+
+/* ====== Reset ====== */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, var(--white), var(--blue-mid));
+  color: var(--blue-dark-gray);
+}
+
+/* ====== Container ====== */
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+/* ====== Header ====== */
+.page-header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 25px;
+}
+
+.page-header h1 { font-size: 1.8rem; color: var(--navy-darker); }
+.page-header a.back-btn {
+  text-decoration: none; color: var(--cool-blue); font-weight: bold;
+  transition: color 0.3s ease;
+}
+.page-header a.back-btn:hover { color: var(--navy-darker); }
+
+/* ====== Form Card ====== */
+.card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+
+/* ====== Inputs ====== */
+.form-label { font-weight: 600; color: var(--navy-darker); margin-bottom: 5px; }
+.form-control {
+  width: 100%; padding: 10px 15px; border-radius: 10px; border: 2px solid var(--gray-navy);
+  transition: all 0.3s ease; font-size: 0.95rem;
+}
+.form-control:focus {
+  outline: none; border-color: var(--cool-blue); box-shadow: 0 0 8px rgba(62,77,110,0.4);
+}
+
+/* ====== Buttons ====== */
+button, a.btn {
+  border-radius: 50px;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center; gap: 5px;
+  font-size: 0.95rem;
+}
+#continueBtn {
+  background: var(--primary-gradient); color: var(--white); border: none;
+}
+#continueBtn:hover {
+  background: var(--btn-hover-gradient);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+#skipBtn {
+  background: transparent; color: var(--cool-blue); border: 2px solid var(--cool-blue);
+}
+#skipBtn:hover { background: var(--cool-blue); color: var(--white); }
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .row.g-3.align-items-end { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="py-4">
   <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h4 m-0">{{ purpose }}</h1>
-      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    <div class="page-header">
+      <h1>{{ purpose }}</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="back-btn">رجوع</a>
     </div>
 
-    <form class="card shadow-sm">
-      <div class="card-body">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label">البنك</label>
-            <input list="banksList" id="bankInput" class="form-control" placeholder="ابحث واكتب اسم البنك">
-            <datalist id="banksList"></datalist>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">الاستعمال</label>
-            <input list="useList" id="useInput" class="form-control" placeholder="سكني، تجاري، صناعي، زراعي">
-            <datalist id="useList">
-              <option value="سكني"></option>
-              <option value="تجاري"></option>
-              <option value="صناعي"></option>
-              <option value="زراعي"></option>
-            </datalist>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">الولاية</label>
-            <input list="wilayasList" id="wilayaInput" class="form-control" placeholder="اكتب لاختيار الولاية">
-            <datalist id="wilayasList"></datalist>
-          </div>
+    <form class="card">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">البنك</label>
+          <input list="banksList" id="bankInput" class="form-control" placeholder="ابحث واكتب اسم البنك">
+          <datalist id="banksList"></datalist>
         </div>
+        <div class="col-md-4">
+          <label class="form-label">الاستعمال</label>
+          <input list="useList" id="useInput" class="form-control" placeholder="سكني، تجاري، صناعي، زراعي">
+          <datalist id="useList">
+            <option value="سكني"></option>
+            <option value="تجاري"></option>
+            <option value="صناعي"></option>
+            <option value="زراعي"></option>
+          </datalist>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الولاية</label>
+          <input list="wilayasList" id="wilayaInput" class="form-control" placeholder="اكتب لاختيار الولاية">
+          <datalist id="wilayasList"></datalist>
+        </div>
+      </div>
 
-        <div class="row g-3 align-items-end mt-1">
-          <div class="col-md-4">
-            <label class="form-label">الحي/القرية</label>
-            <input list="regionsList" id="regionInput" class="form-control" placeholder="اكتب لاختيار الحي/القرية">
-            <datalist id="regionsList"></datalist>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">مساحة الأرض (م²)</label>
-            <input id="landArea" type="number" min="0" class="form-control" placeholder="مثال: 300">
-          </div>
-          {% if purpose != 'تثمين أرض' %}
-          <div class="col-md-4">
-            <label class="form-label">مساحة البناء (م²)</label>
-            <input id="buildArea" type="number" min="0" class="form-control" placeholder="مثال: 200">
-          </div>
-          {% endif %}
+      <div class="row g-3 mt-3">
+        <div class="col-md-4">
+          <label class="form-label">الحي/القرية</label>
+          <input list="regionsList" id="regionInput" class="form-control" placeholder="اكتب لاختيار الحي/القرية">
+          <datalist id="regionsList"></datalist>
         </div>
+        <div class="col-md-4">
+          <label class="form-label">مساحة الأرض (م²)</label>
+          <input id="landArea" type="number" min="0" class="form-control" placeholder="مثال: 300">
+        </div>
+        {% if purpose != 'تثمين أرض' %}
+        <div class="col-md-4">
+          <label class="form-label">مساحة البناء (م²)</label>
+          <input id="buildArea" type="number" min="0" class="form-control" placeholder="مثال: 200">
+        </div>
+        {% endif %}
+      </div>
 
-        <div class="row g-3 align-items-end mt-1">
-          {% if purpose == 'تثمين عقار قائم' %}
-          <div class="col-md-4">
-            <label class="form-label">عمر المبنى (بالسنوات)</label>
-            <input id="buildAge" list="ageList" class="form-control" placeholder="مثال: 10">
-            <datalist id="ageList">
-              <option value="1"></option>
-              <option value="2"></option>
-              <option value="3"></option>
-              <option value="5"></option>
-              <option value="10"></option>
-              <option value="15"></option>
-              <option value="20"></option>
-              <option value="25"></option>
-              <option value="30"></option>
-              <option value="35"></option>
-              <option value="40"></option>
-              <option value="50"></option>
-            </datalist>
-          </div>
-          {% endif %}
-          <div class="col-md-4">
-            <label class="form-label">رقم الهاتف</label>
-            <input id="phoneInput" type="tel" inputmode="tel" class="form-control" dir="ltr" placeholder="مثال: 9xxxxxxx أو +9689xxxxxxx">
-          </div>
+      <div class="row g-3 mt-3">
+        {% if purpose == 'تثمين عقار قائم' %}
+        <div class="col-md-4">
+          <label class="form-label">عمر المبنى (بالسنوات)</label>
+          <input id="buildAge" list="ageList" class="form-control" placeholder="مثال: 10">
+          <datalist id="ageList">
+            <option value="1"></option>
+            <option value="2"></option>
+            <option value="3"></option>
+            <option value="5"></option>
+            <option value="10"></option>
+            <option value="15"></option>
+            <option value="20"></option>
+            <option value="25"></option>
+            <option value="30"></option>
+            <option value="35"></option>
+            <option value="40"></option>
+            <option value="50"></option>
+          </datalist>
         </div>
+        {% endif %}
+        <div class="col-md-4">
+          <label class="form-label">رقم الهاتف</label>
+          <input id="phoneInput" type="tel" inputmode="tel" class="form-control" dir="ltr" placeholder="مثال: 9xxxxxxx أو +9689xxxxxxx">
+        </div>
+      </div>
 
-        <div class="d-flex gap-2 mt-4">
-          <button type="button" id="continueBtn" class="btn btn-primary"><i class="bi bi-arrow-left-circle me-1"></i>احصل على عرض التثمين</button>
-          <a id="skipBtn" class="btn btn-outline-secondary" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
-        </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="button" id="continueBtn"><i class="bi bi-arrow-left-circle me-1"></i>احصل على عرض التثمين</button>
+        <a id="skipBtn" href="{{ url_for('main.certified_step_bank', entity=entity, purpose=purpose) }}">تخطي</a>
       </div>
     </form>
   </div>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script>
-(function(){
-  const bankInput = document.getElementById('bankInput');
-  const banksList = document.getElementById('banksList');
-  const wilayaInput = document.getElementById('wilayaInput');
-  const wilayasList = document.getElementById('wilayasList');
-  const regionInput = document.getElementById('regionInput');
-  const regionsList = document.getElementById('regionsList');
-  const useInput = document.getElementById('useInput');
-  const landArea = document.getElementById('landArea');
-  const buildArea = document.getElementById('buildArea');
-  const buildAge = document.getElementById('buildAge');
-  const phoneInput = document.getElementById('phoneInput');
-  const continueBtn = document.getElementById('continueBtn');
-
-  let LOCATIONS = [];
-
-  // Load banks
-  (async function loadBanks(){
-    try{
-      const res = await fetch('/api/banks');
-      const banks = await res.json();
-      banksList.innerHTML = '';
-      banks.forEach(b=>{
-        const opt = document.createElement('option');
-        opt.value = b.name || b.slug;
-        opt.dataset.slug = b.slug;
-        banksList.appendChild(opt);
-      });
-    }catch{}
-  })();
-
-  function findBankSlugByName(name){
-    const opts = banksList.querySelectorAll('option');
-    for(const o of opts){ if((o.value||'').trim() === (name||'').trim()) return o.dataset.slug; }
-    return '';
-  }
-
-  async function loadLocations(){
-    try{
-      const bankSlug = findBankSlugByName(bankInput.value||'');
-      const params = new URLSearchParams();
-      if(bankSlug) params.append('bank', bankSlug);
-      const res = await fetch(`/api/land_locations?${params.toString()}`);
-      const data = await res.json();
-      LOCATIONS = Array.isArray(data.locations) ? data.locations : [];
-      wilayasList.innerHTML='';
-      LOCATIONS.forEach(item=>{
-        const opt = document.createElement('option');
-        opt.value = item.wilaya; wilayasList.appendChild(opt);
-      });
-      // After reloading wilayas, refresh regions list based on current wilaya input
-      updateRegionsDatalist();
-    }catch{ LOCATIONS = []; }
-  }
-  loadLocations();
-
-  function updateRegionsDatalist(){
-    const w = (wilayaInput.value||'').trim();
-    regionsList.innerHTML='';
-    const entry = LOCATIONS.find(x=>x.wilaya === w);
-    (entry?entry.regions:[]).forEach(r=>{
-      const opt = document.createElement('option');
-      opt.value = r; regionsList.appendChild(opt);
-    });
-  }
-
-  wilayaInput.addEventListener('input', updateRegionsDatalist);
-  // Reload locations when bank changes so that wilaya/region come from approved companies
-  bankInput.addEventListener('input', loadLocations);
-
-  continueBtn.addEventListener('click', function(){
-    const bankSlug = findBankSlugByName(bankInput.value||'');
-    const url = new URL(window.location.origin + '{{ url_for('main.certified_offers') }}');
-    url.searchParams.set('entity', '{{ entity }}');
-    url.searchParams.set('purpose', '{{ purpose }}');
-    if(bankSlug) url.searchParams.set('bank', bankSlug);
-    const useVal = (useInput.value||'').trim();
-    const wilayaVal = (wilayaInput.value||'').trim();
-    const regionVal = (regionInput.value||'').trim();
-    const landAreaVal = (landArea && landArea.value) ? String(landArea.value) : '';
-    const buildAreaVal = (buildArea && buildArea.value) ? String(buildArea.value) : '';
-    const buildAgeVal = (buildAge && buildAge.value) ? String(buildAge.value) : '';
-    const phoneVal = (phoneInput && phoneInput.value) ? String(phoneInput.value) : '';
-    if(useVal) url.searchParams.set('use', useVal);
-    if(wilayaVal) url.searchParams.set('wilaya', wilayaVal);
-    if(regionVal) url.searchParams.set('region', regionVal);
-    if(landAreaVal) url.searchParams.set('land_area', landAreaVal);
-    if(buildAreaVal) url.searchParams.set('build_area', buildAreaVal);
-    if(buildAgeVal) url.searchParams.set('age', buildAgeVal);
-    if(phoneVal) url.searchParams.set('phone', phoneVal);
-    window.location.href = url.toString();
-  });
-})();
-</script>
 {% endblock %}

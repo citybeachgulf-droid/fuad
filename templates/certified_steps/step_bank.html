@@ -1,14 +1,122 @@
 {% extends 'base.html' %}
-{% from 'partials/cards.html' import cards_grid, logos_grid %}
 {% block title %}تقييم معتمد - اختيار البنك{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --white: #ffffff;
+  --blue-dark-gray: #374568;
+  --blue-mid: #425172;
+  --navy-dark: #354366;
+  --navy-darker: #324063;
+  --gray-navy: #344265;
+  --gray-blue: #364467;
+  --cool-blue: #3e4d6e;
+}
+
+/* ====== Reset ====== */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, var(--white), var(--blue-mid));
+  color: var(--blue-dark-gray);
+}
+
+/* ====== Container ====== */
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+/* ====== Header ====== */
+.page-header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 25px;
+}
+
+.page-header h1 { font-size: 1.8rem; color: var(--navy-darker); }
+.page-header a.back-btn {
+  text-decoration: none; color: var(--cool-blue); font-weight: bold;
+  transition: color 0.3s ease;
+}
+.page-header a.back-btn:hover { color: var(--navy-darker); }
+
+/* ====== Logos Grid ====== */
+.logos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.logo-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 25px 15px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-card:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+
+.logo-card img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 15px;
+  margin-bottom: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--white);
+  padding: 10px;
+}
+.logo-card:hover img {
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.logo-card span {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--navy-darker);
+  transition: color 0.3s ease;
+  text-align: center;
+}
+.logo-card:hover span { color: var(--cool-blue); }
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="py-4">
   <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h1 class="h4 m-0">اختر البنك</h1>
-      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="btn btn-link">رجوع</a>
+    <div class="page-header">
+      <h1>اختر البنك</h1>
+      <a href="{{ url_for('main.certified_step_purpose', entity=entity) }}" class="back-btn">رجوع</a>
     </div>
-    {{ logos_grid(options) }}
+
+    <div class="logos-grid">
+      {% for option in options %}
+        <a href="{{ option.get('href', '#') }}" class="logo-card">
+          {% if option.get('logo') %}
+            <img src="{{ option.get('logo') }}" alt="{{ option.get('name','') }}">
+          {% else %}
+            <div style="width:100px;height:100px;background:#eee;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#777;">
+              {{ option.get('name','?')[:1] }}
+            </div>
+          {% endif %}
+          <span>{{ option.get('name','غير معروف') }}</span>
+        </a>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}
