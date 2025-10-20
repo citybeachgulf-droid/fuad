@@ -158,6 +158,17 @@
   const results = document.getElementById('results');
   const resultsList = document.getElementById('resultsList');
   const resultsCount = document.getElementById('resultsCount');
+  // Helper: map relative path inside static/ to absolute URL; keep http(s) as-is
+  function staticOrExternal(path){
+    try{
+      const p=(path||'').trim();
+      if(!p) return '';
+      if(/^https?:\/\//i.test(p)) return p;
+      const base = new URL({{ url_for('static', filename='') | tojson }}, window.location.origin);
+      base.pathname = (base.pathname.replace(/\/$/, '') + '/' + p.replace(/^\//, ''));
+      return base.toString();
+    }catch{return path||'';}
+  }
 
   function toggleActive(selected){
     [optPerson,optCompany].forEach(el => el.classList.remove('active'));
@@ -202,7 +213,7 @@
       items.forEach(it=>{
         const row = document.createElement('div');
         row.className='d-flex align-items-center justify-content-between p-2 border rounded';
-        row.innerHTML=`<div class="d-flex align-items-center gap-2"><img src="${it.logo_path||''}" alt="" class="size-36 rounded-8 img-cover"><strong>${it.name}</strong></div><span class="badge bg-success">حد: ${it.limit_value??'—'}</span>`;
+        row.innerHTML=`<div class="d-flex align-items-center gap-2"><img src="${staticOrExternal(it.logo_path||'')}" alt="" class="size-36 rounded-8 img-cover"><strong>${it.name}</strong></div><span class="badge bg-success">حد: ${it.limit_value??'—'}</span>`;
         resultsList.appendChild(row);
       });
     }

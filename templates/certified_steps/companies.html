@@ -207,7 +207,7 @@ body {
           <div class="company-card">
             <div class="company-header">
               {% if c.logo_path %}
-                <img src="{{ c.logo_path }}" alt="logo">
+                <img src="{{ c.logo_path | static_or_external }}" alt="logo">
               {% endif %}
               <strong>{{ c.name }}</strong>
               <span class="limit-badge">حد: {{ '%.0f'|format(c.limit_value or 0) }}</span>
