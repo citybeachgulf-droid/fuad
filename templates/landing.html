@@ -1,171 +1,308 @@
 {% extends 'base.html' %}
 {% block title %}الصفحة الرئيسية - ثمِّن{% endblock %}
-{% block head %}{% endblock %}
-{% block content %}
-    {# Top Advertisement Banner(s) #}
-    {% if ads_top and ads_top|length > 0 %}
-    <section id="ads-top" class="py-3">
-        <div class="container">
-            <div id="adsTopCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000" data-bs-pause="false" data-bs-touch="true">
-                <div class="carousel-inner">
-                    {% for ad in ads_top %}
-                    <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="card border-0 shadow-sm overflow-hidden">
-                            {% if ad.target_url %}
-                            <a href="{{ ad.target_url }}" target="_blank" rel="noopener" class="d-block">
-                                <img src="{{ ad.image_path | static_or_external }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
-                            </a>
-                            {% else %}
-                            <img src="{{ ad.image_path | static_or_external }}" class="d-block w-100" alt="{{ ad.title or 'إعلان' }}">
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% if ads_top|length > 1 %}
-                <button class="carousel-control-prev" type="button" data-bs-target="#adsTopCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">السابق</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#adsTopCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">التالي</span>
-                </button>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-    {% endif %}
-    {% from 'partials/cards.html' import cards_grid %}
-    <!-- CTA as cards -->
-    <section id="cta" class="py-5">
-        <div class="container">
-            <div class="text-center mb-4">
-                <h1 class="fw-bold mb-3">ابدأ التقييم</h1>
-                <p class="text-muted">اختر نوع الخدمة المناسبة لك</p>
-            </div>
-            {{ cards_grid([
-              { 'title': 'أفراد', 'href': url_for('main.certified_step_purpose', entity='person'), 'icon_class': 'bi bi-person-fill', 'color_class': 'tile-primary', 'subtitle': 'خيارات التمويل للأفراد' },
-              { 'title': 'شركات', 'href': url_for('main.certified_step_purpose', entity='company'), 'icon_class': 'bi bi-buildings', 'color_class': 'tile-success', 'subtitle': 'خدمات التمويل للشركات' },
-            ]) }}
-        </div>
-    </section>
 
-    <!-- Quick Valuation Section: now a separate page at /quick -->
-    <!-- Removed inline quick form from landing to avoid duplication -->
+{% block head %}
+<style>
+/* ====== الهوية البصرية ====== */
+:root {
+  --color-white: #ffffff;
+  --color-dark-blue-gray: #374568;
+  --color-mid-blue: #425172;
+  --color-navy-dark: #354366;
+  --color-navy-darker: #324063;
+  --color-gray-navy: #344265;
+  --color-gray-blue: #364467;
+  --color-cool-blue: #3e4d6e;
+}
 
-    <!-- Certified Valuation Section: now a separate page at /certified -->
-    <!-- Removed inline certified form from landing to avoid duplication -->
+/* ====== Reset & Base ====== */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--color-white);
+  background-color: var(--color-dark-blue-gray);
+  margin: 0;
+  padding: 0;
+}
 
-    <!-- News Section -->
-    <section id="news" class="bg-light py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">أحدث الأخبار</h2>
-            {% if latest_news and latest_news|length > 0 %}
-            <div class="row g-4">
-                {% for item in latest_news %}
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
-                    <div class="card h-100">
-                        {% if item.image_path %}
-                        <img src="{{ item.image_path | static_or_external }}" class="card-img-top" alt="خبر" />
-                        {% endif %}
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ item.title }}</h5>
-                            {% if item.body %}
-                            <p class="card-text text-muted small text-truncate">{{ item.body }}</p>
-                            {% endif %}
-                            <div class="mt-auto">
-                                <a href="#" class="stretched-link">اقرأ المزيد</a>
-                            </div>
-                        </div>
-                        <div class="card-footer text-muted small">
-                            {{ item.created_at.strftime('%Y-%m-%d') if item.created_at else '' }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="alert alert-info text-center">لا توجد أخبار بعد.</div>
-            {% endif %}
-        </div>
-    </section>
+/* ====== Hero Section ====== */
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+}
 
-    <!-- Testimonials Section + Share Your Experience -->
-<section id="testimonials" class="py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5">تجارب العملاء</h2>
+.hero-section img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(80%) contrast(110%);
+  animation: zoomInOut 15s ease-in-out infinite;
+}
 
-        <!-- Existing Testimonials (dynamic) as animated carousel -->
-        <div id="testimonialsCarousel" class="carousel slide carousel-fade mb-5" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="hover" data-bs-touch="true">
-            <div class="carousel-inner">
-                {% if testimonials and testimonials|length > 0 %}
-                    {% for t in testimonials %}
-                    <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="card h-100 card-hover p-4">
-                            {% if t.rating %}
-                            <div class="d-flex justify-content-center mb-2" aria-label="تقييم الخدمة">
-                                <span class="badge bg-light text-dark">
-                                    {% for _ in range(t.rating) %}★{% endfor %}{% for _ in range(5 - t.rating) %}☆{% endfor %}
-                                </span>
-                            </div>
-                            {% endif %}
-                            <blockquote class="blockquote mb-0 text-center">
-                                <p class="mb-2">{{ t.body }}</p>
-                                <footer class="blockquote-footer">{{ t.name }}</footer>
-                            </blockquote>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="carousel-item active">
-                        <div class="alert alert-info text-center mb-0">لا توجد تجارب بعد. كن أول من يشارك!</div>
-                    </div>
-                {% endif %}
-            </div>
-            {% if testimonials and testimonials|length > 1 %}
-            <button class="carousel-control-prev" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">السابق</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">التالي</span>
-            </button>
-            {% endif %}
-        </div>
+@keyframes zoomInOut {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
 
-        <!-- Share Your Experience Form -->
-        <div class="row justify-content-center">
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
-                <h3 class="text-center mb-4">شارك تجربتك معنا</h3>
-                <form id="testimonial-form">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">الاسم</label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="اسمك" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="rating" class="form-label">تقييم الخدمة (اختياري)</label>
-                        <select class="form-select" id="rating" name="rating">
-                            <option value="">— بدون تقييم —</option>
-                            <option value="5">★★★★★</option>
-                            <option value="4">★★★★☆</option>
-                            <option value="3">★★★☆☆</option>
-                            <option value="2">★★☆☆☆</option>
-                            <option value="1">★☆☆☆☆</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="experience" class="form-label">تجربتك</label>
-                        <textarea class="form-control" id="experience" name="experience" rows="4" placeholder="اكتب تجربتك هنا" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">إرسال تجربتك</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</section>
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  animation: fadeUp 1.5s ease forwards;
+}
 
+.hero-content h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.25rem;
+  color: #d0d4e0;
+}
+
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== قسم الخدمات (Cards) ====== */
+.services-section {
+  background-color: var(--color-mid-blue);
+  padding: 80px 0;
+  text-align: center;
+}
+
+.services-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: var(--color-white);
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.service-card {
+  background: var(--color-navy-dark);
+  border-radius: 20px;
+  padding: 30px 20px;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  cursor: pointer;
+}
+
+.service-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+.service-card i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-cool-blue);
+}
+
+.service-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-white);
+}
+
+.service-card p {
+  color: #cfd4e0;
+  font-size: 1rem;
+}
+
+/* ====== الأزرار ====== */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-cool-blue), var(--color-gray-blue));
+  border: none;
+  color: var(--color-white);
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--color-gray-blue), var(--color-cool-blue));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* ====== الأخبار ====== */
+.news-section {
+  background: var(--color-gray-navy);
+  padding: 80px 0;
+  color: var(--color-white);
+  text-align: center;
+}
+
+.news-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.news-card {
+  background: var(--color-navy-darker);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.news-card img {
+  width: 100%;
+  display: block;
+  height: 180px;
+  object-fit: cover;
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+}
+
+.news-card .card-body {
+  padding: 20px;
+  text-align: left;
+}
+
+.news-card .card-body h5 {
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.news-card .card-body p {
+  color: #cfd4e0;
+  font-size: 0.95rem;
+}
+
+/* ====== تجارب العملاء ====== */
+.testimonials-section {
+  background: var(--color-mid-blue);
+  padding: 80px 0;
+  text-align: center;
+}
+
+.testimonials-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: var(--color-white);
+}
+
+.testimonial-card {
+  background: var(--color-navy-dark);
+  padding: 30px 20px;
+  border-radius: 20px;
+  color: #cfd4e0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+
+.testimonial-card p {
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.testimonial-card footer {
+  color: #9aa3b1;
+  font-weight: 600;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .hero-content h1 { font-size: 2rem; }
+  .hero-content p { font-size: 1rem; }
+  .services-section h2, .news-section h2, .testimonials-section h2 { font-size: 2rem; }
+}
+</style>
 {% endblock %}
 
-{% block scripts %}{% endblock %}
+{% block content %}
+{% from 'partials/cards.html' import cards_grid %}
+
+<!-- ====== Hero Section ====== -->
+<section class="hero-section">
+  <img src="{{ url_for('static', filename='img/2.png') }}" alt="مهندس يشاهد خريطة">
+  <div class="hero-content">
+    <h1>مرحبًا بك في منصة ثمِّن</h1>
+    <p>نقدّر ممتلكاتك بدقة واحترافية</p>
+    <a href="#cta" class="btn-primary">ابدأ الآن</a>
+  </div>
+</section>
+
+<!-- ====== الخدمات ====== -->
+<section class="services-section" id="cta">
+  <h2>خدماتنا</h2>
+  <div class="services-grid">
+    {% for card in [
+      {'icon_class':'bi bi-person-fill', 'title':'أفراد', 'subtitle':'خيارات التمويل للأفراد', 'href': url_for('main.certified_step_purpose', entity='person')},
+      {'icon_class':'bi bi-buildings', 'title':'شركات', 'subtitle':'خدمات التمويل للشركات', 'href': url_for('main.certified_step_purpose', entity='company')}
+    ] %}
+    <a href="{{ card.href }}" class="service-card">
+      <i class="{{ card.icon_class }}"></i>
+      <h3>{{ card.title }}</h3>
+      <p>{{ card.subtitle }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ====== الأخبار ====== -->
+<section class="news-section">
+  <h2>أحدث الأخبار</h2>
+  <div class="news-grid">
+    {% for item in latest_news %}
+    <div class="news-card">
+      {% if item.image_path %}
+      <img src="{{ item.image_path | static_or_external }}" alt="خبر">
+      {% endif %}
+      <div class="card-body">
+        <h5>{{ item.title }}</h5>
+        <p>{{ item.body|truncate(80) }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ====== تجارب العملاء ====== -->
+<section class="testimonials-section">
+  <h2>تجارب العملاء</h2>
+  <div class="services-grid">
+    {% for t in testimonials %}
+    <div class="testimonial-card">
+      <p>"{{ t.body }}"</p>
+      <footer>- {{ t.name }}</footer>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
