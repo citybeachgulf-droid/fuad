@@ -5,35 +5,28 @@
 <style>
 :root {
   --white: #ffffff;
-  --blue-dark-gray: #374568;
-  --blue-mid: #425172;
-  --navy-dark: #354366;
-  --navy-darker: #324063;
-  --gray-navy: #344265;
-  --gray-blue: #364467;
-  --cool-blue: #3e4d6e;
+  --blue-light: #f3f6ff;
+  --blue-mid: #e4ebff;
+  --blue-dark: #364467;
+  --navy: #2f3a58;
+  --accent: #4e6ef2;
+  --accent-dark: #3c59c2;
+  --accent-glow: rgba(78,110,242,0.4);
 }
 
 /* ====== Reset ====== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--blue-dark-gray);
-  color: var(--white);
+  background: linear-gradient(160deg, var(--blue-light), var(--blue-mid), var(--white));
+  color: var(--navy);
   line-height: 1.6;
+  min-height: 100vh;
 }
 
 /* ====== Container ====== */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
 /* ====== Header ====== */
 .page-header {
@@ -46,6 +39,8 @@ body {
 
 .page-header h1 {
   font-size: 1.8rem;
+  color: var(--navy);
+  font-weight: 700;
 }
 
 .page-header .header-links {
@@ -56,76 +51,76 @@ body {
 .page-header .header-links a {
   text-decoration: none;
   font-weight: 600;
-  padding: 8px 15px;
+  padding: 8px 18px;
   border-radius: 50px;
   transition: all 0.3s ease;
 }
 
 .page-header .header-links a.modify-btn {
   background: transparent;
-  border: 2px solid var(--cool-blue);
-  color: var(--cool-blue);
+  border: 2px solid var(--accent);
+  color: var(--accent);
 }
 
 .page-header .header-links a.modify-btn:hover {
-  background: var(--cool-blue);
+  background: var(--accent);
   color: var(--white);
 }
 
 .page-header .header-links a.bank-btn {
-  background: linear-gradient(135deg, var(--cool-blue), var(--gray-blue));
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: var(--white);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .page-header .header-links a.bank-btn:hover {
-  background: linear-gradient(135deg, var(--gray-blue), var(--cool-blue));
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 20px rgba(78,110,242,0.5);
 }
 
 /* ====== Info Card ====== */
 .info-card {
-  background: var(--navy-dark);
-  padding: 20px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
-  margin-bottom: 20px;
+  padding: 20px;
+  margin-bottom: 25px;
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
 .info-card div {
   min-width: 120px;
-  color: #cfd4e0;
+  color: #555;
 }
 
 .info-card div strong {
-  color: var(--white);
-}
-
-/* ====== Company Offers Grid ====== */
-.offers-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  color: var(--navy);
 }
 
 /* ====== Offer Card ====== */
+.offers-grid { display: flex; flex-direction: column; gap: 15px; }
+
 .offer-card {
-  background: var(--navy-dark);
+  background: var(--white);
   border-radius: 20px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border: 1px solid #e6e9f2;
 }
 
 .offer-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(78,110,242,0.25);
 }
 
+/* ====== Offer Left ====== */
 .offer-left {
   display: flex;
   align-items: center;
@@ -133,48 +128,43 @@ body {
 }
 
 .offer-left img {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 10px;
   object-fit: cover;
-  border: 1px solid #fff;
+  border: 2px solid #e6e9f2;
   background: #fff;
   padding: 2px;
 }
 
 .logo-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  color: var(--navy-dark);
+  background: var(--blue-mid);
+  color: var(--navy);
   font-weight: bold;
-  border: 1px solid #fff;
-}
-
-.offer-left div {
-  display: flex;
-  flex-direction: column;
 }
 
 .offer-left div .name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
+  color: var(--navy);
 }
 
 .offer-left div .limit {
   font-size: 0.85rem;
-  color: #cfd4e0;
+  color: #666;
 }
 
 /* ====== Offer Right ====== */
 .offer-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
 }
 
 .offer-right .offer-info {
@@ -183,60 +173,48 @@ body {
 
 .offer-right .offer-info .label {
   font-size: 0.8rem;
-  color: #cfd4e0;
+  color: #777;
 }
 
 .offer-right .offer-info .value {
   font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--cool-blue);
+  font-weight: 700;
+  color: var(--accent-dark);
 }
 
-/* ====== Request Button ====== */
-.offer-right .request-btn {
-  background: linear-gradient(135deg, var(--cool-blue), var(--gray-blue));
+/* ====== Button ====== */
+.request-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: var(--white);
   text-decoration: none;
-  padding: 8px 15px;
+  padding: 8px 16px;
   border-radius: 50px;
   font-weight: 600;
   transition: all 0.3s ease;
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
-.offer-right .request-btn:hover {
-  background: linear-gradient(135deg, var(--gray-blue), var(--cool-blue));
+.request-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 20px rgba(78,110,242,0.5);
 }
 
-/* ====== Alerts ====== */
+/* ====== Alert ====== */
 .alert-info {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #68c3ff, #4e6ef2);
   color: #fff;
   padding: 15px;
-  border-radius: 10px;
+  border-radius: 12px;
   text-align: center;
+  font-weight: 500;
 }
 
 /* ====== Responsive ====== */
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .info-card {
-    flex-direction: column;
-  }
-  .offer-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .offer-right {
-    width: 100%;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .info-card { flex-direction: column; }
+  .offer-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .offer-right { width: 100%; justify-content: space-between; }
 }
 </style>
 {% endblock %}
@@ -255,27 +233,13 @@ body {
     </div>
 
     <div class="info-card">
-      {% if bank %}
-      <div><strong>البنك:</strong> {{ bank.user.name if bank.user else bank.slug }}</div>
-      {% endif %}
-      {% if wilaya %}
-      <div><strong>الولاية:</strong> {{ wilaya }}</div>
-      {% endif %}
-      {% if region %}
-      <div><strong>الحي/القرية:</strong> {{ region }}</div>
-      {% endif %}
-      {% if use %}
-      <div><strong>الاستعمال:</strong> {{ use }}</div>
-      {% endif %}
-      {% if land_area %}
-      <div><strong>مساحة الأرض:</strong> {{ '{:,}'.format(land_area|int) }} م²</div>
-      {% endif %}
-      {% if build_area and purpose != 'تثمين أرض' %}
-      <div><strong>مساحة البناء:</strong> {{ '{:,}'.format(build_area|int) }} م²</div>
-      {% endif %}
-      {% if age and purpose != 'تثمين أرض' %}
-      <div><strong>عمر المبنى:</strong> {{ age|int }} سنة</div>
-      {% endif %}
+      {% if bank %}<div><strong>البنك:</strong> {{ bank.user.name if bank.user else bank.slug }}</div>{% endif %}
+      {% if wilaya %}<div><strong>الولاية:</strong> {{ wilaya }}</div>{% endif %}
+      {% if region %}<div><strong>الحي/القرية:</strong> {{ region }}</div>{% endif %}
+      {% if use %}<div><strong>الاستعمال:</strong> {{ use }}</div>{% endif %}
+      {% if land_area %}<div><strong>مساحة الأرض:</strong> {{ '{:,}'.format(land_area|int) }} م²</div>{% endif %}
+      {% if build_area and purpose != 'تثمين أرض' %}<div><strong>مساحة البناء:</strong> {{ '{:,}'.format(build_area|int) }} م²</div>{% endif %}
+      {% if age and purpose != 'تثمين أرض' %}<div><strong>عمر المبنى:</strong> {{ age|int }} سنة</div>{% endif %}
     </div>
 
     {% if companies and companies|length %}

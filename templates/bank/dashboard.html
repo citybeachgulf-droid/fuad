@@ -1,408 +1,632 @@
-{% extends 'layout.html' %}
-{% block content %}
-<h2>Bank Dashboard</h2>
-<div class="d-flex align-items-center gap-3 mb-3">
-  {% if bank_profile and bank_profile.logo_path %}
-    <img src="{{ bank_profile.logo_path | static_or_external }}" alt="Logo" class="size-56 img-cover rounded-8 border bg-white p-1">
-  {% endif %}
-  <form method="post" action="{{ url_for('bank.update_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
-    <input type="file" name="logo" accept="image/*" class="form-control form-control-sm" required>
-    <button class="btn btn-sm btn-outline-primary">تحديث الشعار</button>
-  </form>
-  {% if bank_profile and bank_profile.logo_path %}
-    <a href="{{ url_for('bank.dashboard') }}" class="btn btn-sm btn-outline-secondary">تحديث العرض</a>
-  {% endif %}
-  <span class="text-muted">ارفع شعار البنك ليظهر للعملاء.</span>
-  <div class="ms-auto"></div>
-  {% if bank_profile and bank_profile.slug %}
-    <a class="btn btn-sm btn-link" href="{{ url_for('main.bank_detail', slug=bank_profile.slug) }}" target="_blank">عرض صفحة البنك</a>
-  {% endif %}
-  
-</div>
-<p>Valuations awaiting review:</p>
-<table class="table">
-<thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Company</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
-  <tbody>
-    {% for r in requests %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.title }}</td>
-        <td>{% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}</td>
-        <td>{{ r.company.name if r.company else '-' }}</td>
-        <td>{{ r.value or '-' }}</td>
-        <td>{{ r.status }}</td>
-        <td>
-          <form method="post" action="{{ url_for('bank.review', request_id=r.id) }}" class="d-flex gap-2">
-            <button name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
-            <button name="action" value="revision" class="btn btn-sm btn-warning">Request Revision</button>
-          </form>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<!-- 
+Bank Dashboard - Custom Design
+Author: FUAD
+Built with pure CSS 
+-->
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bank Dashboard</title>
+  <style>
+    :root{
+      --white: #ffffff;
 
-<hr>
+      --c-1: #374568; /* أزرق داكن رمادي */
+      --c-2: #425172; /* أزرق متوسط (accent) */
+      --c-3: #354366; /* أزرق كحلي غامق */
+      --c-4: #324063; /* أزرق داكن جداً - للعناوين */
+      --c-5: #344265; /* كحلي رمادي */
+      --c-6: #364467; /* أزرق رمادي متوازن (muted) */
+      --c-7: #3e4d6e; /* أزرق بارد مائل للرمادي */
 
-<div class="row g-4">
-  <div class="col-md-7">
-    <div class="card">
-      <div class="card-header">
-        <strong>العروض التمويلية الحالية</strong>
-      </div>
-      <div class="card-body p-0">
-        <table class="table mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>المنتج</th>
-              <th>نوع السعر</th>
-              <th>% الفائدة السنوية</th>
-              <th>APR</th>
-              <th>الحد الأدنى/الأعلى</th>
-              <th>المدة (أشهر)</th>
-              <th>ملاحظات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if offers and offers|length > 0 %}
-              {% for o in offers %}
-              <tr>
-                <td>{{ o.product_name }}</td>
-                <td>{{ o.rate_type or '-' }}</td>
-                <td>{{ '%.2f' % o.interest_rate }}</td>
-                <td>{{ (('%.2f' % o.apr) if o.apr is not none else '-') }}</td>
-                <td>
-                  {{ (('%.0f' % o.min_amount) if o.min_amount is not none else '-') }} /
-                  {{ (('%.0f' % o.max_amount) if o.max_amount is not none else '-') }}
-                </td>
-                <td>
-                  {{ (o.min_tenure_months or '-') }} /
-                  {{ (o.max_tenure_months or '-') }}
-                </td>
-                <td>{{ o.notes or '-' }}</td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <tr>
-                <td colspan="7" class="text-center py-3">لا توجد عروض بعد</td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-5">
-    <div class="card">
-      <div class="card-header"><strong>إضافة عرض تمويلي</strong></div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('bank.add_offer') }}">
-          <div class="mb-3">
-            <label class="form-label">اسم المنتج</label>
-            <input type="text" name="product_name" class="form-control" placeholder="مثال: قرض سكني" required>
+      --bg: var(--white);
+      --text: var(--c-4);
+      --muted: var(--c-6);
+      --accent: var(--c-2);
+
+      --radius: 12px;
+      --card-shadow: 0 6px 20px rgba(50,60,90,0.06);
+      --soft-line: rgba(50,60,90,0.06);
+      --gap: 16px;
+
+      --container-max: 1200px;
+      --sm: 720px;
+    }
+
+    /* Reset & base */
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, "Segoe UI", Roboto, "Noto Sans", system-ui, -apple-system, "Helvetica Neue", Arial;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      direction: rtl;
+      line-height:1.45;
+      font-size:14px;
+    }
+
+    /* Container */
+    .container{
+      width:92%;
+      max-width:var(--container-max);
+      margin-inline:auto;
+      padding-block:20px;
+    }
+
+    /* Header */
+    .page-title{
+      font-size:20px;
+      font-weight:700;
+      color:var(--c-4);
+      margin:0 0 12px 0;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    /* Utility flex */
+    .row { display:flex; flex-wrap:wrap; gap:var(--gap); }
+    .col { flex:1 1 0%; min-width:0; }
+    .col-7{flex:0 0 58%}
+    .col-5{flex:0 0 40%}
+    .col-4{flex:0 0 32%}
+    .col-3{flex:0 0 24%}
+    .col-2{flex:0 0 16%}
+    .w-100{width:100%}
+    @media (max-width:900px){
+      .col-7, .col-5, .col-4, .col-3, .col-2 { flex:0 0 100%; }
+    }
+
+    .flex { display:flex; align-items:center; gap:12px; }
+    .flex-stretch { display:flex; align-items:center; gap:12px; justify-content:space-between; }
+
+    /* Small helpers */
+    .muted{color:var(--muted); font-size:13px}
+    .text-center{ text-align:center }
+    .badge {
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:600;
+      background: rgba(66,81,114,0.08);
+      color:var(--c-4);
+    }
+
+    /* Card */
+    .card{
+      background:var(--white);
+      border-radius:var(--radius);
+      box-shadow:var(--card-shadow);
+      border:1px solid var(--soft-line);
+      overflow:hidden;
+    }
+    .card + .card { margin-top:12px; }
+    .card-header{
+      padding:14px 18px;
+      border-bottom:1px solid var(--soft-line);
+      background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,255,0.98));
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .card-header strong{ color:var(--c-4); font-size:15px; }
+    .card-body{ padding:16px 18px; }
+
+    /* Forms / inputs */
+    input[type="text"], input[type="number"], input[type="file"], select, textarea {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(50,60,90,0.08);
+      background: #fff;
+      outline:none;
+      font-size:14px;
+      color:var(--text);
+      transition: box-shadow .12s ease, border-color .12s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      box-shadow:0 6px 18px rgba(66,81,114,0.06);
+      border-color:var(--accent);
+    }
+    label{ display:block; margin-bottom:6px; font-weight:600; color:var(--c-3); font-size:13px }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid transparent;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+      text-decoration:none;
+      transition: transform .08s ease, box-shadow .08s ease, opacity .08s ease;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent), var(--c-7));
+      color: var(--white);
+      box-shadow: 0 6px 18px rgba(66,81,114,0.12);
+      border-color: rgba(0,0,0,0.03);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--c-4);
+      border: 1px solid rgba(50,60,90,0.08);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+    }
+    .btn-sm { padding:6px 10px; font-size:13px; border-radius:8px; }
+    .btn-danger { background: linear-gradient(180deg, #ea5555, #d84343); color:#fff; }
+    .btn-warning { background: linear-gradient(180deg, #f6b93b, #f39c12); color:#fff; }
+
+    /* Logo preview */
+    .logo-preview{
+      width:56px;height:56px;border-radius:10px; overflow:hidden;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,245,250,0.9));
+      border:1px solid rgba(50,60,90,0.06);
+      box-shadow:0 6px 14px rgba(50,60,90,0.04);
+    }
+    .img-cover{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* Tables */
+    .table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+    .table th, .table td {
+      padding:12px 10px;
+      text-align:right;
+      border-bottom:1px solid rgba(50,60,90,0.04);
+      vertical-align:middle;
+    }
+    .table thead th {
+      background:transparent;
+      color:var(--muted);
+      font-weight:700;
+      font-size:13px;
+    }
+    .table tbody tr:hover{ background: rgba(66,81,114,0.03); }
+    .table .actions { display:flex; gap:8px; justify-content:flex-end }
+    .table .text-muted { color:var(--muted) }
+
+    .small-note {
+      background: linear-gradient(180deg, rgba(66,81,114,0.03), rgba(66,81,114,0.015));
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(50,60,90,0.03);
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    hr.hr-soft {
+      border: none;
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(50,60,90,0.04), transparent);
+      margin:20px 0;
+    }
+
+    /* Cards inside grid */
+    .compact-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
+    @media (max-width:900px){ .compact-grid { grid-template-columns: repeat(1, 1fr); } }
+
+    /* Stat box used by calculator outcomes */
+    .stat {
+      border-radius:10px;
+      padding:12px;
+      border:1px solid rgba(50,60,90,0.04);
+      background:#fff;
+      text-align:center;
+    }
+    .stat .label { color:var(--muted); font-size:13px; margin-bottom:6px; }
+    .stat .value { font-weight:800; font-size:18px; color:var(--c-4) }
+
+    /* Form row helpers */
+    .form-row { display:flex; gap:12px; align-items:end; flex-wrap:wrap; }
+    .form-row .col-auto { flex:0 0 auto; }
+    .text-right { text-align:right; }
+
+    /* responsive helper for small text under tables */
+    .empty-note { padding:18px; color:var(--muted); text-align:center; }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header style="margin-bottom:12px;">
+      <h1 class="page-title">لوحة تحكم البنك</h1>
+    </header>
+
+    <!-- Header / Logo + actions -->
+    <section class="card" style="margin-bottom:14px;">
+      <div class="card-body" style="display:flex;align-items:center;gap:14px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          {% if bank_profile and bank_profile.logo_path %}
+            <div class="logo-preview" aria-hidden="true">
+              <img src="{{ bank_profile.logo_path | static_or_external }}" alt="Logo" class="img-cover">
+            </div>
+          {% else %}
+            <!-- Placeholder logo (first letters) -->
+            <div class="logo-preview" aria-hidden="true" style="font-weight:800;color:var(--white);background:linear-gradient(180deg,var(--accent),var(--c-7));">
+              {% if bank_profile and bank_profile.name %}
+                {{ bank_profile.name[:2] | upper }}
+              {% else %}
+                بنك
+              {% endif %}
+            </div>
+          {% endif %}
+          <div style="min-width:260px;">
+            <form method="post" action="{{ url_for('bank.update_logo') }}" enctype="multipart/form-data" style="display:flex;align-items:center;gap:10px;">
+              <input type="file" name="logo" accept="image/*" required style="flex:1;">
+              <button class="btn btn-outline btn-sm" type="submit">تحديث الشعار</button>
+            </form>
+            <div class="muted" style="margin-top:8px;">ارفع شعار البنك ليظهر للعملاء.</div>
           </div>
-          <div class="row g-3">
-            <div class="col-6">
-              <label class="form-label">نوع السعر</label>
-              <select class="form-select" name="rate_type">
-                <option value="">—</option>
-                <option value="ثابت">ثابت</option>
-                <option value="متغير">متغير</option>
+        </div>
+
+        <div style="margin-inline-start:auto; display:flex; gap:10px; align-items:center;">
+          {% if bank_profile and bank_profile.logo_path %}
+            <a href="{{ url_for('bank.dashboard') }}" class="btn btn-outline btn-sm" style="white-space:nowrap;">تحديث العرض</a>
+          {% endif %}
+          {% if bank_profile and bank_profile.slug %}
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('main.bank_detail', slug=bank_profile.slug) }}" target="_blank">عرض صفحة البنك</a>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+   
+
+    <hr class="hr-soft">
+
+    <!-- Financing offers & add offer -->
+    <section class="row" style="margin-top:14px;">
+      <div class="col col-7">
+        <div class="card">
+          <div class="card-header"><strong>العروض التمويلية الحالية</strong></div>
+          <div class="card-body" style="padding:0;">
+            <div style="overflow:auto;">
+              <table class="table" style="margin:0;">
+                <thead>
+                  <tr>
+                    <th>المنتج</th>
+                    <th>نوع السعر</th>
+                    <th style="width:120px">% الفائدة السنوية</th>
+                    <th style="width:100px">APR</th>
+                    <th>الحد الأدنى/الأعلى</th>
+                    <th>المدة (أشهر)</th>
+                    <th>ملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if offers and offers|length > 0 %}
+                    {% for o in offers %}
+                      <tr>
+                        <td>{{ o.product_name }}</td>
+                        <td>{{ o.rate_type or '-' }}</td>
+                        <td>{{ '%.2f' % o.interest_rate }}</td>
+                        <td>{{ (('%.2f' % o.apr) if o.apr is not none else '-') }}</td>
+                        <td>
+                          {{ (('%.0f' % o.min_amount) if o.min_amount is not none else '-') }} /
+                          {{ (('%.0f' % o.max_amount) if o.max_amount is not none else '-') }}
+                        </td>
+                        <td>{{ (o.min_tenure_months or '-') }} / {{ (o.max_tenure_months or '-') }}</td>
+                        <td class="muted">{{ o.notes or '-' }}</td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="7" class="empty-note">لا توجد عروض بعد</td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-5">
+        <div class="card">
+          <div class="card-header"><strong>إضافة عرض تمويلي</strong></div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('bank.add_offer') }}">
+              <div style="margin-bottom:10px;">
+                <label>اسم المنتج</label>
+                <input type="text" name="product_name" placeholder="مثال: قرض سكني" required>
+              </div>
+
+              <div class="form-row" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <label>نوع السعر</label>
+                  <select name="rate_type">
+                    <option value="">—</option>
+                    <option value="ثابت">ثابت</option>
+                    <option value="متغير">متغير</option>
+                  </select>
+                </div>
+                <div style="flex:1;">
+                  <label>% الفائدة السنوية</label>
+                  <input type="number" step="0.01" min="0" name="interest_rate" placeholder="مثال: 6" required>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <label>APR</label>
+                  <input type="number" step="0.01" min="0" name="apr" placeholder="اختياري">
+                </div>
+                <div style="flex:1;">
+                  <label>الحد الأدنى للمبلغ</label>
+                  <input type="number" step="0.01" min="0" name="min_amount" placeholder="اختياري">
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <label>الحد الأقصى للمبلغ</label>
+                  <input type="number" step="0.01" min="0" name="max_amount" placeholder="اختياري">
+                </div>
+                <div style="flex:1;">
+                  <label>المدة الدنيا (أشهر)</label>
+                  <input type="number" min="0" name="min_tenure_months" placeholder="اختياري">
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <label>المدة القصوى (أشهر)</label>
+                  <input type="number" min="0" name="max_tenure_months" placeholder="اختياري">
+                </div>
+                <div style="flex:1;">
+                  <label>ملاحظات</label>
+                  <input type="text" name="notes" placeholder="اختياري">
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                <button class="btn btn-primary" type="submit">حفظ العرض</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="hr-soft">
+
+    <!-- Approved companies management -->
+    <section class="row" style="margin-top:14px;">
+      <div class="col col-7">
+        <div class="card">
+          <div class="card-header"><strong>الشركات المعتمدة</strong></div>
+          <div class="card-body" style="padding:0;">
+            <div style="overflow:auto;">
+              <table class="table" style="margin:0;">
+                <thead>
+                  <tr>
+                    <th>الشركة</th>
+                    <th style="width:300px">الحد المعتمد</th>
+                    <th style="width:120px">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if approved_companies and approved_companies|length > 0 %}
+                    {% for c in approved_companies %}
+                      <tr>
+                        <td style="font-weight:700">{{ c.name }}</td>
+                        <td>
+                          <form method="post" action="{{ url_for('bank.update_approved_company', cab_id=c.cab_id) }}" style="display:flex; gap:8px; align-items:center;">
+                            <input type="number" step="0.01" name="limit_value" value="{{ c.limit_value or '' }}" placeholder="اختياري" style="flex:1;">
+                            <button class="btn btn-outline btn-sm" type="submit">تحديث</button>
+                          </form>
+                        </td>
+                        <td>
+                          <form method="post" action="{{ url_for('bank.delete_approved_company', cab_id=c.cab_id) }}" onsubmit="return confirm('تأكيد حذف الاعتماد؟');" style="display:flex; justify-content:flex-end;">
+                            <button class="btn btn-danger btn-sm" type="submit">إزالة</button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="3" class="empty-note">لا توجد شركات معتمدة بعد</td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-5">
+        <div class="card">
+          <div class="card-header"><strong>اعتماد شركة جديدة</strong></div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('bank.add_approved_company') }}" style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <label>اختر الشركة</label>
+                <select name="company_user_id" required>
+                  <option value="">— اختر —</option>
+                  {% for item in companies_to_add or [] %}
+                    <option value="{{ item.user_id }}">{{ item.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label>الحد المعتمد (اختياري)</label>
+                <input type="number" step="0.01" name="limit_value" placeholder="مثال: 100000">
+              </div>
+              <div style="display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" type="submit">اعتماد</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="hr-soft">
+
+    <!-- Loan calculator & policies -->
+   
+
+          <script>
+            (function() {
+              const offerSelect = document.getElementById('calc_offer');
+              const amountInput = document.getElementById('calc_amount');
+              const monthsInput = document.getElementById('calc_months');
+              const rateInput = document.getElementById('calc_rate');
+              const monthlyEl = document.getElementById('calc_monthly');
+              const totalEl = document.getElementById('calc_total');
+              const interestEl = document.getElementById('calc_interest');
+
+              function formatCurrency(value) {
+                if (!isFinite(value)) return '—';
+                try {
+                  return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(value);
+                } catch (e) {
+                  return value.toFixed(2);
+                }
+              }
+
+              function compute() {
+                const P = parseFloat(amountInput.value);
+                const n = parseInt(monthsInput.value, 10);
+                const annual = parseFloat(rateInput.value);
+                if (!(P > 0) || !(n > 0) || !(annual >= 0)) {
+                  monthlyEl.textContent = '—';
+                  totalEl.textContent = '—';
+                  interestEl.textContent = '—';
+                  return;
+                }
+                const r = (annual / 100) / 12; // monthly rate
+                let M;
+                if (r === 0) {
+                  M = P / n;
+                } else {
+                  M = P * r / (1 - Math.pow(1 + r, -n));
+                }
+                const total = M * n;
+                const interest = total - P;
+                monthlyEl.textContent = formatCurrency(M);
+                totalEl.textContent = formatCurrency(total);
+                interestEl.textContent = formatCurrency(interest);
+              }
+
+              offerSelect && offerSelect.addEventListener('change', function() {
+                const opt = offerSelect.selectedOptions[0];
+                if (!opt) return;
+                const rate = opt.getAttribute('data-rate');
+                const minm = opt.getAttribute('data-minm');
+                const maxm = opt.getAttribute('data-maxm');
+                if (rate) rateInput.value = rate;
+                if (minm && !monthsInput.value) monthsInput.value = minm;
+                if (maxm && monthsInput.value && parseInt(monthsInput.value, 10) > parseInt(maxm, 10)) {
+                  monthsInput.value = maxm;
+                }
+                compute();
+              });
+
+              [amountInput, monthsInput, rateInput].forEach(function(el) {
+                el && el.addEventListener('input', compute);
+                el && el.addEventListener('change', compute);
+              });
+            })();
+          </script>
+        </div>
+      </div>
+    </section>
+
+    <hr class="hr-soft">
+
+    <!-- Loan policies -->
+    <section style="margin-top:14px;">
+      <div class="card">
+        <div class="card-header"><strong>سياسات القروض (للاستخدام في بوابة العملاء)</strong></div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('bank.upsert_policy') }}" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+            <div style="flex:0 0 22%;">
+              <label>نوع القرض</label>
+              <select name="loan_type">
+                <option value="housing">سكني</option>
+                <option value="personal">شخصي</option>
+                <option value="auto">سيارات</option>
               </select>
             </div>
-            <div class="col-6">
-              <label class="form-label">% الفائدة السنوية</label>
-              <input type="number" step="0.01" min="0" name="interest_rate" class="form-control" placeholder="مثال: 6" required>
-            </div>
-          </div>
-          <div class="row g-3 mt-0">
-            <div class="col-6">
-              <label class="form-label">APR</label>
-              <input type="number" step="0.01" min="0" name="apr" class="form-control" placeholder="اختياري">
-            </div>
-            <div class="col-6">
-              <label class="form-label">الحد الأدنى للمبلغ</label>
-              <input type="number" step="0.01" min="0" name="min_amount" class="form-control" placeholder="اختياري">
-            </div>
-          </div>
-          <div class="row g-3 mt-0">
-            <div class="col-6">
-              <label class="form-label">الحد الأقصى للمبلغ</label>
-              <input type="number" step="0.01" min="0" name="max_amount" class="form-control" placeholder="اختياري">
-            </div>
-            <div class="col-6">
-              <label class="form-label">المدة الدنيا (أشهر)</label>
-              <input type="number" min="0" name="min_tenure_months" class="form-control" placeholder="اختياري">
-            </div>
-          </div>
-          <div class="row g-3 mt-0">
-            <div class="col-6">
-              <label class="form-label">المدة القصوى (أشهر)</label>
-              <input type="number" min="0" name="max_tenure_months" class="form-control" placeholder="اختياري">
-            </div>
-            <div class="col-6">
-              <label class="form-label">ملاحظات</label>
-              <input type="text" name="notes" class="form-control" placeholder="اختياري">
-            </div>
-          </div>
-          <div class="mt-3 d-flex justify-content-end">
-            <button class="btn btn-primary" type="submit">حفظ العرض</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 
-<hr>
+            <div style="flex:0 0 22%;">
+              <label>نسبة التحمل القصوى</label>
+              <select name="max_ratio" required>
+                <option value="0.3">30%</option>
+                <option value="0.4">40%</option>
+                <option value="0.5">50%</option>
+              </select>
+            </div>
 
-<!-- إدارة الشركات المعتمدة لدى البنك -->
-<div class="row g-4 mt-1">
-  <div class="col-md-7">
-    <div class="card">
-      <div class="card-header"><strong>الشركات المعتمدة</strong></div>
-      <div class="card-body p-0">
-        <table class="table mb-0 align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>الشركة</th>
-              <th>الحد المعتمد</th>
-              <th class="text-end">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if approved_companies and approved_companies|length > 0 %}
-              {% for c in approved_companies %}
-              <tr>
-                <td class="fw-semibold">{{ c.name }}</td>
-                <td style="width: 240px;">
-                  <form class="d-flex gap-2" method="post" action="{{ url_for('bank.update_approved_company', cab_id=c.cab_id) }}">
-                    <input type="number" step="0.01" name="limit_value" class="form-control" value="{{ c.limit_value or '' }}" placeholder="اختياري">
-                    <button class="btn btn-sm btn-outline-primary">تحديث</button>
-                  </form>
-                </td>
-                <td class="text-end">
-                  <form method="post" action="{{ url_for('bank.delete_approved_company', cab_id=c.cab_id) }}" onsubmit="return confirm('تأكيد حذف الاعتماد؟');">
-                    <button class="btn btn-sm btn-outline-danger">إزالة</button>
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <tr>
-                <td colspan="3" class="text-center py-3 text-muted">لا توجد شركات معتمدة بعد</td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+            <div style="flex:0 0 18%;">
+              <label>الفائدة الافتراضية %</label>
+              <input type="number" step="0.01" min="0" name="default_annual_rate" placeholder="مثال: 6">
+            </div>
 
-  <div class="col-md-5">
-    <div class="card">
-      <div class="card-header"><strong>اعتماد شركة جديدة</strong></div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('bank.add_approved_company') }}" class="row g-3 align-items-end">
-          <div class="col-12">
-            <label class="form-label">اختر الشركة</label>
-            <select name="company_user_id" class="form-select" required>
-              <option value="">— اختر —</option>
-              {% for item in companies_to_add or [] %}
-                <option value="{{ item.user_id }}">{{ item.name }}</option>
-              {% endfor %}
-            </select>
+            <div style="flex:0 0 18%;">
+              <label>المدة الافتراضية (سنوات)</label>
+              <input type="number" min="1" step="1" name="default_years" placeholder="مثال: 20">
+            </div>
+
+            <div style="flex:0 0 18%; display:flex; justify-content:flex-end;">
+              <button class="btn btn-primary" type="submit">حفظ السياسة</button>
+            </div>
+          </form>
+
+          <hr class="hr-soft" style="margin:14px 0;">
+
+          <div style="overflow:auto;">
+            <table class="table" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>النوع</th>
+                  <th>نسبة التحمل</th>
+                  <th>فائدة افتراضية</th>
+                  <th>مدة افتراضية (سنوات)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in policies or [] %}
+                  <tr>
+                    <td>{{ p.loan_type }}</td>
+                    <td>{{ (p.max_ratio * 100) | round(0) }}%</td>
+                    <td>{{ (('%.2f' % p.default_annual_rate) if p.default_annual_rate is not none else '-') }}</td>
+                    <td>{{ p.default_years or '-' }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="4" class="empty-note">لا توجد سياسات بعد</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-          <div class="col-12">
-            <label class="form-label">الحد المعتمد (اختياري)</label>
-            <input type="number" step="0.01" name="limit_value" class="form-control" placeholder="مثال: 100000">
-          </div>
-          <div class="col-12 d-flex justify-content-end">
-            <button class="btn btn-primary">اعتماد</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<hr>
-
-<div class="card mt-3">
-  <div class="card-header"><strong>حاسبة القروض</strong></div>
-  <div class="card-body">
-    <div class="alert alert-info">قم بتحديد نسب التحمل والسياسات الافتراضية من الأسفل ليتم استخدامها في بوابة العملاء.</div>
-    <div class="row g-3">
-      <div class="col-md-4">
-        <label class="form-label">اختر عرضًا (اختياري)</label>
-        <select id="calc_offer" class="form-select">
-          <option value="">—</option>
-          {% for o in offers or [] %}
-            <option value="{{ o.id }}" data-rate="{{ o.interest_rate }}" data-minm="{{ o.min_tenure_months or '' }}" data-maxm="{{ o.max_tenure_months or '' }}">{{ o.product_name }} — {{ '%.2f' % o.interest_rate }}%</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">المبلغ (Principal)</label>
-        <input id="calc_amount" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 100000">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">المدة (شهر)</label>
-        <input id="calc_months" type="number" min="1" step="1" class="form-control" placeholder="مثال: 60">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">% الفائدة السنوية</label>
-        <input id="calc_rate" type="number" min="0" step="0.01" class="form-control" placeholder="مثال: 6">
-      </div>
-    </div>
-
-    <div class="row g-3 mt-3">
-      <div class="col-md-3">
-        <div class="border rounded p-3 text-center">
-          <div class="text-muted">القسط الشهري</div>
-          <div id="calc_monthly" class="fs-5 fw-bold">—</div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="border rounded p-3 text-center">
-          <div class="text-muted">إجمالي المدفوعات</div>
-          <div id="calc_total" class="fs-5 fw-bold">—</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="border rounded p-3 text-center">
-          <div class="text-muted">إجمالي الفائدة</div>
-          <div id="calc_interest" class="fs-5 fw-bold">—</div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-    <script>
-      (function() {
-        const offerSelect = document.getElementById('calc_offer');
-        const amountInput = document.getElementById('calc_amount');
-        const monthsInput = document.getElementById('calc_months');
-        const rateInput = document.getElementById('calc_rate');
-        const monthlyEl = document.getElementById('calc_monthly');
-        const totalEl = document.getElementById('calc_total');
-        const interestEl = document.getElementById('calc_interest');
-
-        function formatCurrency(value) {
-          if (!isFinite(value)) return '—';
-          try {
-            return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(value);
-          } catch (e) {
-            return value.toFixed(2);
-          }
-        }
-
-        function compute() {
-          const P = parseFloat(amountInput.value);
-          const n = parseInt(monthsInput.value, 10);
-          const annual = parseFloat(rateInput.value);
-          if (!(P > 0) || !(n > 0) || !(annual >= 0)) {
-            monthlyEl.textContent = '—';
-            totalEl.textContent = '—';
-            interestEl.textContent = '—';
-            return;
-          }
-          const r = (annual / 100) / 12; // معدل شهري
-          let M;
-          if (r === 0) {
-            M = P / n;
-          } else {
-            M = P * r / (1 - Math.pow(1 + r, -n));
-          }
-          const total = M * n;
-          const interest = total - P;
-          monthlyEl.textContent = formatCurrency(M);
-          totalEl.textContent = formatCurrency(total);
-          interestEl.textContent = formatCurrency(interest);
-        }
-
-        offerSelect && offerSelect.addEventListener('change', function() {
-          const opt = offerSelect.selectedOptions[0];
-          if (!opt) return;
-          const rate = opt.getAttribute('data-rate');
-          const minm = opt.getAttribute('data-minm');
-          const maxm = opt.getAttribute('data-maxm');
-          if (rate) rateInput.value = rate;
-          if (minm && !monthsInput.value) monthsInput.value = minm;
-          if (maxm && monthsInput.value && parseInt(monthsInput.value, 10) > parseInt(maxm, 10)) {
-            monthsInput.value = maxm;
-          }
-          compute();
-        });
-
-        [amountInput, monthsInput, rateInput].forEach(function(el) {
-          el && el.addEventListener('input', compute);
-          el && el.addEventListener('change', compute);
-        });
-      })();
-    </script>
   </div>
-</div>
-
-<div class="card mt-3">
-  <div class="card-header"><strong>سياسات القروض (للاستخدام في بوابة العملاء)</strong></div>
-  <div class="card-body">
-    <form method="post" action="{{ url_for('bank.upsert_policy') }}" class="row g-3 align-items-end">
-      <div class="col-12 col-md-3">
-        <label class="form-label">نوع القرض</label>
-        <select name="loan_type" class="form-select">
-          <option value="housing">سكني</option>
-          <option value="personal">شخصي</option>
-          <option value="auto">سيارات</option>
-        </select>
-      </div>
-      <div class="col-12 col-md-3">
-        <label class="form-label">نسبة التحمل القصوى</label>
-        <select name="max_ratio" class="form-select" required>
-          <option value="0.3">30%</option>
-          <option value="0.4">40%</option>
-          <option value="0.5">50%</option>
-        </select>
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">الفائدة الافتراضية %</label>
-        <input type="number" step="0.01" min="0" name="default_annual_rate" class="form-control" placeholder="مثال: 6">
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">المدة الافتراضية (سنوات)</label>
-        <input type="number" min="1" step="1" name="default_years" class="form-control" placeholder="مثال: 20">
-      </div>
-      <div class="col-12 d-flex justify-content-end">
-        <button class="btn btn-primary">حفظ السياسة</button>
-      </div>
-    </form>
-
-    <hr>
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>النوع</th>
-            <th>نسبة التحمل</th>
-            <th>فائدة افتراضية</th>
-            <th>مدة افتراضية (سنوات)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in policies or [] %}
-          <tr>
-            <td>{{ p.loan_type }}</td>
-            <td>{{ (p.max_ratio * 100) | round(0) }}%</td>
-            <td>{{ (('%.2f' % p.default_annual_rate) if p.default_annual_rate is not none else '-') }}</td>
-            <td>{{ p.default_years or '-' }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="4" class="text-center text-muted">لا توجد سياسات بعد</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-{% endblock %}
+</body>
+</html>
