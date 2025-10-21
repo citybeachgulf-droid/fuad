@@ -34,7 +34,7 @@
         <div class="form-control bg-light">{{ user.oauth_provider or 'البريد/الهاتف' }}</div>
       </div>
       <div class="col-12 mt-3">
-        <a href="{{ url_for('client.submit_request') }}" class="btn btn-primary">طلب تثمين جديد</a>
+        <a href="{{ url_for('main.certified_step_purpose', entity='person') }}" class="btn btn-primary">طلب تثمين جديد</a>
         <a href="{{ url_for('client.dashboard') }}" class="btn btn-outline-primary ms-2">مشاهدة طلباتي</a>
         <a href="{{ url_for('client.edit_profile') }}" class="btn btn-outline-secondary ms-2">تعديل الملف الشخصي</a>
       </div>
