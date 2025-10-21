@@ -1,53 +1,188 @@
+<!-- 
+Client Dashboard - Custom Design
+Author: FUAD
+Built with pure CSS (no Bootstrap/Tailwind)
+-->
+
 {% extends 'layout.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>لوحة العميل</h2>
-  <div class="d-flex gap-2">
-    <a class="btn btn-success" href="{{ url_for('main.certified_step_purpose', entity='person') }}">طلب تثمين جديد</a>
-  </div>
 
+<style>
+  :root {
+    --white: #ffffff;
+    --primary: #425172;
+    --primary-dark: #324063;
+    --secondary: #3e4d6e;
+    --text: #354366;
+    --muted: #364467;
+    --border: #e0e4ef;
+    --shadow: rgba(55, 69, 104, 0.1);
+  }
+
+  body {
+    font-family: "Cairo", sans-serif;
+    background-color: var(--white);
+    color: var(--text);
+    direction: rtl;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .page-header h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-success {
+    background-color: var(--primary);
+    color: var(--white);
+    border: none;
+  }
+
+  .btn-success:hover {
+    background-color: var(--primary-dark);
+  }
+
+  .btn-outline-secondary,
+  .btn-outline-info,
+  .btn-primary {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    border: 1px solid var(--muted);
+    background-color: var(--white);
+    color: var(--primary-dark);
+    transition: 0.2s ease;
+  }
+
+  .btn-outline-secondary:hover,
+  .btn-outline-info:hover,
+  .btn-primary:hover {
+    background-color: var(--secondary);
+    color: var(--white);
+  }
+
+  .btn-primary {
+    border-color: var(--primary);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    box-shadow: 0 2px 8px var(--shadow);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  thead {
+    background-color: var(--primary-dark);
+    color: var(--white);
+  }
+
+  th, td {
+    text-align: center;
+    padding: 0.9rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:hover {
+    background-color: #f7f9fc;
+  }
+
+  a {
+    color: var(--primary-dark);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .text-warning {
+    color: #e6b800;
+  }
+
+  .text-danger {
+    color: #d9534f;
+  }
+
+  .small {
+    font-size: 0.85rem;
+  }
+
+  .table-container {
+    margin-top: 1.5rem;
+  }
+</style>
+
+<div class="page-header">
+  <h2>لوحة العميل</h2>
+  <a class="btn btn-success" href="{{ url_for('client.submit_request') }}">طلب تثمين جديد</a>
 </div>
 
-<table class="table mt-3">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>العنوان</th>
-      <th>نوع التثمين</th>
-      <th>الشركة</th>
-      <th>الحالة</th>
-      <th>إجراء</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in requests %}
+<div class="table-container">
+  <table>
+    <thead>
       <tr>
-        <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
-        <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
-        <td>
-          {% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
-        </td>
-        <td>{{ r.company.name if r.company else '-' }}</td>
-        <td>
-          {{ r.status }}
-          {% if (r.status or '').lower() == 'revision_requested' %}
-            <div class="small text-warning">مستندات ناقصة مطلوبة</div>
-          {% endif %}
-          {% if r.status == 'rejected' and r.rejection_reason %}
-            <div class="small text-danger">سبب الرفض: {{ r.rejection_reason }}</div>
-          {% endif %}
-        </td>
-        <td class="d-flex gap-2">
-          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('client.request_detail', request_id=r.id) }}">تفاصيل</a>
-          {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}
-          {% if (r.status or '').lower() == 'completed' and not has_final %}
-            <a class="btn btn-sm btn-outline-info" href="{{ url_for('client.request_detail', request_id=r.id) }}">اعتماد التثمين</a>
-          {% elif (r.status or '').lower() == 'approved' and not has_final %}
-            <a class="btn btn-sm btn-primary" href="{{ url_for('client.propose_appointment', request_id=r.id) }}">تحديد موعد زيارة</a>
-          {% endif %}
-        </td>
+        <th>#</th>
+        <th>العنوان</th>
+        <th>نوع التثمين</th>
+        <th>الشركة</th>
+        <th>الحالة</th>
+        <th>إجراء</th>
       </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+        <tr>
+          <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.id }}</a></td>
+          <td><a href="{{ url_for('client.request_detail', request_id=r.id) }}">{{ r.title }}</a></td>
+          <td>
+            {% if r.valuation_type == 'land' %}أرض{% elif r.valuation_type == 'property' %}عقار{% elif r.valuation_type == 'house' %}بناء منزل{% else %}-{% endif %}
+          </td>
+          <td>{{ r.company.name if r.company else '-' }}</td>
+          <td>
+            {{ r.status }}
+            {% if (r.status or '').lower() == 'revision_requested' %}
+              <div class="small text-warning">مستندات ناقصة مطلوبة</div>
+            {% endif %}
+            {% if r.status == 'rejected' and r.rejection_reason %}
+              <div class="small text-danger">سبب الرفض: {{ r.rejection_reason }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:0.4rem; justify-content:center;">
+              <a class="btn btn-outline-secondary" href="{{ url_for('client.request_detail', request_id=r.id) }}">تفاصيل</a>
+              {% set has_final = r.appointments|selectattr('status', 'equalto', 'final')|list|length > 0 %}
+              {% if (r.status or '').lower() == 'completed' and not has_final %}
+                <a class="btn btn-outline-info" href="{{ url_for('client.request_detail', request_id=r.id) }}">اعتماد التثمين</a>
+              {% elif (r.status or '').lower() == 'approved' and not has_final %}
+                <a class="btn btn-primary" href="{{ url_for('client.propose_appointment', request_id=r.id) }}">تحديد موعد زيارة</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 {% endblock %}
