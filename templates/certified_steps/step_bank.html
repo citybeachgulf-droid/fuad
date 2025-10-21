@@ -106,14 +106,14 @@ body {
     <div class="logos-grid">
       {% for option in options %}
         <a href="{{ option.get('href', '#') }}" class="logo-card">
-          {% if option.get('logo') %}
-            <img src="{{ option.get('logo') }}" alt="{{ option.get('name','') }}">
+          {% if option.get('logo_src') %}
+            <img src="{{ option.get('logo_src') | static_or_external }}" alt="{{ option.get('title','') }}" loading="lazy">
           {% else %}
             <div style="width:100px;height:100px;background:#eee;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#777;">
-              {{ option.get('name','?')[:1] }}
+              {{ option.get('title','?')[:1] }}
             </div>
           {% endif %}
-          <span>{{ option.get('name','غير معروف') }}</span>
+          <span>{{ option.get('title','غير معروف') }}</span>
         </a>
       {% endfor %}
     </div>
