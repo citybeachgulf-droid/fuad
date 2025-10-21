@@ -176,3 +176,177 @@ button, a.btn {
   </div>
 </section>
 {% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const entity = {{ entity|tojson }};
+  const purpose = {{ purpose|tojson }};
+
+  const bankInput = document.getElementById('bankInput');
+  const banksList = document.getElementById('banksList');
+  const useInput = document.getElementById('useInput');
+  const wilayaInput = document.getElementById('wilayaInput');
+  const wilayasList = document.getElementById('wilayasList');
+  const regionInput = document.getElementById('regionInput');
+  const regionsList = document.getElementById('regionsList');
+  const landAreaInput = document.getElementById('landArea');
+  const buildAreaInput = document.getElementById('buildArea');
+  const buildAgeInput = document.getElementById('buildAge');
+  const phoneInput = document.getElementById('phoneInput');
+  const continueBtn = document.getElementById('continueBtn');
+
+  // Maps for banks and locations
+  const bankSlugByName = new Map(); // lower(name) -> slug
+  const bankNameBySlug = new Map(); // slug -> name
+  const wilayaToRegions = new Map(); // wilaya -> [regions]
+
+  function populateBanks(banks) {
+    if (!banksList) return;
+    banksList.innerHTML = '';
+    bankSlugByName.clear();
+    bankNameBySlug.clear();
+    (banks || []).forEach(b => {
+      const slug = (b && b.slug) ? String(b.slug) : '';
+      const name = (b && (b.name || b.slug)) ? String(b.name || b.slug) : slug;
+      if (!slug) return;
+      bankSlugByName.set(name.toLowerCase(), slug);
+      bankNameBySlug.set(slug, name);
+      const opt = document.createElement('option');
+      opt.value = slug; // ensure input value becomes slug
+      opt.label = name; // hint for suggestion UI
+      opt.textContent = name;
+      banksList.appendChild(opt);
+    });
+  }
+
+  async function fetchBanks() {
+    try {
+      const res = await fetch('/api/banks');
+      if (!res.ok) return;
+      const data = await res.json();
+      populateBanks(data);
+    } catch (_) { /* ignore */ }
+  }
+
+  function populateWilayas(locations) {
+    if (!wilayasList) return;
+    wilayasList.innerHTML = '';
+    regionsList && (regionsList.innerHTML = '');
+    wilayaToRegions.clear();
+    (locations || []).forEach(item => {
+      const w = item && item.wilaya ? String(item.wilaya) : '';
+      if (!w) return;
+      wilayaToRegions.set(w, Array.isArray(item.regions) ? item.regions : []);
+      const opt = document.createElement('option');
+      opt.value = w;
+      wilayasList.appendChild(opt);
+    });
+    // If a wilaya is already typed, refresh regions list
+    updateRegionsForSelectedWilaya();
+  }
+
+  function updateRegionsForSelectedWilaya() {
+    if (!regionsList) return;
+    regionsList.innerHTML = '';
+    const w = (wilayaInput && wilayaInput.value) ? wilayaInput.value.trim() : '';
+    const regions = (w && wilayaToRegions.has(w)) ? (wilayaToRegions.get(w) || []) : [];
+    regions.forEach(r => {
+      if (!r) return;
+      const opt = document.createElement('option');
+      opt.value = String(r);
+      regionsList.appendChild(opt);
+    });
+  }
+
+  async function fetchLocations(params) {
+    const qs = new URLSearchParams(params || {});
+    try {
+      const url = '/api/land_locations' + (qs.toString() ? ('?' + qs.toString()) : '');
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      populateWilayas(json && json.locations ? json.locations : []);
+    } catch (_) { /* ignore */ }
+  }
+
+  function coercePositiveNumber(value) {
+    const num = parseFloat(String(value || '').trim());
+    return Number.isFinite(num) && num > 0 ? num : null;
+  }
+
+  function mapBankInputToSlug(raw) {
+    const val = String(raw || '').trim();
+    if (!val) return '';
+    // If user typed a bank name instead of slug, convert to slug
+    if (!bankNameBySlug.has(val) && bankSlugByName.has(val.toLowerCase())) {
+      return bankSlugByName.get(val.toLowerCase());
+    }
+    return val; // assume already slug (from selecting an option)
+  }
+
+  // Event bindings
+  if (bankInput) {
+    bankInput.addEventListener('change', async () => {
+      const slug = mapBankInputToSlug(bankInput.value);
+      if (slug) {
+        // Reflect normalized slug back into the input for consistency
+        bankInput.value = slug;
+        await fetchLocations({ bank: slug });
+      } else {
+        await fetchLocations();
+      }
+    });
+  }
+
+  if (wilayaInput) {
+    wilayaInput.addEventListener('input', updateRegionsForSelectedWilaya);
+  }
+
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      const params = new URLSearchParams();
+      params.set('entity', entity || 'person');
+      if (purpose) params.set('purpose', purpose);
+
+      const bankSlug = mapBankInputToSlug(bankInput && bankInput.value);
+      if (bankSlug) params.set('bank', bankSlug);
+
+      const useVal = (useInput && useInput.value) ? useInput.value.trim() : '';
+      if (useVal) params.set('use', useVal);
+
+      const wilayaVal = (wilayaInput && wilayaInput.value) ? wilayaInput.value.trim() : '';
+      if (wilayaVal) params.set('wilaya', wilayaVal);
+
+      const regionVal = (regionInput && regionInput.value) ? regionInput.value.trim() : '';
+      if (regionVal) params.set('region', regionVal);
+
+      const la = coercePositiveNumber(landAreaInput && landAreaInput.value);
+      if (la !== null) params.set('land_area', String(la));
+
+      if (buildAreaInput && purpose !== 'تثمين أرض') {
+        const ba = coercePositiveNumber(buildAreaInput.value);
+        if (ba !== null) params.set('build_area', String(ba));
+      }
+
+      if (buildAgeInput && purpose === 'تثمين عقار قائم') {
+        const ageNum = coercePositiveNumber(buildAgeInput.value);
+        if (ageNum !== null) params.set('age', String(ageNum));
+      }
+
+      const phoneVal = (phoneInput && phoneInput.value) ? phoneInput.value.trim() : '';
+      if (phoneVal) params.set('phone', phoneVal);
+
+      window.location.href = '/certified/offers?' + params.toString();
+    });
+  }
+
+  // Initial load
+  (async function init() {
+    await fetchBanks();
+    await fetchLocations();
+    updateRegionsForSelectedWilaya();
+  })();
+})();
+</script>
+{% endblock %}
