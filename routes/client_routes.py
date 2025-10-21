@@ -297,7 +297,7 @@ def submit_request():
             allowed_types = {'property', 'land', 'house'}
             if valuation_type_q not in allowed_types:
                 flash('نوع التثمين غير صالح', 'danger')
-                return render_template('client/submit.html', companies=companies, preselected_company_id=request.args.get('company_id', type=int))
+                return render_template('certified_steps/step_purpose.html', companies=companies, preselected_company_id=request.args.get('company_id', type=int))
 
             company_id_q = request.args.get('company_id', type=int)
             company_id: int | None = None
@@ -347,7 +347,7 @@ def submit_request():
 
     # Preselect company if passed as query parameter from company detail page
     preselected_company_id = request.args.get('company_id', type=int)
-    return render_template('client/submit.html', companies=companies, preselected_company_id=preselected_company_id)
+    return render_template('certified_steps/step_purpose.html', companies=companies, preselected_company_id=preselected_company_id)
 
 
 # -------------------------------
