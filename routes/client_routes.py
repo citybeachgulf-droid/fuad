@@ -288,6 +288,8 @@ def decline_valuation(request_id: int):
 def submit_request():
     # Bring list of companies for selection
     companies = User.query.filter_by(role='company').all()
+    # Preserve company preselection (if arriving from company details page)
+    preselected_company_id = request.args.get('company_id', type=int)
 
     # Fast-path: allow GET with valuation_type + optional company_id to auto-create and go to docs
     if request.method == 'GET':
@@ -297,7 +299,13 @@ def submit_request():
             allowed_types = {'property', 'land', 'house'}
             if valuation_type_q not in allowed_types:
                 flash('نوع التثمين غير صالح', 'danger')
-                return render_template('certified_steps/step_purpose.html', companies=companies, preselected_company_id=request.args.get('company_id', type=int))
+                # Show selectable cards (links) to choose a valid type
+                options = [
+                    {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
+                    {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
+                    {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+                ]
+                return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
             company_id_q = request.args.get('company_id', type=int)
             company_id: int | None = None
@@ -316,6 +324,14 @@ def submit_request():
             db.session.add(vr)
             db.session.commit()
             return redirect(url_for('client.upload_docs', request_id=vr.id))
+
+        # No type preselected: render cards to pick a type (auto-advances via GET)
+        options = [
+            {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
+            {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
+            {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+        ]
+        return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
     if request.method == 'POST':
         # Step 1: Only valuation type (guided)
@@ -345,9 +361,13 @@ def submit_request():
         # Proceed to documents step
         return redirect(url_for('client.upload_docs', request_id=vr.id))
 
-    # Preselect company if passed as query parameter from company detail page
-    preselected_company_id = request.args.get('company_id', type=int)
-    return render_template('certified_steps/step_purpose.html', companies=companies, preselected_company_id=preselected_company_id)
+    # Fallback (should not be reached)
+    options = [
+        {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
+        {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
+        {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+    ]
+    return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
 
 # -------------------------------
