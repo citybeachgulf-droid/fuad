@@ -299,73 +299,50 @@ def submit_request():
             allowed_types = {'property', 'land', 'house'}
             if valuation_type_q not in allowed_types:
                 flash('نوع التثمين غير صالح', 'danger')
-                # Show selectable cards (links) to choose a valid type
+                # Show selectable cards (links) to choose a valid type -> redirect directly to property inputs
                 options = [
-                    {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
-                    {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
-                    {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+                    {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين عقار قائم')},
+                    {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين أرض')},
+                    {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين بناء عقار')},
                 ]
                 return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
-            company_id_q = request.args.get('company_id', type=int)
-            company_id: int | None = None
-            if company_id_q is not None:
-                company_user = User.query.filter_by(id=company_id_q, role='company').first()
-                if company_user:
-                    company_id = company_user.id
-
-            vr = ValuationRequest(
-                title=None,
-                description=None,
-                valuation_type=valuation_type_q,
-                client_id=current_user.id,
-                company_id=company_id,
-            )
-            db.session.add(vr)
-            db.session.commit()
-            return redirect(url_for('client.upload_docs', request_id=vr.id))
+            # Map selected valuation_type to Certified flow purpose and redirect to property inputs
+            purpose_map = {
+                'property': 'تثمين عقار قائم',
+                'land': 'تثمين أرض',
+                'house': 'تثمين بناء عقار',
+            }
+            purpose_value = purpose_map.get(valuation_type_q, 'تثمين عقار قائم')
+            return redirect(url_for('main.certified_property_inputs', entity='person', purpose=purpose_value))
 
         # No type preselected: render cards to pick a type (auto-advances via GET)
         options = [
-            {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
-            {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
-            {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+            {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين عقار قائم')},
+            {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين أرض')},
+            {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين بناء عقار')},
         ]
         return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
     if request.method == 'POST':
-        # Step 1: Only valuation type (guided)
+        # Step 1: Only valuation type (guided) -> redirect to property inputs flow
         valuation_type = (request.form.get('valuation_type') or '').strip() or None
-
-        # Company selection (optional)
-        company_id_raw = request.form.get('company_id')
-        company_id = None
-        if company_id_raw:
-            try:
-                company_id_candidate = int(company_id_raw)
-                company_user = User.query.filter_by(id=company_id_candidate, role='company').first()
-                if company_user:
-                    company_id = company_user.id
-            except Exception:
-                company_id = None
-
-        vr = ValuationRequest(
-            title=None,
-            description=None,
-            valuation_type=valuation_type,
-            client_id=current_user.id,
-            company_id=company_id,
-        )
-        db.session.add(vr)
-        db.session.commit()
-        # Proceed to documents step
-        return redirect(url_for('client.upload_docs', request_id=vr.id))
+        purpose_map = {
+            'property': 'تثمين عقار قائم',
+            'land': 'تثمين أرض',
+            'house': 'تثمين بناء عقار',
+        }
+        if valuation_type not in purpose_map:
+            flash('يرجى اختيار نوع تثمين صالح', 'danger')
+            return redirect(url_for('client.submit_request'))
+        purpose_value = purpose_map[valuation_type]
+        return redirect(url_for('main.certified_property_inputs', entity='person', purpose=purpose_value))
 
     # Fallback (should not be reached)
     options = [
-        {"title": "شراء منزل", "subtitle": "تقييم لغرض الشراء", "href": url_for('client.submit_request', valuation_type='property', company_id=preselected_company_id)},
-        {"title": "شراء أرض", "subtitle": "قطعة أرض بدون بناء", "href": url_for('client.submit_request', valuation_type='land', company_id=preselected_company_id)},
-        {"title": "بناء منزل", "subtitle": "تقييم لغرض البناء", "href": url_for('client.submit_request', valuation_type='house', company_id=preselected_company_id)},
+        {"title": "تثمين عقار قائم", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين عقار قائم')},
+        {"title": "تثمين أرض", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين أرض')},
+        {"title": "تثمين بناء عقار", "href": url_for('main.certified_property_inputs', entity='person', purpose='تثمين بناء عقار')},
     ]
     return render_template('certified_steps/step_purpose.html', options=options, companies=companies, preselected_company_id=preselected_company_id)
 
